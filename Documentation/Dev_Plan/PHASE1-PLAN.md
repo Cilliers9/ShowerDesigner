@@ -32,8 +32,8 @@ class GlassPanel:
     - Width: App::PropertyLength
     - Height: App::PropertyLength
     - Thickness: App::PropertyLength (6mm, 8mm, 10mm, 12mm)
-    - GlassType: App::PropertyEnumeration (Clear, Frosted, Tinted, Pattern, Low-Iron)
-    - EdgeFinish: App::PropertyEnumeration (Polished, Beveled, Seamed)
+    - GlassType: App::PropertyEnumeration (Clear, Frosted, Bronze, Grey, Reeded, Low-Iron)
+    - EdgeFinish: App::PropertyEnumeration (Bright_Polish, Dull_Polish)
     - TemperType: App::PropertyEnumeration (Tempered, Laminated, None)
     - Position: App::PropertyVector
     - Rotation: App::PropertyAngle
@@ -76,11 +76,12 @@ GLASS_SPECS = {
 }
 
 GLASS_TYPES = {
-    "Clear": {"light_transmission": 0.90, "opacity": 0.0},
-    "Frosted": {"light_transmission": 0.75, "opacity": 0.8},
-    "Tinted": {"light_transmission": 0.60, "opacity": 0.3},
-    "Pattern": {"light_transmission": 0.70, "opacity": 0.6},
-    "Low-Iron": {"light_transmission": 0.92, "opacity": 0.0}
+    "Clear": {"light_transmission": 0.90, "opacity": 0.2, "color": (0.7, 0.9, 1.0)},
+    "Frosted": {"light_transmission": 0.75, "opacity": 0.8, "color": (0.7, 0.9, 1.0)},
+    "Bronze": {"light_transmission": 0.60, "opacity": 0.3, "color": (0.804, 0.498, 0.196)},
+    "Grey": {"light_transmission": 0.60, "opacity": 0.3, "color": (0.25, 0.25, 0.25)},
+    "Reeded": {"light_transmission": 0.70, "opacity": 0.6, "color": (0.7, 0.9, 1.0)},
+    "Low-Iron": {"light_transmission": 0.92, "opacity": 0.0, "color": (1.0, 1.0, 1.0)}
 }
 ```
 
@@ -146,7 +147,7 @@ class HingedDoor(GlassPanel):
     
     Additional Properties:
     - SwingDirection: App::PropertyEnumeration (Inward, Outward)
-    - HingeCount: App::PropertyInteger (2-4 hinges)
+    - HingeCount: App::PropertyInteger (2-3 hinges)
     - HingePlacement: App::PropertyVectorList
     - OpeningAngle: App::PropertyAngle (default 90°, max 110°)
     - HandlePosition: App::PropertyVector
@@ -154,7 +155,7 @@ class HingedDoor(GlassPanel):
 ```
 
 **Features:**
-- Automatic hinge spacing calculation (top hinge 150mm from top, bottom 200mm from bottom)
+- Automatic hinge spacing calculation (top hinge 3000mm from top, bottom 300mm from bottom)
 - Swing clearance validation
 - Door weight calculation for hinge selection
 - Visual representation of swing arc
@@ -175,7 +176,6 @@ class HingedDoor(GlassPanel):
 **Objectives:**
 - Track-based sliding mechanism
 - Multi-panel sliding doors
-- Bypass configuration (2+ panels)
 
 **Implementation Details:**
 
@@ -186,8 +186,8 @@ class SlidingDoor(GlassPanel):
     """Sliding shower door with track system"""
     
     Additional Properties:
-    - PanelCount: App::PropertyInteger (1-4 panels)
-    - TrackType: App::PropertyEnumeration (Top-Hung, Bottom-Rolling, Both)
+    - PanelCount: App::PropertyInteger (1-2 panels)
+    - TrackType: App::PropertyEnumeration (Edge, City, Ezy, Soft-Close)
     - OverlapWidth: App::PropertyLength (typical 50mm)
     - RollerType: App::PropertyEnumeration (Standard, Soft-Close)
     - TrackFinish: App::PropertyEnumeration (Chrome, Brushed-Nickel, Matte-Black)
@@ -201,8 +201,6 @@ class SlidingDoor(GlassPanel):
 
 **Testing:**
 - Single panel sliding
-- Bypass configuration (2 panels)
-- 3-panel configuration
 - Track length validation
 
 ---

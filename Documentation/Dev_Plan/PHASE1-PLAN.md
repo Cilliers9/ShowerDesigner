@@ -125,6 +125,43 @@ def distributeEvenly(panels, total_width):
 
 ---
 
+### 1.4 Fixed Panel Implementation
+**Priority:** High  
+**Estimated Effort:** Medium  
+**Dependencies:** 1.1
+
+**Objectives:**
+- Parametric fixed panel with wall and floor fixings.
+- Fixing hardware: None, Channels or CLamps
+- 
+
+**Implementation Details:**
+
+**File:** `freecad/ShowerDesigner/Models/FixedPanel.py`
+
+```python
+class FixedPanel(GlassPanel):
+    """Hinged shower door with hardware"""
+    
+    Additional Properties:
+    - WallHardware: App::PropertyEnumeration (None, Channel, Clamp)
+    - FloorHardware: App::PropertyEnumeration (None, Channel, Clamp)
+    - WallClampCount: App::PropertyInteger (1-2 hinges)
+    - WallClampPlacement: App::PropertyVectorList
+    - FloorClampCount: App::PropertyInteger (1-2 hinges)
+    - FloorClampPlacement: App::PropertyVectorList
+```
+
+**Features:**
+- Automatic WallClamp spacing calculation (Default: 300mm from top and bottom)
+- Automatic FloorCLamp spacing calculation (Default: 75mm from left and right)
+
+**Testing:**
+- Test with different panel heights
+- Validate clamp placement
+
+---
+
 ### 2. Door Implementation
 
 #### 2.1 Hinged Door System

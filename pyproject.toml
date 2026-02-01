@@ -1,0 +1,24 @@
+
+[project]
+version = '0.1.0'
+name = 'ShowerDesigner'
+authors = [
+    { name = 'Cilliers', email = 'tclouwrens@gmail.com' }
+]
+maintainers = [
+    { name = 'Cilliers', email = 'tclouwrens@gmail.com' }
+]
+
+requires-python = '>=3.10'
+
+dependencies = [
+    'freecad-stubs>=1.0.21' ,
+    'pyside6>=6.9.2'
+]
+
+[project.optional-dependencies]
+dev = [
+    'pytest>=7.0.0',
+    'black>=23.0.0',
+    'ruff>=0.1.0'
+]

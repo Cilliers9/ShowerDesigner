@@ -1,0 +1,26 @@
+<svg width="100" height="100" version="1.1" viewBox="0 0 26.458 26.458" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="13.229" cy="13.229" r="12.7" fill="#e8f4f8" stroke="#0077be" stroke-width="0.5"/>
+  
+  <!-- Shower head -->
+  <rect x="11.5" y="6" width="3.5" height="1.5" rx="0.5" fill="#0077be"/>
+  <ellipse cx="13.229" cy="8" rx="2.5" ry="0.8" fill="#0077be"/>
+  
+  <!-- Water drops -->
+  <g fill="#4db8e8">
+    <circle cx="11" cy="11" r="0.4"/>
+    <circle cx="13.2" cy="12" r="0.4"/>
+    <circle cx="15.4" cy="11.5" r="0.4"/>
+    <circle cx="10.5" cy="14" r="0.4"/>
+    <circle cx="12.5" cy="15" r="0.4"/>
+    <circle cx="14.5" cy="14.5" r="0.4"/>
+    <circle cx="15.8" cy="14" r="0.4"/>
+    <circle cx="11.5" cy="17" r="0.4"/>
+    <circle cx="13.5" cy="18" r="0.4"/>
+    <circle cx="15" cy="17.5" r="0.4"/>
+  </g>
+  
+  <!-- Glass panel representation -->
+  <rect x="8" y="9" width="10.5" height="11" fill="none" stroke="#0077be" stroke-width="0.6" rx="0.5"/>
+  <line x1="13.229" y1="9" x2="13.229" y2="20" stroke="#0077be" stroke-width="0.3"/>
+</svg>

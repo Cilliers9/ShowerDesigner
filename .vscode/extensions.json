@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "streetsidesoftware.code-spell-checker",
+        "editorconfig.editorconfig",
+        "theqtcompany.qt-ui",
+        "aaron-bond.better-comments",
+        "redhat.vscode-xml",
+        "astral-sh.ruff"
+    ]
+}

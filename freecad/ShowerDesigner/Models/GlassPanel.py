@@ -160,20 +160,27 @@ class GlassPanel:
         """
         from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
-        # Calculate area in m²
-        width_m = obj.Width.Value / 1000.0
-        height_m = obj.Height.Value / 1000.0
-        area = width_m * height_m
-        obj.Area = area
+        try:
+            # Calculate area in m²
+            width_m = obj.Width.Value / 1000.0
+            height_m = obj.Height.Value / 1000.0
+            area = width_m * height_m
+            if hasattr(obj, "Area"):
+                obj.Area = area
 
-        # Calculate weight based on thickness
-        thickness_key = f"{int(obj.Thickness.Value)}mm"
-        if thickness_key in GLASS_SPECS:
-            weight_per_m2 = GLASS_SPECS[thickness_key]["weight_kg_m2"]
-            obj.Weight = area * weight_per_m2
-        else:
-            # Approximate weight if thickness not in database
-            obj.Weight = area * 2.5 * obj.Thickness.Value  # Glass density ~2.5 kg/mm/m²
+            # Calculate weight based on thickness
+            thickness_key = f"{int(obj.Thickness.Value)}mm"
+            if thickness_key in GLASS_SPECS:
+                weight_per_m2 = GLASS_SPECS[thickness_key]["weight_kg_m2"]
+                weight = area * weight_per_m2
+            else:
+                # Approximate weight if thickness not in database
+                weight = area * 2.5 * obj.Thickness.Value  # Glass density ~2.5 kg/mm/m²
+            if hasattr(obj, "Weight"):
+                obj.Weight = weight
+
+        except Exception as e:
+            App.Console.PrintWarning(f"Error updating calculated properties: {e}\n")
 
     def onChanged(self, obj, prop):
         """
@@ -185,7 +192,9 @@ class GlassPanel:
         """
         # Recalculate when dimensions or glass type change
         if prop in ["Width", "Height", "Thickness", "GlassType"]:
-            if hasattr(obj, "Width") and hasattr(obj, "Height") and hasattr(obj, "Thickness"):
+            if (hasattr(obj, "Width") and hasattr(obj, "Height") and
+                hasattr(obj, "Thickness") and hasattr(obj, "Weight") and
+                hasattr(obj, "Area")):
                 self._updateCalculatedProperties(obj)
 
     def __getstate__(self):

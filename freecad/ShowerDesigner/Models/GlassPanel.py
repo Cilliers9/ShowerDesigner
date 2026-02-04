@@ -138,15 +138,15 @@ class GlassPanel:
         # Create the glass panel shape
         panel = Part.makeBox(width, thickness, height)
 
-        # Apply rotation around Z-axis if specified
-        if obj.Rotation != 0:
-            panel.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), obj.Rotation)
-
-        # Apply position
-        panel.translate(obj.Position)
-
         # Set the shape
         obj.Shape = panel
+
+        # Apply position
+        obj.Placement.Base = obj.Position
+
+        # Apply Rotation
+        new_rotation= App.Rotation(App.Vector(0, 0, 1), obj.Rotation)
+        obj.Placement.Rotation = new_rotation
 
         # Calculate weight and area
         self._updateCalculatedProperties(obj)

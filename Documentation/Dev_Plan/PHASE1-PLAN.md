@@ -258,20 +258,25 @@ class SlidingDoor(GlassPanel):
 
 ```python
 class BiFoldDoor(GlassPanel):
-    """Bi-fold shower door"""
-    
+    """Bi-fold shower door (fixed 2-panel design)"""
+
     Additional Properties:
-    - PanelCount: App::PropertyInteger (2 or 4)
     - FoldDirection: App::PropertyEnumeration (Inward, Outward)
+    - HingeSide: App::PropertyEnumeration (Left, Right)
     - PivotType: App::PropertyEnumeration (Inline, Offset)
-    - PanelWidth: App::PropertyLength (auto-calculated)
+    - FoldAngle: App::PropertyAngle (0-180, visualization)
+    - PanelWidth: App::PropertyLength (auto-calculated = Width / 2)
+    - FoldedWidth: App::PropertyLength (auto-calculated)
+    - OpeningWidth: App::PropertyLength (auto-calculated)
+    - ClearanceDepth: App::PropertyLength (auto-calculated)
 ```
 
 **Calculations:**
-- Panel width = Total Width / Panel Count
-- Pivot point offset (inline vs offset pivot)
-- Folded width calculation
-- Clearance requirements
+- Panel width = Total Width / 2
+- Pivot point offset (inline = 0mm vs offset = 15mm)
+- Folded width = PanelWidth + Thickness [+ PivotOffset]
+- Opening width = Width - FoldedWidth
+- Clearance depth = PanelWidth + PivotOffset
 
 ---
 
@@ -295,25 +300,25 @@ class BiFoldDoor(GlassPanel):
 HINGES = {
     "standard_glass_to_glass": {
         "name": "Glass-to-Glass Hinge",
-        "max_load_kg": 40,
+        "max_load_kg": 45,
         "glass_thickness": [8, 10, 12],
         "opening_angle": 90,
         "model_file": "StandardGTG.step"
     },
     "heavy_duty_wall_mount": {
         "name": "Heavy Duty Wall Mount",
-        "max_load_kg": 60,
+        "max_load_kg": 100,
         "glass_thickness": [10, 12],
-        "opening_angle": 110,
-        "model_file": "HeavyDutyWall.step"
-    },
-    "soft_close_wall_mount": {
-        "name": "Soft-Close Wall Mount",
-        "max_load_kg": 45,
-        "glass_thickness": [8, 10],
         "opening_angle": 90,
-        "soft_close": True,
-        "model_file": "SoftCloseWall.step"
+        "soft_close" : True,
+        "model_file": "HeavyDutyGTWHinge.step"
+    },
+    "standard_wall_mount": {
+        "name": "Standard Wall Mount",
+        "max_load_kg": 45,
+        "glass_thickness": [8, 10, 12],
+        "opening_angle": 90,
+        "model_file": "StandardGTWHinge.step"
     }
 }
 ```
@@ -461,6 +466,89 @@ SEALS = {
 
 ---
 
+#### 3.5 Clamp Catalog
+**Priority:** High
+**Estimated Effort:** Medium
+**Dependencies:** 1.4
+
+**Objectives:**
+- Standard clamp types for fixed panel mounting
+- Wall clamp and floor clamp specifications
+- Load capacity and glass thickness compatibility
+- Automatic clamp selection based on panel requirements
+
+**Implementation Details:**
+
+**File:** `freecad/ShowerDesigner/Data/HardwareSpecs.py` (extend existing)
+
+```python
+CLAMPS = {
+    "wall_clamp_standard": {
+        "name": "Standard Wall Clamp",
+        "max_load_kg": 30,
+        "glass_thickness": [8, 10, 12],
+        "mounting": "wall",
+        "model_file": "WallClampStandard.step"
+    },
+    "wall_clamp_heavy_duty": {
+        "name": "Heavy Duty Wall Clamp",
+        "max_load_kg": 50,
+        "glass_thickness": [10, 12],
+        "mounting": "wall",
+        "model_file": "WallClampHeavyDuty.step"
+    },
+    "floor_clamp_standard": {
+        "name": "Standard Floor Clamp",
+        "max_load_kg": 40,
+        "glass_thickness": [8, 10, 12],
+        "mounting": "floor",
+        "model_file": "FloorClampStandard.step"
+    },
+    "floor_clamp_adjustable": {
+        "name": "Adjustable Floor Clamp",
+        "max_load_kg": 50,
+        "glass_thickness": [8, 10, 12],
+        "mounting": "floor",
+        "height_range": [10, 25],  # mm adjustment range
+        "model_file": "FloorClampAdjustable.step"
+    }
+}
+```
+
+**File:** `freecad/ShowerDesigner/Models/Clamp.py`
+
+```python
+class Clamp:
+    """Parametric clamp object for fixed panel mounting"""
+
+    Properties:
+    - ClampType: App::PropertyEnumeration (from CLAMPS dict)
+    - Position: App::PropertyVector
+    - Rotation: App::PropertyAngle
+    - LoadCapacity: App::PropertyFloat (read-only)
+    - Finish: App::PropertyEnumeration (Chrome, Brushed, Matte-Black, Gold)
+    - MountingType: App::PropertyEnumeration (Wall, Floor)
+```
+
+**Methods:**
+```python
+def selectClamp(panel_weight, glass_thickness, mounting_type):
+    """Automatically select appropriate clamp based on requirements"""
+
+def calculateClampPlacement(panel_width, panel_height, mounting_type):
+    """Calculate optimal clamp positions based on panel dimensions"""
+
+def validateLoad(clamp_type, panel_weight, clamp_count):
+    """Verify clamps can support panel weight"""
+```
+
+**Integration with FixedPanel:**
+- Auto-select clamp type based on glass thickness and panel weight
+- Calculate required number of clamps based on panel dimensions
+- Validate total load capacity against panel weight
+
+---
+
 ### 4. Enhanced Enclosure Models
 
 #### 4.1 Update CornerEnclosure
@@ -550,7 +638,8 @@ SEALS = {
 1. Create Hinge catalog and class (3.1)
 2. Create Handle library (3.2)
 3. Implement SupportBar (3.3)
-4. Update WalkInEnclosure (4.3)
+4. Create Clamp catalog and class (3.5)
+5. Update WalkInEnclosure (4.3)
 
 ### Sprint 4 (Week 7-8): Finalization
 1. Implement BiFoldDoor (2.3)

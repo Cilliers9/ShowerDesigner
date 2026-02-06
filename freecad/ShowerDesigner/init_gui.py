@@ -28,7 +28,10 @@ class ShowerDesignerWorkbench(Gui.Workbench):
 
         component_commands = [
             'ShowerDesigner_GlassPanel',
-            'ShowerDesigner_Door',
+            'ShowerDesigner_FixedPanel',
+            'ShowerDesigner_HingedDoor',
+            'ShowerDesigner_SlidingDoor',
+            'ShowerDesigner_BiFoldDoor',
             'ShowerDesigner_Hardware'
         ]
 

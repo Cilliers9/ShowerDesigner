@@ -1,0 +1,25 @@
+<svg width="64" height="64" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg">
+  <!-- Top track (dark bar) -->
+  <rect x="2" y="2" width="12" height="1" fill="#333333"/>
+
+  <!-- Glass door panel (light blue, semi-transparent) -->
+  <rect x="4" y="3" width="5" height="10" fill="#0088cc" opacity="0.7"/>
+
+  <!-- Second panel behind (for bypass indication) -->
+  <rect x="7" y="3.3" width="5" height="9.7" fill="#0088cc" opacity="0.4"/>
+
+  <!-- Bottom guide (thin dark line) -->
+  <rect x="2" y="13.5" width="12" height="0.5" fill="#333333"/>
+
+  <!-- Rollers (small circles at top) -->
+  <circle cx="5" cy="2.5" r="0.6" fill="#666666"/>
+  <circle cx="8.5" cy="2.5" r="0.6" fill="#666666"/>
+
+  <!-- Slide direction arrow -->
+  <path d="M 11 8 L 14 8 M 13 6.5 L 14 8 L 13 9.5"
+        stroke="#0088cc" stroke-width="0.6"
+        fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Door symbol (small S for Sliding) -->
+  <text x="2" y="6" fill="#0088cc" font-size="3px" font-weight="bold">S</text>
+</svg>

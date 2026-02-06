@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "mcp__freecad__get_connection_status",
+      "mcp__freecad__get_mcp_server_environment",
+      "mcp__freecad__execute_python",
+      "Bash(ls:*)",
+      "Bash(file:*)",
+      "Bash(pytest:*)",
+      "Bash(mcp__freecad__execute_python --code \"exec\\(open\\(r''c:\\\\Users\\\\tclou\\\\AppData\\\\Roaming\\\\FreeCAD\\\\v1-1\\\\Mod\\\\ShowerDesigner\\\\freecad\\\\ShowerDesigner\\\\Tests\\\\test_hinged_door.py''\\).read\\(\\)\\)\" --timeout_ms 60000)"
+    ]
+  }
+}

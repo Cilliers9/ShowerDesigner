@@ -110,11 +110,104 @@ class PlaceholderCommand:
         return True
 
 
-# Register placeholder commands
-Gui.addCommand('ShowerDesigner_GlassPanel', 
-               PlaceholderCommand('Glass Panel', 'Add a glass panel'))
-Gui.addCommand('ShowerDesigner_Door', 
-               PlaceholderCommand('Door', 'Add a shower door'))
+# Component Commands
+
+class GlassPanelCommand:
+    """Create a basic glass panel"""
+    
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Glass Panel',
+            'ToolTip': 'Create a basic glass panel'
+        }
+    
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.GlassPanel import createGlassPanel
+        createGlassPanel()
+    
+    def IsActive(self):
+        return True
+
+
+class FixedPanelCommand:
+    """Create a fixed panel with mounting hardware"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('FixedPanel'),
+            'MenuText': 'Fixed Panel',
+            'ToolTip': 'Create a fixed panel with wall/floor mounting hardware'
+        }
+
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.FixedPanel import createFixedPanel
+        createFixedPanel()
+
+    def IsActive(self):
+        return True
+
+
+class HingedDoorCommand:
+    """Create a hinged shower door"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('HingedDoor'),
+            'MenuText': 'Hinged Door',
+            'ToolTip': 'Create a hinged shower door with hardware'
+        }
+
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.HingedDoor import createHingedDoor
+        createHingedDoor()
+
+    def IsActive(self):
+        return True
+
+
+class SlidingDoorCommand:
+    """Create a sliding shower door"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('SlidingDoor'),
+            'MenuText': 'Sliding Door',
+            'ToolTip': 'Create a sliding shower door with track hardware'
+        }
+
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.SlidingDoor import createSlidingDoor
+        createSlidingDoor()
+
+    def IsActive(self):
+        return True
+
+
+class BiFoldDoorCommand:
+    """Create a bi-fold shower door"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('BiFoldDoor'),
+            'MenuText': 'Bi-Fold Door',
+            'ToolTip': 'Create a bi-fold shower door with pivot hardware'
+        }
+
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.BiFoldDoor import createBiFoldDoor
+        createBiFoldDoor()
+
+    def IsActive(self):
+        return True
+
+
+# Register component commands
+Gui.addCommand('ShowerDesigner_GlassPanel', GlassPanelCommand())
+Gui.addCommand('ShowerDesigner_FixedPanel', FixedPanelCommand())
+Gui.addCommand('ShowerDesigner_HingedDoor', HingedDoorCommand())
+Gui.addCommand('ShowerDesigner_SlidingDoor', SlidingDoorCommand())
+Gui.addCommand('ShowerDesigner_BiFoldDoor', BiFoldDoorCommand())
 Gui.addCommand('ShowerDesigner_Hardware', 
                PlaceholderCommand('Hardware', 'Add hardware fittings'))
 Gui.addCommand('ShowerDesigner_Measure', 

@@ -1,0 +1,19 @@
+<svg width="64" height="64" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg">
+  <!-- Glass door panel (light blue, semi-transparent) -->
+  <rect x="5" y="2" width="1.2" height="12" fill="#0088cc" opacity="0.7"/>
+
+  <!-- Hinges (dark rectangles on left edge) -->
+  <rect x="4" y="3" width="1" height="1.2" fill="#333333"/>
+  <rect x="4" y="11.8" width="1" height="1.2" fill="#333333"/>
+
+  <!-- Handle (small rectangle on right side) -->
+  <rect x="5.8" y="7" width="0.6" height="2" fill="#333333" rx="0.15"/>
+
+  <!-- Swing arc indicator (curved dashed line) -->
+  <path d="M 6.2 14 A 5 5 0 0 1 10.5 9.5"
+        stroke="#0088cc" stroke-width="0.4"
+        stroke-dasharray="0.6,0.4" fill="none"/>
+
+  <!-- Door symbol (small D) -->
+  <text x="12" y="6" fill="#0088cc" font-size="4px" font-weight="bold">D</text>
+</svg>

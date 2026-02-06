@@ -1,0 +1,26 @@
+<svg width="64" height="64" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left glass panel (light blue, semi-transparent) -->
+  <rect x="4" y="2" width="3" height="12" fill="#0088cc" opacity="0.7"/>
+
+  <!-- Right glass panel (light blue, semi-transparent) -->
+  <rect x="7.2" y="2" width="3" height="12" fill="#0088cc" opacity="0.6"/>
+
+  <!-- Center fold pivot points (dark circles) -->
+  <circle cx="7.1" cy="3.5" r="0.6" fill="#333333"/>
+  <circle cx="7.1" cy="12.5" r="0.6" fill="#333333"/>
+
+  <!-- Wall-side pivot points -->
+  <circle cx="4" cy="3.5" r="0.5" fill="#333333"/>
+  <circle cx="4" cy="12.5" r="0.5" fill="#333333"/>
+
+  <!-- Fold arc indicator (curved dashed line) -->
+  <path d="M 10.2 14 A 3.5 3.5 0 0 1 7.1 10.8"
+        stroke="#0088cc" stroke-width="0.4"
+        stroke-dasharray="0.6,0.4" fill="none"/>
+
+  <!-- Handle on free edge -->
+  <rect x="9.8" y="7" width="0.5" height="2" fill="#333333" rx="0.15"/>
+
+  <!-- Bi-fold symbol -->
+  <text x="12.5" y="6" fill="#0088cc" font-size="3.5px" font-weight="bold">B</text>
+</svg>

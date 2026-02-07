@@ -32,7 +32,9 @@ class ShowerDesignerWorkbench(Gui.Workbench):
             'ShowerDesigner_HingedDoor',
             'ShowerDesigner_SlidingDoor',
             'ShowerDesigner_BiFoldDoor',
-            'ShowerDesigner_Hardware'
+            'ShowerDesigner_Hinge',
+            'ShowerDesigner_Clamp',
+            'ShowerDesigner_SupportBar',
         ]
 
         tool_commands = [

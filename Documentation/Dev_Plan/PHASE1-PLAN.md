@@ -741,5 +741,5 @@ def validateLoad(clamp_type, panel_weight, clamp_count):
 
 - [FreeCAD Part Module](https://wiki.freecad.org/Part_Module)
 - [FeaturePython Objects](https://wiki.freecad.org/FeaturePython_Objects)
-- Glass Industry Standards (GANA, SGCC)
+- Glass Industry Standards (GANA, SGCC, SESEMA)
 - Shower Door Manufacturers' Specs

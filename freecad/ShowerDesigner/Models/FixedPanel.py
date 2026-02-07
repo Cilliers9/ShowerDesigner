@@ -7,10 +7,17 @@ Fixed glass panel with wall and floor hardware mounting.
 This module provides a FixedPanel class that extends GlassPanel with
 wall and floor mounting hardware (channels or clamps).
 """
+from ssl import ALERT_DESCRIPTION_NO_RENEGOTIATION
 
 import FreeCAD as App
 import Part
 from freecad.ShowerDesigner.Models.GlassPanel import GlassPanel
+from freecad.ShowerDesigner.Data.HardwareSpecs import (
+    CLAMP_SPECS,
+    CLAMP_PLACEMENT_DEFAULTS,
+    CHANNEL_SPECS,
+)
+from freecad.ShowerDesigner.Models.Clamp import createClampShape
 
 
 class FixedPanel(GlassPanel):
@@ -66,28 +73,28 @@ class FixedPanel(GlassPanel):
             "WallClampOffsetTop",
             "Wall Hardware",
             "Distance from top edge to first clamp"
-        ).WallClampOffsetTop = 300  # mm
+        ).WallClampOffsetTop = CLAMP_PLACEMENT_DEFAULTS["wall_offset_top"]
 
         obj.addProperty(
             "App::PropertyLength",
             "WallClampOffsetBottom",
             "Wall Hardware",
             "Distance from bottom edge to last clamp"
-        ).WallClampOffsetBottom = 300  # mm
+        ).WallClampOffsetBottom = CLAMP_PLACEMENT_DEFAULTS["wall_offset_bottom"]
 
         obj.addProperty(
             "App::PropertyLength",
             "ChannelWidth",
             "Wall Hardware",
             "Width of wall channel (if using channel)"
-        ).ChannelWidth = 15  # mm
+        ).ChannelWidth = CHANNEL_SPECS["wall"]["width"]
 
         obj.addProperty(
             "App::PropertyLength",
             "ChannelDepth",
             "Wall Hardware",
             "Depth of wall channel"
-        ).ChannelDepth = 15  # mm
+        ).ChannelDepth = CHANNEL_SPECS["wall"]["depth"]
 
         # Floor hardware properties
         obj.addProperty(
@@ -97,7 +104,7 @@ class FixedPanel(GlassPanel):
             "Type of floor mounting hardware"
         )
         obj.FloorHardware = ["None", "Channel", "Clamp"]
-        obj.FloorHardware = "None"
+        obj.FloorHardware = "Clamp"
 
         obj.addProperty(
             "App::PropertyInteger",
@@ -112,29 +119,48 @@ class FixedPanel(GlassPanel):
             "FloorClampOffsetLeft",
             "Floor Hardware",
             "Distance from left edge to first clamp"
-        ).FloorClampOffsetLeft = 75  # mm
+        ).FloorClampOffsetLeft = CLAMP_PLACEMENT_DEFAULTS["floor_offset_start"]
 
         obj.addProperty(
             "App::PropertyLength",
             "FloorClampOffsetRight",
             "Floor Hardware",
             "Distance from right edge to last clamp"
-        ).FloorClampOffsetRight = 75  # mm
+        ).FloorClampOffsetRight = CLAMP_PLACEMENT_DEFAULTS["floor_offset_end"]
 
-        # Clamp visualization properties
+        obj.addProperty(
+            "App::PropertyEnumeration",
+            "WallClampType",
+            "Wall Hardware",
+            "Shape of wall clamp"
+        )
+        obj.WallClampType = list(CLAMP_SPECS.keys())
+        obj.WallClampType = "L_Clamp"
+
+        obj.addProperty(
+            "App::PropertyEnumeration",
+            "FloorClampType",
+            "Floor Hardware",
+            "Shape of floor clamp"
+        )
+        obj.FloorClampType = list(CLAMP_SPECS.keys())
+        obj.FloorClampType = "U_Clamp"
+
+        _clamp_bb = CLAMP_SPECS["L_Clamp"]["bounding_box"]
+
         obj.addProperty(
             "App::PropertyLength",
             "ClampDiameter",
             "Hardware Display",
-            "Diameter of clamp hardware"
-        ).ClampDiameter = 40  # mm
+            "Width/diameter of clamp hardware"
+        ).ClampDiameter = _clamp_bb["width"]
 
         obj.addProperty(
             "App::PropertyLength",
             "ClampThickness",
             "Hardware Display",
-            "Thickness of clamp hardware"
-        ).ClampThickness = 10  # mm
+            "Depth/thickness of clamp hardware"
+        ).ClampThickness = _clamp_bb["depth"]
 
         obj.addProperty(
             "App::PropertyBool",
@@ -278,26 +304,30 @@ class FixedPanel(GlassPanel):
                 height, clamp_count, offset_top, offset_bottom
             )
 
+            clamp_w = obj.ClampDiameter.Value
+            clamp_d = obj.ClampThickness.Value
+            clamp_h = clamp_w  # Square face
+
             # Create clamps on left edge
             if mount_edge in ["Left", "Both"]:
                 for z_pos in positions:
-                    # Create box clamp (40x20x40)
-                    clamp = Part.makeBox(40, 20, 40)
-                    # Position at left edge of panel
-                    clamp.translate(App.Vector(0,
-                                              thickness/2 - 10,
-                                              z_pos - 20))
+                    clamp = createClampShape(obj.WallClampType)
+                    rotation = App.Rotation(App.Vector(0, 1, 0), 90)
+                    clamp.Placement.Rotation = rotation
+                    clamp.translate(App.Vector(20,
+                                              0,
+                                              z_pos))
                     clamps.append(clamp)
 
             # Create clamps on right edge
             if mount_edge in ["Right", "Both"]:
                 for z_pos in positions:
-                    # Create box clamp (40x20x40)
-                    clamp = Part.makeBox(40, 20, 40)
-                    # Position at right edge of panel
-                    clamp.translate(App.Vector(width - 40,
-                                              thickness/2 - 10,
-                                              z_pos - 20))
+                    clamp = createClampShape(obj.WallClampType)
+                    rotation = App.Rotation(App.Vector(0, 1, 0), -90)
+                    clamp.Placement.Rotation = rotation
+                    clamp.translate(App.Vector(width - 20,
+                                              0,
+                                              z_pos))
                     clamps.append(clamp)
 
         except Exception as e:
@@ -368,16 +398,15 @@ class FixedPanel(GlassPanel):
                 width, clamp_count, offset_left, offset_right
             )
 
+            clamp_w = diameter
+            clamp_d = clamp_thickness
+
             # Create clamp at each position
             for x_pos in positions:
-                # Create box clamp (40x20x40)
-                clamp = Part.makeBox(40, 20, 40)
-
-                # Position at bottom of panel, centered on x_pos
-                clamp.translate(App.Vector(x_pos - 20,
-                                          thickness/2 - 10,
-                                          0))
-
+                clamp = createClampShape(obj.FloorClampType)
+                clamp.translate(App.Vector(x_pos,
+                                          0,
+                                          20))
                 clamps.append(clamp)
 
         except Exception as e:

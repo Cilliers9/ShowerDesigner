@@ -12,6 +12,13 @@ import FreeCAD as App
 import Part
 import math
 from freecad.ShowerDesigner.Models.GlassPanel import GlassPanel
+from freecad.ShowerDesigner.Data.HardwareSpecs import (
+    HINGE_SPECS,
+    HINGE_PLACEMENT_DEFAULTS,
+    HARDWARE_FINISHES,
+)
+from freecad.ShowerDesigner.Models.Hinge import createHingeShape
+from freecad.ShowerDesigner.Models.Handle import createHandleShape
 
 
 class HingedDoor(GlassPanel):
@@ -140,26 +147,28 @@ class HingedDoor(GlassPanel):
             "Show swing arc on floor plane"
         ).ShowSwingArc = False
 
+        _hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
+
         obj.addProperty(
             "App::PropertyLength",
             "HingeWidth",
             "Hardware Display",
             "Width of hinge hardware visualization"
-        ).HingeWidth = 65  # mm
+        ).HingeWidth = _hinge_dims["width"]
 
         obj.addProperty(
             "App::PropertyLength",
             "HingeDepth",
             "Hardware Display",
             "Depth of hinge hardware visualization"
-        ).HingeDepth = 20  # mm
+        ).HingeDepth = _hinge_dims["depth"]
 
         obj.addProperty(
             "App::PropertyLength",
             "HingeHeight",
             "Hardware Display",
             "Height of hinge hardware visualization"
-        ).HingeHeight = 90  # mm
+        ).HingeHeight = _hinge_dims["height"]
 
         # Calculated properties (read-only)
         obj.addProperty(
@@ -286,8 +295,7 @@ class HingedDoor(GlassPanel):
             positions = self._calculateHingePositions(obj)
 
             for z_pos in positions:
-                # Create box hinge
-                hinge = Part.makeBox(hinge_w, hinge_d, hinge_h)
+                hinge = createHingeShape(hinge_w, hinge_d, hinge_h)
 
                 # Position based on hinge side
                 if hinge_side == "Left":
@@ -341,7 +349,7 @@ class HingedDoor(GlassPanel):
 
     def _createHandle(self, obj):
         """
-        Create handle hardware visualization.
+        Create handle hardware visualization using shared shape function.
 
         Args:
             obj: FreeCAD document object
@@ -354,42 +362,8 @@ class HingedDoor(GlassPanel):
 
         try:
             handle_pos = self._calculateHandlePosition(obj)
-
-            if obj.HandleType == "Knob":
-                # Simple cylinder for knob (40mm diameter, 15mm depth)
-                handle = Part.makeCylinder(
-                    20, 15,
-                    App.Vector(handle_pos.x, handle_pos.y, handle_pos.z),
-                    App.Vector(0, 1, 0)
-                )
-
-            elif obj.HandleType == "Bar":
-                # Vertical bar handle
-                length = obj.HandleLength.Value
-                radius = 12  # Typical bar radius
-                start = App.Vector(
-                    handle_pos.x,
-                    handle_pos.y,
-                    handle_pos.z - length / 2
-                )
-                handle = Part.makeCylinder(radius, length, start, App.Vector(0, 0, 1))
-
-            elif obj.HandleType == "Pull":
-                # Vertical pull handle (200mm length)
-                length = 200
-                radius = 10
-                start = App.Vector(
-                    handle_pos.x,
-                    handle_pos.y,
-                    handle_pos.z - length / 2
-                )
-                handle = Part.makeCylinder(radius, length, start, App.Vector(0, 0, 1))
-
-            else:
-                return None
-
-            return handle
-
+            length = obj.HandleLength.Value if obj.HandleType == "Bar" else None
+            return createHandleShape(obj.HandleType, length, handle_pos)
         except Exception as e:
             App.Console.PrintWarning(f"Error creating handle: {e}\n")
             return None
@@ -460,7 +434,8 @@ class HingedDoor(GlassPanel):
 
         try:
             weight = obj.Weight
-            if weight <= 45:
+            threshold = HINGE_PLACEMENT_DEFAULTS["weight_threshold_3_hinges"]
+            if weight <= threshold:
                 obj.RecommendedHingeCount = 2
             else:
                 obj.RecommendedHingeCount = 3

@@ -14,23 +14,14 @@ whether the door folds inward or outward.
 import FreeCAD as App
 import Part
 from freecad.ShowerDesigner.Models.GlassPanel import GlassPanel
-
-
-# Bi-fold hinge specifications
-# Left/Right configuration determines fold direction (inward/outward)
-# Primary direction: 180 deg, secondary direction: 45 deg
-BIFOLD_HINGE_SPECS = {
-    "Left": {
-        "primary_angle": 180,
-        "secondary_angle": 45,
-        "fold_direction": "Inward",
-    },
-    "Right": {
-        "primary_angle": 180,
-        "secondary_angle": 45,
-        "fold_direction": "Outward",
-    },
-}
+from freecad.ShowerDesigner.Data.HardwareSpecs import (
+    BIFOLD_HINGE_SPECS,
+    HINGE_SPECS,
+    HINGE_PLACEMENT_DEFAULTS,
+    HARDWARE_FINISHES,
+)
+from freecad.ShowerDesigner.Models.Hinge import createHingeShape
+from freecad.ShowerDesigner.Models.Handle import createHandleShape
 
 
 class BiFoldDoor(GlassPanel):
@@ -103,26 +94,28 @@ class BiFoldDoor(GlassPanel):
             "Number of bi-fold hinges at fold joint (2-3)"
         ).HingeCount = 2
 
+        _hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
+
         obj.addProperty(
             "App::PropertyLength",
             "HingeWidth",
             "Hinge Hardware",
             "Width of hinge hardware visualization"
-        ).HingeWidth = 65  # mm
+        ).HingeWidth = _hinge_dims["width"]
 
         obj.addProperty(
             "App::PropertyLength",
             "HingeDepth",
             "Hinge Hardware",
             "Depth of hinge hardware visualization"
-        ).HingeDepth = 20  # mm
+        ).HingeDepth = _hinge_dims["depth"]
 
         obj.addProperty(
             "App::PropertyLength",
             "HingeHeight",
             "Hinge Hardware",
             "Height of hinge hardware visualization"
-        ).HingeHeight = 90  # mm
+        ).HingeHeight = _hinge_dims["height"]
 
         # Handle hardware properties
         obj.addProperty(
@@ -292,8 +285,8 @@ class BiFoldDoor(GlassPanel):
         """
         height = obj.Height.Value
         hinge_count = max(2, min(3, obj.HingeCount))
-        offset_top = 300  # mm from top
-        offset_bottom = 300  # mm from bottom
+        offset_top = HINGE_PLACEMENT_DEFAULTS["offset_top"]
+        offset_bottom = HINGE_PLACEMENT_DEFAULTS["offset_bottom"]
 
         positions = [offset_bottom, height - offset_top]
 
@@ -327,7 +320,7 @@ class BiFoldDoor(GlassPanel):
             y_pos = thickness / 2 - hinge_d / 2
 
             for z_pos in wall_z:
-                hinge = Part.makeBox(hinge_w, hinge_d, hinge_h)
+                hinge = createHingeShape(hinge_w, hinge_d, hinge_h)
                 z_offset = z_pos - hinge_h / 2
 
                 if hinge_side == "Left":
@@ -367,7 +360,7 @@ class BiFoldDoor(GlassPanel):
             y_pos = thickness / 2 - hinge_d / 2
 
             for z_pos in z_positions:
-                hinge = Part.makeBox(hinge_w, hinge_d, hinge_h)
+                hinge = createHingeShape(hinge_w, hinge_d, hinge_h)
                 z_offset = z_pos - hinge_h / 2
                 hinge.translate(App.Vector(center_x, y_pos, z_offset))
                 hinges.append(hinge)
@@ -397,45 +390,14 @@ class BiFoldDoor(GlassPanel):
         return App.Vector(x_pos, y_pos, z_pos)
 
     def _createHandle(self, obj):
-        """Create handle hardware visualization."""
+        """Create handle hardware visualization using shared shape function."""
         if obj.HandleType == "None":
             return None
 
         try:
             handle_pos = self._calculateHandlePosition(obj)
-
-            if obj.HandleType == "Knob":
-                handle = Part.makeCylinder(
-                    20, 15,
-                    App.Vector(handle_pos.x, handle_pos.y, handle_pos.z),
-                    App.Vector(0, 1, 0)
-                )
-
-            elif obj.HandleType == "Bar":
-                length = obj.HandleLength.Value
-                radius = 12
-                start = App.Vector(
-                    handle_pos.x,
-                    handle_pos.y,
-                    handle_pos.z - length / 2
-                )
-                handle = Part.makeCylinder(radius, length, start, App.Vector(0, 0, 1))
-
-            elif obj.HandleType == "Pull":
-                length = 200
-                radius = 10
-                start = App.Vector(
-                    handle_pos.x,
-                    handle_pos.y,
-                    handle_pos.z - length / 2
-                )
-                handle = Part.makeCylinder(radius, length, start, App.Vector(0, 0, 1))
-
-            else:
-                return None
-
-            return handle
-
+            length = obj.HandleLength.Value if obj.HandleType == "Bar" else None
+            return createHandleShape(obj.HandleType, length, handle_pos)
         except Exception as e:
             App.Console.PrintWarning(f"Error creating handle: {e}\n")
             return None

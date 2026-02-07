@@ -202,17 +202,72 @@ class BiFoldDoorCommand:
         return True
 
 
+class HingeCommand:
+    """Create a standalone hinge fitting"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Hinge',
+            'ToolTip': 'Create a standalone hinge fitting'
+        }
+
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.Hinge import createHinge
+        createHinge()
+
+    def IsActive(self):
+        return True
+
+
+class ClampCommand:
+    """Create a standalone clamp fitting"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Clamp',
+            'ToolTip': 'Create a standalone clamp fitting'
+        }
+
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.Clamp import createClamp
+        createClamp()
+
+    def IsActive(self):
+        return True
+
+
+class SupportBarCommand:
+    """Create a standalone support bar"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Support Bar',
+            'ToolTip': 'Create a support bar (stabilizer)'
+        }
+
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.SupportBar import createSupportBar
+        createSupportBar()
+
+    def IsActive(self):
+        return True
+
+
 # Register component commands
 Gui.addCommand('ShowerDesigner_GlassPanel', GlassPanelCommand())
 Gui.addCommand('ShowerDesigner_FixedPanel', FixedPanelCommand())
 Gui.addCommand('ShowerDesigner_HingedDoor', HingedDoorCommand())
 Gui.addCommand('ShowerDesigner_SlidingDoor', SlidingDoorCommand())
 Gui.addCommand('ShowerDesigner_BiFoldDoor', BiFoldDoorCommand())
-Gui.addCommand('ShowerDesigner_Hardware', 
-               PlaceholderCommand('Hardware', 'Add hardware fittings'))
-Gui.addCommand('ShowerDesigner_Measure', 
+Gui.addCommand('ShowerDesigner_Hinge', HingeCommand())
+Gui.addCommand('ShowerDesigner_Clamp', ClampCommand())
+Gui.addCommand('ShowerDesigner_SupportBar', SupportBarCommand())
+Gui.addCommand('ShowerDesigner_Measure',
                PlaceholderCommand('Measure', 'Measurement tools'))
-Gui.addCommand('ShowerDesigner_CutList', 
+Gui.addCommand('ShowerDesigner_CutList',
                PlaceholderCommand('Cut List', 'Generate cut list'))
-Gui.addCommand('ShowerDesigner_Export', 
+Gui.addCommand('ShowerDesigner_Export',
                PlaceholderCommand('Export', 'Export design'))

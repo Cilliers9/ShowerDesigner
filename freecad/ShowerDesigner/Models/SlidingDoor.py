@@ -11,15 +11,12 @@ track hardware, roller placement, and support for single and bypass configuratio
 import FreeCAD as App
 import Part
 from freecad.ShowerDesigner.Models.GlassPanel import GlassPanel
-
-
-# Track profile specifications (width x height in mm)
-TRACK_PROFILES = {
-    "Edge": {"width": 10, "height": 30, "max_panels": 1},
-    "City": {"width": 25, "height": 30, "max_panels": 1},
-    "Ezy": {"width": 20, "height": 25, "max_panels": 1, "glass_thickness": [10, 12]},
-    "Soft-Close": {"width": 25, "height": 35, "max_panels": 2},
-}
+from freecad.ShowerDesigner.Data.HardwareSpecs import (
+    TRACK_PROFILES,
+    ROLLER_SPECS,
+    BOTTOM_GUIDE_SPECS,
+)
+from freecad.ShowerDesigner.Models.Handle import createHandleShape
 
 
 class SlidingDoor(GlassPanel):
@@ -321,9 +318,8 @@ class SlidingDoor(GlassPanel):
             thickness = obj.Thickness.Value
             sliding_direction = obj.SlideDirection
 
-            # Simple U-channel: 15mm wide x 5mm deep
-            guide_width = 15
-            guide_height = 5
+            guide_width = BOTTOM_GUIDE_SPECS["width"]
+            guide_height = BOTTOM_GUIDE_SPECS["height"]
 
             guide = Part.makeBox(track_length, guide_width, guide_height)
 
@@ -360,8 +356,10 @@ class SlidingDoor(GlassPanel):
             thickness = obj.Thickness.Value
             panel_count = max(1, min(2, obj.PanelCount))
 
-            roller_radius = 8
-            roller_height = 15
+            roller_type = obj.RollerType if hasattr(obj, "RollerType") else "Standard"
+            roller_spec = ROLLER_SPECS.get(roller_type, ROLLER_SPECS["Standard"])
+            roller_radius = roller_spec["radius"]
+            roller_height = roller_spec["height"]
 
             # Rollers at panel edges (top)
             for panel_idx in range(panel_count):
@@ -424,7 +422,7 @@ class SlidingDoor(GlassPanel):
 
     def _createHandle(self, obj):
         """
-        Create handle hardware visualization.
+        Create handle hardware visualization using shared shape function.
 
         Args:
             obj: FreeCAD document object
@@ -437,42 +435,8 @@ class SlidingDoor(GlassPanel):
 
         try:
             handle_pos = self._calculateHandlePosition(obj)
-
-            if obj.HandleType == "Knob":
-                # Simple cylinder for knob (40mm diameter, 15mm depth)
-                handle = Part.makeCylinder(
-                    20, 15,
-                    App.Vector(handle_pos.x, handle_pos.y, handle_pos.z),
-                    App.Vector(0, 1, 0)
-                )
-
-            elif obj.HandleType == "Bar":
-                # Vertical bar handle
-                length = obj.HandleLength.Value
-                radius = 12  # Typical bar radius
-                start = App.Vector(
-                    handle_pos.x,
-                    handle_pos.y,
-                    handle_pos.z - length / 2
-                )
-                handle = Part.makeCylinder(radius, length, start, App.Vector(0, 0, 1))
-
-            elif obj.HandleType == "Pull":
-                # Vertical pull handle (200mm length)
-                length = 200
-                radius = 10
-                start = App.Vector(
-                    handle_pos.x,
-                    handle_pos.y,
-                    handle_pos.z - length / 2
-                )
-                handle = Part.makeCylinder(radius, length, start, App.Vector(0, 0, 1))
-
-            else:
-                return None
-
-            return handle
-
+            length = obj.HandleLength.Value if obj.HandleType == "Bar" else None
+            return createHandleShape(obj.HandleType, length, handle_pos)
         except Exception as e:
             App.Console.PrintWarning(f"Error creating handle: {e}\n")
             return None

@@ -19,6 +19,8 @@ from freecad.ShowerDesigner.Models.ChildProxies import (
 )
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HINGE_SPECS,
+    BEVEL_HINGE_SPECS,
+    BEVEL_FINISHES,
     HINGE_PLACEMENT_DEFAULTS,
     HARDWARE_FINISHES,
 )
@@ -107,6 +109,16 @@ class HingedDoorAssembly(AssemblyController):
         ).OpeningAngle = 90
 
         # Hinge hardware
+        _wall_bevel_keys = [
+            k for k, v in BEVEL_HINGE_SPECS.items()
+            if v["mounting_type"] == "Wall-to-Glass"
+        ]
+        vs.addProperty(
+            "App::PropertyEnumeration", "HingeModel", "Hinge Hardware",
+            "Hinge product line (Legacy = simple box hinges)"
+        )
+        vs.HingeModel = ["Legacy"] + _wall_bevel_keys
+        vs.HingeModel = "Legacy"
         vs.addProperty(
             "App::PropertyInteger", "HingeCount", "Hinge Hardware",
             "Number of hinges (2-3)"
@@ -141,11 +153,14 @@ class HingedDoorAssembly(AssemblyController):
         ).HandleLength = 300
 
         # Hardware display
+        all_finishes = HARDWARE_FINISHES[:] + [
+            f for f in BEVEL_FINISHES if f not in HARDWARE_FINISHES
+        ]
         vs.addProperty(
             "App::PropertyEnumeration", "HardwareFinish", "Hardware Display",
             "Finish for all hardware"
         )
-        vs.HardwareFinish = HARDWARE_FINISHES[:]
+        vs.HardwareFinish = all_finishes
         vs.HardwareFinish = "Chrome"
         vs.addProperty(
             "App::PropertyBool", "ShowHardware", "Hardware Display",
@@ -238,11 +253,9 @@ class HingedDoorAssembly(AssemblyController):
         hinge_count = max(2, min(3, vs.HingeCount))
         hinge_side = vs.HingeSide
 
-        # Get hinge dimensions from specs
-        hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
-        hinge_w = hinge_dims["width"]
-        hinge_d = hinge_dims["depth"]
-        hinge_h = hinge_dims["height"]
+        hinge_model = "Legacy"
+        if hasattr(vs, "HingeModel"):
+            hinge_model = vs.HingeModel
 
         # Calculate positions
         positions = _calculateHingePositions(
@@ -255,22 +268,60 @@ class HingedDoorAssembly(AssemblyController):
             lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
         )
 
+        use_bevel = hinge_model != "Legacy" and hinge_model in BEVEL_HINGE_SPECS
+
+        if use_bevel:
+            bevel_dims = BEVEL_HINGE_SPECS[hinge_model]["dimensions"]
+            body_h = bevel_dims["body_height"]
+            offset_x = bevel_dims.get("wall_to_glass_offset", 16)
+        else:
+            hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
+            hinge_w = hinge_dims["width"]
+            hinge_d = hinge_dims["depth"]
+            hinge_h = hinge_dims["height"]
+
         for i, z_pos in enumerate(positions):
             child = self._getChild(part_obj, f"Hinge{i + 1}")
             if child is None:
                 continue
 
-            if hinge_side == "Left":
-                x_pos = -10
+            if use_bevel:
+                child.HingeType = hinge_model
+                if hasattr(child, "GlassThickness"):
+                    child.GlassThickness = thickness
+
+                # Bevel shapes have origin at knuckle bottom-center
+                if hinge_side == "Left":
+                    x_pos = -offset_x
+                else:
+                    x_pos = width + offset_x
+
+                y_pos = thickness / 2
+                z_offset = z_pos - body_h / 2
+
+                if hinge_side == "Right":
+                    # Rotate 180° around Z so wall plate faces right wall
+                    rot = App.Rotation(App.Vector(0, 0, 1), 180)
+                else:
+                    rot = App.Rotation()
+
+                child.Placement = App.Placement(
+                    App.Vector(x_pos, y_pos, z_offset), rot
+                )
             else:
-                x_pos = width - hinge_w + 10
+                child.HingeType = "standard_wall_mount"
 
-            y_pos = thickness / 2 - hinge_d / 2
-            z_offset = z_pos - hinge_h / 2
+                if hinge_side == "Left":
+                    x_pos = -10
+                else:
+                    x_pos = width - hinge_w + 10
 
-            child.Placement = App.Placement(
-                App.Vector(x_pos, y_pos, z_offset), App.Rotation()
-            )
+                y_pos = thickness / 2 - hinge_d / 2
+                z_offset = z_pos - hinge_h / 2
+
+                child.Placement = App.Placement(
+                    App.Vector(x_pos, y_pos, z_offset), App.Rotation()
+                )
 
     # ------------------------------------------------------------------
     # Handle management

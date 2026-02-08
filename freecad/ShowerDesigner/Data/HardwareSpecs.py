@@ -16,7 +16,7 @@ Pure Python — no FreeCAD imports. Models import from here, never the reverse.
 HARDWARE_FINISHES = ["Chrome", "Brushed-Nickel", "Matte-Black", "Gold"]
 
 # ---------------------------------------------------------------------------
-# Hinge specifications
+# Hinge specifications (generic / legacy)
 # ---------------------------------------------------------------------------
 HINGE_SPECS = {
     "standard_glass_to_glass": {
@@ -39,6 +39,393 @@ HINGE_SPECS = {
         "glass_thickness_range": [6, 8, 10, 12],
         "max_opening_angle": 110,
         "mounting_type": "Wall",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Bevel hinge range — from Showers-Ex-Sliding catalogue
+# ---------------------------------------------------------------------------
+
+# Finishes available in the Bevel range
+BEVEL_FINISHES = [
+    "Bright Polished",
+    "Antique Brass",
+    "Matte Black",
+    "Bright Chrome",
+    "Satin Chrome",
+]
+
+# Product code series → material + finish mapping
+BEVEL_CODE_SERIES = {
+    "201": {"material": "S/S 304", "finish": "Bright Polished"},
+    "281": {"material": "S/S 304", "finish": "Antique Brass"},
+    "291": {"material": "S/S 304", "finish": "Matte Black"},
+    "301": {"material": "Brass", "finish": "Bright Chrome"},
+    "501": {"material": "S/S 304", "finish": "Bright Polished"},
+    "581": {"material": "S/S 304", "finish": "Antique Brass"},
+    "591": {"material": "S/S 304", "finish": "Matte Black"},
+    "701": {"material": "Brass", "finish": "Bright Chrome"},
+    "711": {"material": "Brass", "finish": "Satin Chrome"},
+    "791": {"material": "Brass", "finish": "Matte Black"},
+}
+
+BEVEL_HINGE_SPECS = {
+    # ------------------------------------------------------------------
+    # 1. Bevel 90° Wall to Glass — Full Plate
+    # ------------------------------------------------------------------
+    "bevel_90_wall_to_glass_full": {
+        "name": "Bevel 90° Wall to Glass Hinge — Full Plate",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 90,
+        "max_opening_angle": 90,
+        "dimensions": {
+            "wall_plate_width": 50,
+            "glass_plate_width": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "body_height": 90,
+            "body_width": 65,
+            "knuckle_depth": 37,
+            "knuckle_width": 58,
+            "knuckle_diameter": 16,
+            "wall_to_glass_offset": 10,
+        },
+        "product_codes": [
+            {"code": "SDH-201-90", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10]},
+            {"code": "SDH-291-90", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-301-90", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12],
+             "adjustable": True},
+            {"code": "SDH-501-90", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-581-90", "material": "S/S 304", "finish": "Antique Brass",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-591-90", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-701-90", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 2. Bevel 90° Wall to Glass — Half Plate
+    # ------------------------------------------------------------------
+    "bevel_90_wall_to_glass_half": {
+        "name": "Bevel 90° Wall to Glass Hinge — Half Plate",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 90,
+        "max_opening_angle": 90,
+        "dimensions": {
+            "wall_plate_width": 50,
+            "glass_plate_width": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "body_height": 90,
+            "body_width": 65,
+            "knuckle_depth": 37,
+            "knuckle_width": 58,
+            "knuckle_diameter": 16,
+            "wall_to_glass_offset": 10,
+        },
+        "product_codes": [
+            {"code": "SDH-201-90HP", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10]},
+            {"code": "SDH-281-90HP", "material": "S/S 304", "finish": "Antique Brass",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10]},
+            {"code": "SDH-291-90HP", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-301-90HP", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12],
+             "adjustable": True},
+            {"code": "SDH-501-90HP", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-581-90HP", "material": "S/S 304", "finish": "Antique Brass",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-591-90HP", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-701-90HP", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-711-90HP", "material": "Brass", "finish": "Satin Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 3. Bevel 135° Wall to Glass
+    # ------------------------------------------------------------------
+    "bevel_135_wall_to_glass": {
+        "name": "Bevel 135° Wall to Glass Hinge",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 135,
+        "max_opening_angle": 135,
+        "dimensions": {
+            "wall_plate_width": 50,
+            "glass_plate_width": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "body_height": 90,
+            "body_width": 65,
+            "knuckle_depth": 37,
+            "knuckle_width": 58,
+            "knuckle_diameter": 16,
+            "wall_to_glass_offset_inside": 9,
+            "wall_to_glass_offset_outside": 17,
+            "pivot_offset": 18,
+        },
+        "product_codes": [
+            {"code": "SDH-701-135", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 4. Bevel 90° Glass to Glass
+    # ------------------------------------------------------------------
+    "bevel_90_glass_to_glass": {
+        "name": "Bevel 90° Glass to Glass Hinge",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 90,
+        "max_opening_angle": 90,
+        "dimensions": {
+            "fixed_plate_width": 60,
+            "glass_plate_width": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "body_height": 90,
+            "body_width": 78,
+            "knuckle_depth": 37,
+            "knuckle_width": 58,
+            "knuckle_diameter": 16,
+            "glass_to_glass_offset": 10,  # for 8mm glass
+        },
+        "product_codes": [
+            {"code": "SDH-202-90", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10]},
+            {"code": "SDH-282-90", "material": "S/S 304", "finish": "Antique Brass",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10]},
+            {"code": "SDH-292-90", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-502-90", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-582-90", "material": "S/S 304", "finish": "Antique Brass",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-592-90", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-702-90", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-712-90", "material": "Brass", "finish": "Satin Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 5. Bevel 135° Glass to Glass — Unequal Cut Out
+    # ------------------------------------------------------------------
+    "bevel_135_glass_to_glass_unequal": {
+        "name": "Bevel 135° Glass to Glass Hinge — Unequal Cut Out",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 135,
+        "max_opening_angle": 135,
+        "dimensions": {
+            "glass_plate_width_door": 55,
+            "glass_plate_width_fix": 43,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth_door": 41,
+            "glass_cutout_depth_fix": 35,
+            "body_height": 90,
+            "body_width": 65,
+            "knuckle_depth_door": 37,
+            "knuckle_depth_fix": 27,
+            "knuckle_width": 58,
+            "knuckle_diameter": 16,
+            "glass_to_glass_offset_inside_fix": 7,
+            "glass_to_glass_offset_inside_door": 4,
+            "glass_to_glass_offset_outside_fix": 11,
+            "glass_to_glass_offset_outside_door": 7,
+            "pivot_offset": 19,
+        },
+        "product_codes": [
+            {"code": "SDH-202-135", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10]},
+            {"code": "SDH-292-135", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-502-135", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-592-135", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-702-135", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-712-135", "material": "Brass", "finish": "Satin Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 6. Bevel 135° Glass to Glass — Equal Cut Out
+    # ------------------------------------------------------------------
+    "bevel_135_glass_to_glass_equal": {
+        "name": "Bevel 135° Glass to Glass Hinge — Equal Cut Out",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 135,
+        "max_opening_angle": 135,
+        "dimensions": {
+            "glass_plate_width": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "body_height": 90,
+            "body_width": 65,
+            "knuckle_depth": 37,
+            "knuckle_width": 58,
+            "knuckle_diameter": 16,
+            "glass_to_glass_offset_inside_fix": 7,
+            "glass_to_glass_offset_inside_door": 4,
+            "glass_to_glass_offset_outside_fix": 11,
+            "glass_to_glass_offset_outside_door": 7,
+            "pivot_offset": 19,
+        },
+        "product_codes": [
+            {"code": "SDH-502-135E", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-582-135E", "material": "S/S 304", "finish": "Antique Brass",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-592-135E", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 7. Bevel 180° Glass to Glass
+    # ------------------------------------------------------------------
+    "bevel_180_glass_to_glass": {
+        "name": "Bevel 180° Glass to Glass Hinge",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 180,
+        "max_opening_angle": 180,
+        "dimensions": {
+            "glass_plate_width": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "body_height": 90,
+            "body_width": 115,
+            "knuckle_depth": 37,
+            "knuckle_width": 58,
+            "knuckle_diameter": 16,
+            "glass_to_glass_offset": 4,  # for 8mm glass
+        },
+        "product_codes": [
+            {"code": "SDH-202-180", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10]},
+            {"code": "SDH-282-180", "material": "S/S 304", "finish": "Antique Brass",
+             "weight_capacity_kg": 35, "glass_thickness_range": [6, 8, 10]},
+            {"code": "SDH-292-180", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-302-180", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12],
+             "adjustable": True},
+            {"code": "SDH-502-180", "material": "S/S 304", "finish": "Bright Polished",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-582-180", "material": "S/S 304", "finish": "Antique Brass",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-592-180", "material": "S/S 304", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-702-180", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-712-180", "material": "Brass", "finish": "Satin Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 8. Bevel 360° Glass to Wall Pivot
+    # ------------------------------------------------------------------
+    "bevel_360_wall_pivot": {
+        "name": "Bevel 360° Glass to Wall Pivot Hinge",
+        "mounting_type": "Glass-to-Wall-Pivot",
+        "angle": 360,
+        "max_opening_angle": 360,
+        "dimensions": {
+            "body_height": 70,
+            "body_width": 90,
+            "knuckle_width": 58,
+            "knuckle_depth": 37,
+            "knuckle_diameter": 16,
+            "glass_plate_height": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "glass_slot_depth": 16,
+            "floor_offset": 15,
+            "pivot_plate_depth": 20,
+            "pivot_plate_height": 9,
+        },
+        "product_codes": [
+            {"code": "SDH-704-360", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-714-360", "material": "Brass", "finish": "Satin Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "SDH-794-360", "material": "Brass", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 9. Bevel 360° Glass to Glass Pivot
+    # ------------------------------------------------------------------
+    "bevel_360_glass_pivot": {
+        "name": "Bevel 360° Glass to Glass Pivot Hinge",
+        "mounting_type": "Glass-to-Glass-Pivot",
+        "angle": 360,
+        "max_opening_angle": 360,
+        "dimensions": {
+            "body_height": 116,
+            "body_width": 90,
+            "knuckle_width": 58,
+            "knuckle_depth": 37,
+            "knuckle_diameter": 16,
+            "glass_plate_height": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "glass_slot_depth": 16,
+            "glass_to_glass_offset": 9,
+        },
+        "product_codes": [
+            {"code": "SDH-708-360", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 10. Bevel Glass to Glass Tee Hinge 90°
+    # ------------------------------------------------------------------
+    "bevel_90_tee": {
+        "name": "Bevel Glass to Glass Tee Hinge 90°",
+        "mounting_type": "Glass-to-Glass-Tee",
+        "angle": 90,
+        "max_opening_angle": 90,
+        "dimensions": {
+            "fixed_plate_width": 60,
+            "glass_plate_width": 55,
+            "glass_cutout_width": 63,
+            "glass_cutout_depth": 41,
+            "body_height": 90,
+            "body_width": 142,
+            "knuckle_depth": 37,
+            "knuckle_width": 58,
+            "knuckle_diameter": 16,
+            "fixed_hole_diameter": 16,
+            "fixed_hole_depth": 37,
+            "fixed_hole_height": 58,
+            "glass_to_glass_offset": 10,  # for 8mm glass
+        },
+        "product_codes": [
+            {"code": "H100T", "material": "Brass", "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "H110T", "material": "Brass", "finish": "Satin Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "H190T", "material": "Brass", "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
     },
 }
 
@@ -158,8 +545,8 @@ SEAL_SPECS = {
 # ---------------------------------------------------------------------------
 CLAMP_SPECS = {
     "U_Clamp": {
-        "load_capacity_kg": 100,
-        "glass_thickness_range": [6, 8, 10, 12],
+        "load_capacity_kg": 45,
+        "glass_thickness_range": [6, 8, 10],
         "default_mounting": "Floor",
         "dimensions": {
             "base_size": 45,
@@ -172,7 +559,7 @@ CLAMP_SPECS = {
         "bounding_box": {"width": 45, "depth": 19, "height": 45},
     },
     "L_Clamp": {
-        "load_capacity_kg": 100,
+        "load_capacity_kg": 45,
         "glass_thickness_range": [6, 8, 10, 12],
         "default_mounting": "Wall",
         "dimensions": {
@@ -187,17 +574,31 @@ CLAMP_SPECS = {
     },
     "180DEG_Clamp": {
         "load_capacity_kg": 45,
-        "glass_thickness_range": [6, 8, 10, 12],
+        "glass_thickness_range": [6, 8, 10],
         "default_mounting": "Floor",
-        "dimensions": {},
-        "bounding_box": {"width": 50, "depth": 33, "height": 50},
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 45, "depth": 19, "height": 90},
     },
     "135DEG_Clamp": {
         "load_capacity_kg": 45,
-        "glass_thickness_range": [6, 8, 10, 12],
+        "glass_thickness_range": [6, 8, 10],
         "default_mounting": "Floor",
-        "dimensions": {},
-        "bounding_box": {"width": 50, "depth": 50, "height": 50},
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 45, "depth": 70, "height": 90},
     },
 }
 

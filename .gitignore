@@ -17,3 +17,5 @@ htmlcov/
 .DS_Store
 Thumbs.db
 nul
+*.pdf
+catalogue_text.txt

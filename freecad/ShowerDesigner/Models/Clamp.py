@@ -8,10 +8,10 @@ Provides a Clamp Part::FeaturePython object and a shared
 createClampShape() function used by FixedPanel, etc.
 
 Supported clamp shapes:
-    U_Clamp     — U-channel on base plate (default floor clamp)
+    U_Clamp     — U-bracket on base plate (default floor clamp)
     L_Clamp     — L-bracket with pressure plate (default wall clamp)
-    180DEG_Clamp — placeholder box (two-panel inline joint)
-    135DEG_Clamp — placeholder box (two-panel corner joint)
+    180DEG_Clamp — Connects Glass to inline wall or floor at 180 deg angle
+    135DEG_Clamp — Connects Glass to inline wall or floor at 135 deg angle
 """
 
 import FreeCAD as App
@@ -33,6 +33,8 @@ def _buildUClamp(dims):
     gg = dims["glass_gap"]                    # 10 mm
     cd = dims["cutout_depth"]                 # 20 mm
     cr = dims["cutout_radius"]                # 10 mm
+    cs = dims["chamfer_size"]                 # 3mm
+    #Make Slot
     slot_center = Part.makeCylinder(
         cr, gg,
         App.Vector(0, 0, 0),
@@ -43,11 +45,20 @@ def _buildUClamp(dims):
         App.Vector(-gg, 0, -cd)
     )
     slot = slot_center.fuse(slot_base)
+    #Make beveled front plate
     front_plate = Part.makeBox(
         bs, bt, bs,
         App.Vector(-bs/2, -bt, -cd)
     )
-    front_slot = slot.fuse(front_plate)
+    front_edges = []
+    for edge in front_plate.Edges:
+            # We check the midpoint of the edge to see if it lies on the front plane
+            midpoint = edge.valueAt(edge.FirstParameter + (edge.LastParameter - edge.FirstParameter) / 2)
+            if midpoint.y == -bt:
+                front_edges.append(edge)
+    beveled_front_edge = front_plate.makeChamfer(cs, front_edges)
+    front_slot = slot.fuse(beveled_front_edge)
+    #Make back plate
     back_plate = Part.makeBox(
         bs, bt, bs,
         App.Vector(-bs/2, gg, -cd)
@@ -64,17 +75,58 @@ def _buildLClamp(dims):
     bs = dims["base_size"]                    # 45 mm (overall W and H)
     bt = dims["base_thickness"]               # 4.5 mm
     gg = dims["glass_gap"]                    # 10 mm
+    cd = dims["cutout_depth"]                 # 20 mm
 
     u_clamp = _buildUClamp(dims)
     # Wall plate
     wall_plate = Part.makeBox(
         bs, bs, bt,
-        App.Vector(-bs/2, gg, -bs/2+2.5))
+        App.Vector(-bs/2, gg, -cd))              # Plate at 90angle from bottom of back plate
 
     l_clamp = u_clamp.fuse(wall_plate)
     shape = l_clamp.removeSplitter()
     return shape
 
+def _build180degClamp(dims):
+    """
+    Build an 180deg_Clamp shape: U-Clamp + WallPlate
+    """
+    bs = dims["base_size"]                    # 45 mm (overall W and H)
+    bt = dims["base_thickness"]               # 4.5 mm
+    gg = dims["glass_gap"]                    # 10 mm
+    cd = dims["cutout_depth"]                 # 20 mm
+
+    u_clamp = _buildUClamp(dims)
+    # Wall plate
+    wall_plate = Part.makeBox(
+        bs, bt, bs,
+        App.Vector(-bs/2, gg, -cd-bs)
+    )                                                   # Extend back plate down by base size
+
+    l_clamp = u_clamp.fuse(wall_plate)
+    shape = l_clamp.removeSplitter()
+    return shape
+
+def _build135degClamp(dims):
+    """
+    Build an 135deg_Clamp shape: U-Clamp + WallPlate
+    """
+    bs = dims["base_size"]                    # 45 mm (overall W and H)
+    bt = dims["base_thickness"]               # 4.5 mm
+    gg = dims["glass_gap"]                    # 10 mm
+    cd = dims["cutout_depth"]                 # 20 mm
+
+    u_clamp = _buildUClamp(dims)
+    # Wall plate
+    wall_plate = Part.makeBox(
+        bs, bs, bt,
+        App.Vector(0, 0, 0))            # Extend back plate down by base size
+    rotation = App.Rotation(App.Vector(1, 0, 0), -45)
+    wall_plate.Placement.Rotation = rotation
+    wall_plate.translate(App.Vector(-bs/2, gg, -cd))
+    l_clamp = u_clamp.fuse(wall_plate)
+    shape = l_clamp.removeSplitter()
+    return shape
 
 def _buildPlaceholderBox(spec):
     """Build a simple box from the bounding_box spec (placeholder shape)."""
@@ -114,6 +166,8 @@ def createClampShape(clamp_type="L_Clamp"):
 _SHAPE_BUILDERS = {
     "U_Clamp": _buildUClamp,
     "L_Clamp": _buildLClamp,
+    "180DEG_Clamp": _build180degClamp,
+    "135DEG_Clamp": _build135degClamp,
 }
 
 

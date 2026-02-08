@@ -17,6 +17,12 @@ FINISH_COLORS = {
     "Brushed-Nickel": (0.65, 0.63, 0.58),
     "Matte-Black": (0.10, 0.10, 0.10),
     "Gold": (0.83, 0.69, 0.22),
+    # Bevel range finishes
+    "Bright Polished": (0.85, 0.85, 0.88),
+    "Antique Brass": (0.72, 0.53, 0.26),
+    "Matte Black": (0.08, 0.08, 0.08),
+    "Bright Chrome": (0.78, 0.78, 0.82),
+    "Satin Chrome": (0.70, 0.70, 0.74),
 }
 
 

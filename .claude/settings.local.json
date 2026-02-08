@@ -13,7 +13,9 @@
       "mcp__freecad__get_active_document",
       "mcp__freecad__get_screenshot",
       "mcp__freecad__inspect_object",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(pdftotext:*)"
     ]
   }
 }

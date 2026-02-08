@@ -15,6 +15,7 @@ import Part
 
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HINGE_SPECS,
+    BEVEL_HINGE_SPECS,
     HANDLE_SPECS,
     CLAMP_SPECS,
     SUPPORT_BAR_SPECS,
@@ -76,15 +77,32 @@ class HingeChild:
 
     def __init__(self, obj):
         obj.Proxy = self
+        all_types = list(HINGE_SPECS.keys()) + list(BEVEL_HINGE_SPECS.keys())
         obj.addProperty(
             "App::PropertyEnumeration", "HingeType", "Hinge", "Hinge type"
         )
-        obj.HingeType = list(HINGE_SPECS.keys())
+        obj.HingeType = all_types
         obj.HingeType = "standard_wall_mount"
+        obj.addProperty(
+            "App::PropertyLength", "GlassThickness", "Hinge",
+            "Glass thickness for Bevel slot sizing"
+        ).GlassThickness = 8
 
     def execute(self, obj):
+        hinge_type = obj.HingeType
+        glass_t = 8
+        if hasattr(obj, "GlassThickness"):
+            glass_t = obj.GlassThickness.Value or 8
+
+        # Bevel hinge
+        if hinge_type in BEVEL_HINGE_SPECS:
+            from freecad.ShowerDesigner.Models.Hinge import createBevelHingeShape
+            obj.Shape = createBevelHingeShape(hinge_type, glass_t)
+            return
+
+        # Legacy hinge
         from freecad.ShowerDesigner.Models.Hinge import createHingeShape
-        spec = HINGE_SPECS.get(obj.HingeType)
+        spec = HINGE_SPECS.get(hinge_type)
         if spec is None:
             return
         dims = spec["dimensions"]

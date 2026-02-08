@@ -186,7 +186,7 @@ CLAMP_SPECS = {
         "bounding_box": {"width": 45, "depth": 60, "height": 45},
     },
     "180DEG_Clamp": {
-        "load_capacity_kg": 50,
+        "load_capacity_kg": 45,
         "glass_thickness_range": [6, 8, 10, 12],
         "default_mounting": "Floor",
         "dimensions": {},

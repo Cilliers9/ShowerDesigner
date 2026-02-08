@@ -2,509 +2,459 @@
 # SPDX-FileNotice: Part of the ShowerDesigner workbench.
 
 """
-Fixed glass panel with wall and floor hardware mounting.
+Fixed glass panel assembly — App::Part containing glass + mounting hardware.
 
-This module provides a FixedPanel class that extends GlassPanel with
-wall and floor mounting hardware (channels or clamps).
+Each piece of hardware (clamp, channel) is its own Part::FeaturePython
+with an individual ViewProvider, allowing independent display control.
 """
-from ssl import ALERT_DESCRIPTION_NO_RENEGOTIATION
 
 import FreeCAD as App
 import Part
-from freecad.ShowerDesigner.Models.GlassPanel import GlassPanel
+from freecad.ShowerDesigner.Models.AssemblyBase import AssemblyController
+from freecad.ShowerDesigner.Models.ChildProxies import (
+    GlassChild,
+    ClampChild,
+    ChannelChild,
+)
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     CLAMP_SPECS,
     CLAMP_PLACEMENT_DEFAULTS,
     CHANNEL_SPECS,
+    HARDWARE_FINISHES,
 )
-from freecad.ShowerDesigner.Models.Clamp import createClampShape
+from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
 
-class FixedPanel(GlassPanel):
+def _setupGlassVP(obj):
+    """Attach the glass ViewProvider to a child object."""
+    from freecad.ShowerDesigner.Models.GlassPanelViewProvider import setupViewProvider
+    setupViewProvider(obj)
+
+
+def _setupHardwareVP(obj, finish="Chrome"):
+    """Attach the hardware ViewProvider to a child object."""
+    from freecad.ShowerDesigner.Models.HardwareViewProvider import (
+        setupHardwareViewProvider,
+    )
+    setupHardwareViewProvider(obj, finish)
+
+
+class FixedPanelAssembly(AssemblyController):
     """
-    Parametric fixed glass panel with wall and floor mounting hardware.
+    Assembly controller for a fixed glass panel with mounting hardware.
 
-    Extends the base GlassPanel with hardware mounting options including
-    wall channels/clamps and floor channels/clamps for secure installation.
+    Creates an App::Part containing:
+      - VarSet with all user-editable properties
+      - Glass child (Part::FeaturePython + GlassPanelViewProvider)
+      - Wall clamp/channel children (Part::FeaturePython + HardwareViewProvider)
+      - Floor clamp/channel children (Part::FeaturePython + HardwareViewProvider)
     """
 
-    def __init__(self, obj):
-        """
-        Initialize the fixed panel object with hardware properties.
+    def __init__(self, part_obj):
+        super().__init__(part_obj)
+        vs = self._getOrCreateVarSet(part_obj)
+        self._setupVarSetProperties(vs)
+        self._addChild(part_obj, "Glass", GlassChild, _setupGlassVP)
 
-        Args:
-            obj: FreeCAD document object
-        """
-        # Initialize base GlassPanel
-        super().__init__(obj)
+    # ------------------------------------------------------------------
+    # VarSet property setup
+    # ------------------------------------------------------------------
 
-        # Override attachment type to Fixed
-        obj.AttachmentType = "Fixed"
+    def _setupVarSetProperties(self, vs):
+        """Add all user-facing properties to the VarSet."""
+        # Dimensions
+        vs.addProperty(
+            "App::PropertyLength", "Width", "Dimensions", "Panel width"
+        ).Width = 900
+        vs.addProperty(
+            "App::PropertyLength", "Height", "Dimensions", "Panel height"
+        ).Height = 2000
+        vs.addProperty(
+            "App::PropertyLength", "Thickness", "Dimensions", "Glass thickness"
+        ).Thickness = 8
 
-        # Wall hardware properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "WallHardware",
-            "Wall Hardware",
+        # Glass
+        vs.addProperty(
+            "App::PropertyEnumeration", "GlassType", "Glass", "Type of glass"
+        )
+        vs.GlassType = ["Clear", "Frosted", "Bronze", "Grey", "Reeded", "Low-Iron"]
+        vs.GlassType = "Clear"
+        vs.addProperty(
+            "App::PropertyEnumeration", "EdgeFinish", "Glass", "Edge finish type"
+        )
+        vs.EdgeFinish = ["Bright_Polish", "Dull_Polish"]
+        vs.EdgeFinish = "Bright_Polish"
+        vs.addProperty(
+            "App::PropertyEnumeration", "TemperType", "Glass", "Tempering type"
+        )
+        vs.TemperType = ["Tempered", "Laminated", "None"]
+        vs.TemperType = "Tempered"
+
+        # Wall hardware
+        vs.addProperty(
+            "App::PropertyEnumeration", "WallHardware", "Wall Hardware",
             "Type of wall mounting hardware"
         )
-        obj.WallHardware = ["None", "Channel", "Clamp"]
-        obj.WallHardware = "Clamp"
-
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "WallMountEdge",
-            "Wall Hardware",
+        vs.WallHardware = ["None", "Channel", "Clamp"]
+        vs.WallHardware = "Clamp"
+        vs.addProperty(
+            "App::PropertyEnumeration", "WallMountEdge", "Wall Hardware",
             "Which edge(s) to mount wall hardware"
         )
-        obj.WallMountEdge = ["Left", "Right", "Both"]
-        obj.WallMountEdge = "Left"
-
-        obj.addProperty(
-            "App::PropertyInteger",
-            "WallClampCount",
-            "Wall Hardware",
-            "Number of wall clamps per edge (1-4)"
-        )
-        obj.WallClampCount = 2
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "WallClampOffsetTop",
-            "Wall Hardware",
+        vs.WallMountEdge = ["Left", "Right", "Both"]
+        vs.WallMountEdge = "Left"
+        vs.addProperty(
+            "App::PropertyInteger", "WallClampCount", "Wall Hardware",
+            "Number of wall clamps per edge (2-4)"
+        ).WallClampCount = 2
+        vs.addProperty(
+            "App::PropertyLength", "WallClampOffsetTop", "Wall Hardware",
             "Distance from top edge to first clamp"
         ).WallClampOffsetTop = CLAMP_PLACEMENT_DEFAULTS["wall_offset_top"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "WallClampOffsetBottom",
-            "Wall Hardware",
+        vs.addProperty(
+            "App::PropertyLength", "WallClampOffsetBottom", "Wall Hardware",
             "Distance from bottom edge to last clamp"
         ).WallClampOffsetBottom = CLAMP_PLACEMENT_DEFAULTS["wall_offset_bottom"]
+        vs.addProperty(
+            "App::PropertyEnumeration", "WallClampType", "Wall Hardware",
+            "Shape of wall clamp"
+        )
+        vs.WallClampType = list(CLAMP_SPECS.keys())
+        vs.WallClampType = "L_Clamp"
 
-        obj.addProperty(
-            "App::PropertyLength",
-            "ChannelWidth",
-            "Wall Hardware",
+        # Channel dimensions
+        vs.addProperty(
+            "App::PropertyLength", "ChannelWidth", "Wall Hardware",
             "Width of wall channel (if using channel)"
         ).ChannelWidth = CHANNEL_SPECS["wall"]["width"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "ChannelDepth",
-            "Wall Hardware",
+        vs.addProperty(
+            "App::PropertyLength", "ChannelDepth", "Wall Hardware",
             "Depth of wall channel"
         ).ChannelDepth = CHANNEL_SPECS["wall"]["depth"]
 
-        # Floor hardware properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "FloorHardware",
-            "Floor Hardware",
+        # Floor hardware
+        vs.addProperty(
+            "App::PropertyEnumeration", "FloorHardware", "Floor Hardware",
             "Type of floor mounting hardware"
         )
-        obj.FloorHardware = ["None", "Channel", "Clamp"]
-        obj.FloorHardware = "Clamp"
-
-        obj.addProperty(
-            "App::PropertyInteger",
-            "FloorClampCount",
-            "Floor Hardware",
-            "Number of floor clamps (1-2)"
-        )
-        obj.FloorClampCount = 2
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "FloorClampOffsetLeft",
-            "Floor Hardware",
+        vs.FloorHardware = ["None", "Channel", "Clamp"]
+        vs.FloorHardware = "Clamp"
+        vs.addProperty(
+            "App::PropertyInteger", "FloorClampCount", "Floor Hardware",
+            "Number of floor clamps (2-4)"
+        ).FloorClampCount = 2
+        vs.addProperty(
+            "App::PropertyLength", "FloorClampOffsetLeft", "Floor Hardware",
             "Distance from left edge to first clamp"
         ).FloorClampOffsetLeft = CLAMP_PLACEMENT_DEFAULTS["floor_offset_start"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "FloorClampOffsetRight",
-            "Floor Hardware",
+        vs.addProperty(
+            "App::PropertyLength", "FloorClampOffsetRight", "Floor Hardware",
             "Distance from right edge to last clamp"
         ).FloorClampOffsetRight = CLAMP_PLACEMENT_DEFAULTS["floor_offset_end"]
-
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "WallClampType",
-            "Wall Hardware",
-            "Shape of wall clamp"
-        )
-        obj.WallClampType = list(CLAMP_SPECS.keys())
-        obj.WallClampType = "L_Clamp"
-
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "FloorClampType",
-            "Floor Hardware",
+        vs.addProperty(
+            "App::PropertyEnumeration", "FloorClampType", "Floor Hardware",
             "Shape of floor clamp"
         )
-        obj.FloorClampType = list(CLAMP_SPECS.keys())
-        obj.FloorClampType = "U_Clamp"
+        vs.FloorClampType = list(CLAMP_SPECS.keys())
+        vs.FloorClampType = "U_Clamp"
 
-        _clamp_bb = CLAMP_SPECS["L_Clamp"]["bounding_box"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "ClampDiameter",
-            "Hardware Display",
-            "Width/diameter of clamp hardware"
-        ).ClampDiameter = _clamp_bb["width"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "ClampThickness",
-            "Hardware Display",
-            "Depth/thickness of clamp hardware"
-        ).ClampThickness = _clamp_bb["depth"]
-
-        obj.addProperty(
-            "App::PropertyBool",
-            "ShowHardware",
-            "Hardware Display",
+        # Hardware display
+        vs.addProperty(
+            "App::PropertyEnumeration", "HardwareFinish", "Hardware Display",
+            "Finish for all hardware"
+        )
+        vs.HardwareFinish = HARDWARE_FINISHES[:]
+        vs.HardwareFinish = "Chrome"
+        vs.addProperty(
+            "App::PropertyBool", "ShowHardware", "Hardware Display",
             "Show hardware in 3D view"
         ).ShowHardware = True
 
-    def execute(self, obj):
-        """
-        Rebuild the geometry when properties change.
+        # Calculated (read-only)
+        vs.addProperty(
+            "App::PropertyFloat", "Weight", "Calculated",
+            "Weight of the panel in kg"
+        )
+        vs.setEditorMode("Weight", 1)
+        vs.addProperty(
+            "App::PropertyFloat", "Area", "Calculated",
+            "Area of the panel in m²"
+        )
+        vs.setEditorMode("Area", 1)
 
-        Creates the glass panel and adds hardware visualization if enabled.
+    # ------------------------------------------------------------------
+    # execute — rebuild children when VarSet changes
+    # ------------------------------------------------------------------
 
-        Args:
-            obj: FreeCAD document object
-        """
-        # Get dimensions
-        width = obj.Width.Value
-        height = obj.Height.Value
-        thickness = obj.Thickness.Value
+    def assemblyExecute(self, part_obj):
+        vs = self._getVarSet(part_obj)
+        if vs is None:
+            return
 
-        # Validate dimensions
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
         if width <= 0 or height <= 0 or thickness <= 0:
             App.Console.PrintError("Invalid panel dimensions\n")
             return
 
-        # Create the glass panel shape
-        panel = Part.makeBox(width, thickness, height)
-        shapes = [panel]
+        # --- Update Glass child ---
+        glass = self._getChild(part_obj, "Glass")
+        if glass:
+            glass.Width = width
+            glass.Height = height
+            glass.Thickness = thickness
+            if hasattr(glass, "GlassType"):
+                glass.GlassType = vs.GlassType
 
-        # Add hardware if enabled
-        if obj.ShowHardware:
-            # Add wall hardware
-            if obj.WallHardware == "Channel":
-                wall_channels = self._createWallChannel(obj)
-                shapes.extend(wall_channels)
-            elif obj.WallHardware == "Clamp":
-                wall_clamps = self._createWallClamps(obj)
-                shapes.extend(wall_clamps)
+        show_hw = vs.ShowHardware
+        finish = vs.HardwareFinish
 
-            # Add floor hardware
-            if obj.FloorHardware == "Channel":
-                floor_channel = self._createFloorChannel(obj)
-                if floor_channel:
-                    shapes.append(floor_channel)
-            elif obj.FloorHardware == "Clamp":
-                floor_clamps = self._createFloorClamps(obj)
-                shapes.extend(floor_clamps)
-
-        # Combine all shapes
-        if len(shapes) > 1:
-            compound = Part.makeCompound(shapes)
-            obj.Shape = compound
+        # --- Wall hardware ---
+        if show_hw and vs.WallHardware == "Clamp":
+            self._updateWallClamps(part_obj, vs)
         else:
-            obj.Shape = shapes[0]
+            self._removeWallClamps(part_obj)
 
-        # Apply position and rotation
-        obj.Placement.Base = obj.Position
-        new_rotation = App.Rotation(App.Vector(0, 0, 1), obj.Rotation)
-        obj.Placement.Rotation = new_rotation
+        if show_hw and vs.WallHardware == "Channel":
+            self._updateWallChannels(part_obj, vs)
+        else:
+            self._removeWallChannels(part_obj)
 
-        # Update calculated properties
-        self._updateCalculatedProperties(obj)
+        # --- Floor hardware ---
+        if show_hw and vs.FloorHardware == "Clamp":
+            self._updateFloorClamps(part_obj, vs)
+        else:
+            self._removeFloorClamps(part_obj)
 
-    def _createWallChannel(self, obj):
-        """
-        Create wall-mounted channel hardware on left, right, or both edges.
+        if show_hw and vs.FloorHardware == "Channel":
+            self._updateFloorChannel(part_obj, vs)
+        else:
+            self._removeFloorChannel(part_obj)
 
-        Args:
-            obj: FreeCAD document object
+        # --- Hardware finish ---
+        self._updateAllHardwareFinish(part_obj, finish)
 
-        Returns:
-            List of Part shapes for wall channels
-        """
-        channels = []
+        # --- Calculated properties ---
+        self._updateCalculatedProperties(vs)
 
-        try:
-            width = obj.Width.Value
-            height = obj.Height.Value
-            thickness = obj.Thickness.Value
-            channel_width = obj.ChannelWidth.Value
-            channel_depth = obj.ChannelDepth.Value
-            mount_edge = obj.WallMountEdge
+    # ------------------------------------------------------------------
+    # Wall clamp management
+    # ------------------------------------------------------------------
 
-            def create_single_channel():
-                """Create a single U-channel profile."""
-                # Outer rectangle
-                outer = Part.makeBox(channel_width, channel_depth, height)
-                # Inner rectangle (slightly smaller for wall thickness)
-                inner_width = channel_width - 4  # 3mm on each side
-                inner_depth = channel_depth - 2  # back wall
-                inner = Part.makeBox(inner_width, inner_depth, height)
-                inner.translate(App.Vector(2, 2, 0))
-                # Subtract inner from outer to create channel
-                return outer.cut(inner)
+    def _updateWallClamps(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        clamp_count = max(2, min(4, vs.WallClampCount))
+        mount_edge = vs.WallMountEdge
+        clamp_type = vs.WallClampType
 
-            # Create channel(s) based on mount edge setting
-            if mount_edge in ["Left", "Both"]:
-                left_channel = create_single_channel()
-                # Position at left edge of panel
-                left_channel.translate(App.Vector(-2,
-                                                  2, 0))
-                channels.append(left_channel)
+        # Total clamps needed across edges
+        edges = []
+        if mount_edge in ["Left", "Both"]:
+            edges.append("Left")
+        if mount_edge in ["Right", "Both"]:
+            edges.append("Right")
 
-            if mount_edge in ["Right", "Both"]:
-                right_channel = create_single_channel()
-                # Position at right edge of panel
-                right_channel.translate(App.Vector(width - channel_depth + 2,
-                                                   2, 0))
-                channels.append(right_channel)
+        # Calculate vertical positions
+        positions = _calculateClampPositions(
+            height, clamp_count,
+            vs.WallClampOffsetTop.Value, vs.WallClampOffsetBottom.Value
+        )
 
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating wall channel: {e}\n")
+        # Determine total child count and sync
+        total = len(edges) * len(positions)
+        self._syncChildCount(
+            part_obj, "WallClamp", total, ClampChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
 
-        return channels
+        # Position each clamp
+        idx = 1
+        for edge in edges:
+            for z_pos in positions:
+                child = self._getChild(part_obj, f"WallClamp{idx}")
+                if child:
+                    child.ClampType = clamp_type
+                    if edge == "Left":
+                        rot = App.Rotation(App.Vector(0, 1, 0), 90)
+                        child.Placement = App.Placement(
+                            App.Vector(20, 0, z_pos), rot
+                        )
+                    else:  # Right
+                        rot = App.Rotation(App.Vector(0, 1, 0), -90)
+                        child.Placement = App.Placement(
+                            App.Vector(width - 20, 0, z_pos), rot
+                        )
+                idx += 1
 
-    def _createWallClamps(self, obj):
-        """
-        Create wall-mounted clamp hardware on left, right, or both edges.
+    def _removeWallClamps(self, part_obj):
+        self._syncChildCount(part_obj, "WallClamp", 0, ClampChild)
 
-        Args:
-            obj: FreeCAD document object
+    # ------------------------------------------------------------------
+    # Wall channel management
+    # ------------------------------------------------------------------
 
-        Returns:
-            List of Part shapes for wall clamps
-        """
-        clamps = []
+    def _updateWallChannels(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        mount_edge = vs.WallMountEdge
 
-        try:
-            width = obj.Width.Value
-            height = obj.Height.Value
-            thickness = obj.Thickness.Value
-            clamp_count = max(1, min(4, obj.WallClampCount))
-            offset_top = obj.WallClampOffsetTop.Value
-            offset_bottom = obj.WallClampOffsetBottom.Value
-            mount_edge = obj.WallMountEdge
+        edges = []
+        if mount_edge in ["Left", "Both"]:
+            edges.append("Left")
+        if mount_edge in ["Right", "Both"]:
+            edges.append("Right")
 
-            # Calculate clamp positions along height
-            positions = self._calculateClampPositions(
-                height, clamp_count, offset_top, offset_bottom
+        self._syncChildCount(
+            part_obj, "WallChannel", len(edges), ChannelChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
+
+        for i, edge in enumerate(edges):
+            child = self._getChild(part_obj, f"WallChannel{i + 1}")
+            if child:
+                child.ChannelLocation = "wall"
+                child.ChannelLength = height
+                channel_depth = vs.ChannelDepth.Value
+                if edge == "Left":
+                    child.Placement = App.Placement(
+                        App.Vector(-2, 2, 0), App.Rotation()
+                    )
+                else:
+                    child.Placement = App.Placement(
+                        App.Vector(width - channel_depth + 2, 2, 0),
+                        App.Rotation()
+                    )
+
+    def _removeWallChannels(self, part_obj):
+        self._syncChildCount(part_obj, "WallChannel", 0, ChannelChild)
+
+    # ------------------------------------------------------------------
+    # Floor clamp management
+    # ------------------------------------------------------------------
+
+    def _updateFloorClamps(self, part_obj, vs):
+        width = vs.Width.Value
+        clamp_count = max(2, min(4, vs.FloorClampCount))
+        clamp_type = vs.FloorClampType
+
+        positions = _calculateClampPositions(
+            width, clamp_count,
+            vs.FloorClampOffsetLeft.Value, vs.FloorClampOffsetRight.Value
+        )
+
+        self._syncChildCount(
+            part_obj, "FloorClamp", len(positions), ClampChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
+
+        for i, x_pos in enumerate(positions):
+            child = self._getChild(part_obj, f"FloorClamp{i + 1}")
+            if child:
+                child.ClampType = clamp_type
+                child.Placement = App.Placement(
+                    App.Vector(x_pos, 0, 20), App.Rotation()
+                )
+
+    def _removeFloorClamps(self, part_obj):
+        self._syncChildCount(part_obj, "FloorClamp", 0, ClampChild)
+
+    # ------------------------------------------------------------------
+    # Floor channel management
+    # ------------------------------------------------------------------
+
+    def _updateFloorChannel(self, part_obj, vs):
+        width = vs.Width.Value
+
+        if not self._hasChild(part_obj, "FloorChannel1"):
+            self._addChild(
+                part_obj, "FloorChannel1", ChannelChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
             )
 
-            clamp_w = obj.ClampDiameter.Value
-            clamp_d = obj.ClampThickness.Value
-            clamp_h = clamp_w  # Square face
-
-            # Create clamps on left edge
-            if mount_edge in ["Left", "Both"]:
-                for z_pos in positions:
-                    clamp = createClampShape(obj.WallClampType)
-                    rotation = App.Rotation(App.Vector(0, 1, 0), 90)
-                    clamp.Placement.Rotation = rotation
-                    clamp.translate(App.Vector(20,
-                                              0,
-                                              z_pos))
-                    clamps.append(clamp)
-
-            # Create clamps on right edge
-            if mount_edge in ["Right", "Both"]:
-                for z_pos in positions:
-                    clamp = createClampShape(obj.WallClampType)
-                    rotation = App.Rotation(App.Vector(0, 1, 0), -90)
-                    clamp.Placement.Rotation = rotation
-                    clamp.translate(App.Vector(width - 20,
-                                              0,
-                                              z_pos))
-                    clamps.append(clamp)
-
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating wall clamps: {e}\n")
-
-        return clamps
-
-    def _createFloorChannel(self, obj):
-        """
-        Create floor-mounted channel hardware.
-
-        Args:
-            obj: FreeCAD document object
-
-        Returns:
-            Part shape for floor channel
-        """
-        try:
-            width = obj.Width.Value
-            thickness = obj.Thickness.Value
-            channel_width = obj.ChannelWidth.Value
-            channel_depth = obj.ChannelDepth.Value
-
-            # Create U-channel profile oriented horizontally
-            # Outer rectangle
-            outer = Part.makeBox(width, channel_depth, channel_width)
-            # Inner rectangle
-            inner_width = width - 4  # 3mm on each side
-            inner_depth = channel_depth - 2  # back wall
-            inner = Part.makeBox(inner_width, inner_depth, channel_width)
-            inner.translate(App.Vector(0, 2, 2))
-
-            # Subtract inner from outer to create channel
-            channel = outer.cut(inner)
-
-            # Position at bottom of panel
-            channel.translate(App.Vector(0, -2, -2))
-
-            return channel
-
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating floor channel: {e}\n")
-            return None
-
-    def _createFloorClamps(self, obj):
-        """
-        Create floor-mounted clamp hardware.
-
-        Args:
-            obj: FreeCAD document object
-
-        Returns:
-            List of Part shapes for floor clamps
-        """
-        clamps = []
-
-        try:
-            width = obj.Width.Value
-            thickness = obj.Thickness.Value
-            clamp_count = max(2, min(4, obj.FloorClampCount))
-            offset_left = obj.FloorClampOffsetLeft.Value
-            offset_right = obj.FloorClampOffsetRight.Value
-            diameter = obj.ClampDiameter.Value
-            clamp_thickness = obj.ClampThickness.Value
-
-            # Calculate clamp positions along width
-            positions = self._calculateClampPositions(
-                width, clamp_count, offset_left, offset_right
+        child = self._getChild(part_obj, "FloorChannel1")
+        if child:
+            child.ChannelLocation = "floor"
+            child.ChannelLength = width
+            child.Placement = App.Placement(
+                App.Vector(0, -2, -2), App.Rotation()
             )
 
-            clamp_w = diameter
-            clamp_d = clamp_thickness
+    def _removeFloorChannel(self, part_obj):
+        if self._hasChild(part_obj, "FloorChannel1"):
+            self._removeChild(part_obj, "FloorChannel1")
 
-            # Create clamp at each position
-            for x_pos in positions:
-                clamp = createClampShape(obj.FloorClampType)
-                clamp.translate(App.Vector(x_pos,
-                                          0,
-                                          20))
-                clamps.append(clamp)
+    # ------------------------------------------------------------------
+    # Calculated properties
+    # ------------------------------------------------------------------
 
+    def _updateCalculatedProperties(self, vs):
+        try:
+            width_m = vs.Width.Value / 1000.0
+            height_m = vs.Height.Value / 1000.0
+            area = width_m * height_m
+            if hasattr(vs, "Area"):
+                vs.Area = area
+
+            thickness_key = f"{int(vs.Thickness.Value)}mm"
+            if thickness_key in GLASS_SPECS:
+                weight_per_m2 = GLASS_SPECS[thickness_key]["weight_kg_m2"]
+                weight = area * weight_per_m2
+            else:
+                weight = area * 2.5 * vs.Thickness.Value
+            if hasattr(vs, "Weight"):
+                vs.Weight = weight
         except Exception as e:
-            App.Console.PrintWarning(f"Error creating floor clamps: {e}\n")
+            App.Console.PrintWarning(
+                f"Error updating calculated properties: {e}\n"
+            )
 
-        return clamps
+    # ------------------------------------------------------------------
+    # onChanged — validate VarSet property edits
+    # ------------------------------------------------------------------
 
-    def _calculateClampPositions(self, total_length, clamp_count,
-                                 offset_start, offset_end):
-        """
-        Calculate evenly-spaced clamp positions.
+    def assemblyOnChanged(self, part_obj, prop):
+        pass
 
-        Args:
-            total_length: Total length to distribute clamps across
-            clamp_count: Number of clamps
-            offset_start: Offset from start edge
-            offset_end: Offset from end edge
 
-        Returns:
-            List of positions in mm
-        """
-        positions = []
+# ======================================================================
+# Helper
+# ======================================================================
 
-        if clamp_count == 1:
-            # Single clamp at center
-            positions.append(total_length / 2)
-        elif clamp_count == 2:
-            # Two clamps at offsets from edges
-            positions.append(offset_start)
-            positions.append(total_length - offset_end)
-        else:
-            # Multiple clamps evenly distributed
-            # Calculate available space
-            available_length = total_length - offset_start - offset_end
+def _calculateClampPositions(total_length, clamp_count, offset_start, offset_end):
+    """Calculate evenly-spaced clamp positions along a length."""
+    if clamp_count == 1:
+        return [total_length / 2]
+    elif clamp_count == 2:
+        return [offset_start, total_length - offset_end]
+    else:
+        available = total_length - offset_start - offset_end
+        spacing = available / (clamp_count - 1)
+        return [offset_start + i * spacing for i in range(clamp_count)]
 
-            # Distribute evenly
-            if clamp_count > 2:
-                spacing = available_length / (clamp_count - 1)
-                for i in range(clamp_count):
-                    positions.append(offset_start + i * spacing)
 
-        return positions
-
-    def onChanged(self, obj, prop):
-        """
-        Called when a property changes.
-
-        Args:
-            obj: FreeCAD document object
-            prop: Name of the property that changed
-        """
-        # Call parent onChanged
-        super().onChanged(obj, prop)
-
-        # Validate clamp counts
-        if prop == "WallClampCount":
-            if hasattr(obj, "WallClampCount"):
-                if obj.WallClampCount < 2:
-                    obj.WallClampCount = 2
-                elif obj.WallClampCount > 4:
-                    obj.WallClampCount = 4
-
-        if prop == "FloorClampCount":
-            if hasattr(obj, "FloorClampCount"):
-                if obj.FloorClampCount < 2:
-                    obj.FloorClampCount = 2
-                elif obj.FloorClampCount > 4:
-                    obj.FloorClampCount = 4
-
+# ======================================================================
+# Factory function
+# ======================================================================
 
 def createFixedPanel(name="FixedPanel"):
     """
-    Create a new fixed panel in the active document.
+    Create a new fixed panel assembly in the active document.
 
     Args:
-        name: Name for the panel object (default: "FixedPanel")
+        name: Name for the assembly (default: "FixedPanel")
 
     Returns:
-        FreeCAD document object
+        App::Part assembly object
     """
     doc = App.ActiveDocument
     if doc is None:
         doc = App.newDocument("ShowerDesign")
 
-    obj = doc.addObject("Part::FeaturePython", name)
-    FixedPanel(obj)
-
-    if App.GuiUp:
-        # Use custom view provider if available
-        try:
-            from freecad.ShowerDesigner.Models.GlassPanelViewProvider import setupViewProvider
-            setupViewProvider(obj)
-        except:
-            # Fallback to simple view provider
-            obj.ViewObject.Proxy = 0
-            obj.ViewObject.Transparency = 70
+    part = doc.addObject("App::Part", name)
+    FixedPanelAssembly(part)
 
     doc.recompute()
-
     App.Console.PrintMessage(f"Fixed panel '{name}' created\n")
-    return obj
+    return part

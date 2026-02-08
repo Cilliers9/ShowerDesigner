@@ -2,10 +2,10 @@
 # SPDX-FileNotice: Part of the ShowerDesigner workbench.
 
 """
-Test script for FixedPanel implementation
+Test script for FixedPanel assembly implementation.
 
-Run this in FreeCAD's Python console to test the FixedPanel class with
-wall and floor mounting hardware.
+Run this in FreeCAD's Python console to test the FixedPanel assembly
+with individual glass and hardware child objects.
 
 Usage:
     exec(open('test_fixed_panel.py').read())
@@ -17,333 +17,321 @@ sys.path.insert(0, 'C:\\Users\\tclou\\AppData\\Roaming\\FreeCAD\\v1-1\\Mod\\Show
 import FreeCAD as App
 from freecad.ShowerDesigner.Models.FixedPanel import createFixedPanel
 
-print("="*70)
-print("Testing FixedPanel Implementation")
-print("="*70)
+
+def _get_varset(part_obj):
+    """Helper to find the VarSet child inside an assembly."""
+    for child in part_obj.Group:
+        if child.TypeId == "App::VarSet":
+            return child
+    return None
+
+
+def _get_children_by_prefix(part_obj, prefix):
+    """Get child objects whose Label starts with prefix."""
+    return [c for c in part_obj.Group if c.Label.startswith(prefix)]
+
+
+print("=" * 70)
+print("Testing FixedPanel Assembly Implementation")
+print("=" * 70)
 
 # Create a new document
 doc = App.ActiveDocument
 if doc is None:
     doc = App.newDocument("FixedPanelTest")
-    print("\n✓ Created new document: FixedPanelTest")
+    print("\nCreated new document: FixedPanelTest")
 else:
-    print(f"\n✓ Using existing document: {doc.Name}")
+    print(f"\nUsing existing document: {doc.Name}")
 
-# Test 1: Create basic fixed panel with wall clamps
-print("\n" + "="*70)
-print("1. Creating fixed panel with wall clamps...")
-print("="*70)
+
+# Test 1: Basic assembly structure
+print("\n" + "=" * 70)
+print("1. Testing basic assembly structure...")
+print("=" * 70)
 
 try:
     panel1 = createFixedPanel("WallClampPanel")
-    panel1.Width = 900
-    panel1.Height = 2000
-    panel1.Thickness = 10
-    panel1.GlassType = "Clear"
-    panel1.WallHardware = "Clamp"
-    panel1.WallClampCount = 2
-    panel1.FloorHardware = "None"
-    panel1.Position = App.Vector(0, 0, 0)
-    
-    doc.recompute()
-    
-    print(f"✓ Panel created: {panel1.Label}")
-    print(f"  - Dimensions: {panel1.Width}mm W x {panel1.Height}mm H x {panel1.Thickness}mm T")
-    print(f"  - Wall Hardware: {panel1.WallHardware}")
-    print(f"  - Wall Clamp Count: {panel1.WallClampCount}")
-    print(f"  - Top Offset: {panel1.WallClampOffsetTop}mm")
-    print(f"  - Bottom Offset: {panel1.WallClampOffsetBottom}mm")
-    print(f"  - Weight: {panel1.Weight:.2f} kg")
-    
+    assert panel1.TypeId == "App::Part", f"Expected App::Part, got {panel1.TypeId}"
+    print(f"  OK: Object is App::Part")
+
+    vs = _get_varset(panel1)
+    assert vs is not None, "VarSet not found in assembly"
+    print(f"  OK: VarSet found")
+
+    glass_list = _get_children_by_prefix(panel1, "Glass")
+    assert len(glass_list) == 1, f"Expected 1 Glass child, got {len(glass_list)}"
+    print(f"  OK: Glass child found")
+
+    # Check VarSet default properties
+    assert vs.Width.Value == 900, f"Expected Width=900, got {vs.Width.Value}"
+    assert vs.Height.Value == 2000, f"Expected Height=2000, got {vs.Height.Value}"
+    assert vs.Thickness.Value == 8, f"Expected Thickness=8, got {vs.Thickness.Value}"
+    assert vs.GlassType == "Clear", f"Expected GlassType=Clear, got {vs.GlassType}"
+    assert vs.WallHardware == "Clamp", f"Expected WallHardware=Clamp, got {vs.WallHardware}"
+    assert vs.FloorHardware == "Clamp", f"Expected FloorHardware=Clamp, got {vs.FloorHardware}"
+    print(f"  OK: VarSet default properties correct")
+
 except Exception as e:
-    print(f"✗ Error: {e}")
+    print(f"  FAIL: {e}")
     import traceback
     traceback.print_exc()
 
-# Test 2: Create panel with wall channel
-print("\n" + "="*70)
-print("2. Creating fixed panel with wall channel...")
-print("="*70)
+
+# Test 2: Wall clamps created
+print("\n" + "=" * 70)
+print("2. Testing wall clamp children...")
+print("=" * 70)
+
+try:
+    vs = _get_varset(panel1)
+    vs.WallHardware = "Clamp"
+    vs.WallClampCount = 2
+    vs.WallMountEdge = "Left"
+    doc.recompute()
+
+    wall_clamps = _get_children_by_prefix(panel1, "WallClamp")
+    assert len(wall_clamps) == 2, f"Expected 2 WallClamps, got {len(wall_clamps)}"
+    print(f"  OK: 2 wall clamps created for Left edge")
+
+    # Test Both edges
+    vs.WallMountEdge = "Both"
+    doc.recompute()
+    wall_clamps = _get_children_by_prefix(panel1, "WallClamp")
+    assert len(wall_clamps) == 4, f"Expected 4 WallClamps (Both edges), got {len(wall_clamps)}"
+    print(f"  OK: 4 wall clamps created for Both edges")
+
+    # Verify each clamp has a shape
+    for clamp in wall_clamps:
+        assert hasattr(clamp, "Shape"), f"{clamp.Label} missing Shape"
+        assert not clamp.Shape.isNull(), f"{clamp.Label} has null shape"
+    print(f"  OK: All clamps have valid shapes")
+
+except Exception as e:
+    print(f"  FAIL: {e}")
+    import traceback
+    traceback.print_exc()
+
+
+# Test 3: Floor clamps created
+print("\n" + "=" * 70)
+print("3. Testing floor clamp children...")
+print("=" * 70)
+
+try:
+    vs = _get_varset(panel1)
+    vs.FloorHardware = "Clamp"
+    vs.FloorClampCount = 2
+    doc.recompute()
+
+    floor_clamps = _get_children_by_prefix(panel1, "FloorClamp")
+    assert len(floor_clamps) == 2, f"Expected 2 FloorClamps, got {len(floor_clamps)}"
+    print(f"  OK: 2 floor clamps created")
+
+    for clamp in floor_clamps:
+        assert not clamp.Shape.isNull(), f"{clamp.Label} has null shape"
+    print(f"  OK: All floor clamps have valid shapes")
+
+except Exception as e:
+    print(f"  FAIL: {e}")
+    import traceback
+    traceback.print_exc()
+
+
+# Test 4: Wall channel
+print("\n" + "=" * 70)
+print("4. Testing wall channel children...")
+print("=" * 70)
 
 try:
     panel2 = createFixedPanel("WallChannelPanel")
-    panel2.Width = 1000
-    panel2.Height = 2000
-    panel2.Thickness = 8
-    panel2.GlassType = "Frosted"
-    panel2.WallHardware = "Channel"
-    panel2.ChannelWidth = 30
-    panel2.ChannelDepth = 15
-    panel2.FloorHardware = "None"
-    panel2.Position = App.Vector(1200, 0, 0)
-    
+    vs2 = _get_varset(panel2)
+    vs2.WallHardware = "Channel"
+    vs2.WallMountEdge = "Both"
+    vs2.FloorHardware = "None"
     doc.recompute()
-    
-    print(f"✓ Panel created: {panel2.Label}")
-    print(f"  - Wall Hardware: {panel2.WallHardware}")
-    print(f"  - Channel Width: {panel2.ChannelWidth}mm")
-    print(f"  - Channel Depth: {panel2.ChannelDepth}mm")
-    
+
+    channels = _get_children_by_prefix(panel2, "WallChannel")
+    assert len(channels) == 2, f"Expected 2 WallChannels (Both), got {len(channels)}"
+    print(f"  OK: 2 wall channels created for Both edges")
+
+    for ch in channels:
+        assert not ch.Shape.isNull(), f"{ch.Label} has null shape"
+    print(f"  OK: All channels have valid shapes")
+
+    # No clamps should exist
+    wall_clamps = _get_children_by_prefix(panel2, "WallClamp")
+    assert len(wall_clamps) == 0, f"Expected 0 WallClamps when Channel, got {len(wall_clamps)}"
+    print(f"  OK: No wall clamps when using channels")
+
 except Exception as e:
-    print(f"✗ Error: {e}")
+    print(f"  FAIL: {e}")
     import traceback
     traceback.print_exc()
 
-# Test 3: Create panel with floor clamps
-print("\n" + "="*70)
-print("3. Creating fixed panel with floor clamps...")
-print("="*70)
+
+# Test 5: Floor channel
+print("\n" + "=" * 70)
+print("5. Testing floor channel children...")
+print("=" * 70)
 
 try:
-    panel3 = createFixedPanel("FloorClampPanel")
-    panel3.Width = 800
-    panel3.Height = 2000
-    panel3.Thickness = 10
-    panel3.GlassType = "Bronze"
-    panel3.WallHardware = "None"
-    panel3.FloorHardware = "Clamp"
-    panel3.FloorClampCount = 2
-    panel3.Position = App.Vector(2500, 0, 0)
-    
+    panel3 = createFixedPanel("FloorChannelPanel")
+    vs3 = _get_varset(panel3)
+    vs3.WallHardware = "None"
+    vs3.FloorHardware = "Channel"
     doc.recompute()
-    
-    print(f"✓ Panel created: {panel3.Label}")
-    print(f"  - Floor Hardware: {panel3.FloorHardware}")
-    print(f"  - Floor Clamp Count: {panel3.FloorClampCount}")
-    print(f"  - Left Offset: {panel3.FloorClampOffsetLeft}mm")
-    print(f"  - Right Offset: {panel3.FloorClampOffsetRight}mm")
-    
+
+    floor_channels = _get_children_by_prefix(panel3, "FloorChannel")
+    assert len(floor_channels) == 1, f"Expected 1 FloorChannel, got {len(floor_channels)}"
+    print(f"  OK: Floor channel created")
+
+    assert not floor_channels[0].Shape.isNull()
+    print(f"  OK: Floor channel has valid shape")
+
 except Exception as e:
-    print(f"✗ Error: {e}")
+    print(f"  FAIL: {e}")
     import traceback
     traceback.print_exc()
 
-# Test 4: Create panel with both wall and floor hardware
-print("\n" + "="*70)
-print("4. Creating fixed panel with wall AND floor hardware...")
-print("="*70)
+
+# Test 6: ShowHardware toggle
+print("\n" + "=" * 70)
+print("6. Testing ShowHardware toggle...")
+print("=" * 70)
 
 try:
-    panel4 = createFixedPanel("BothHardwarePanel")
-    panel4.Width = 1200
-    panel4.Height = 2200
-    panel4.Thickness = 12
-    panel4.GlassType = "Grey"
-    panel4.WallHardware = "Clamp"
-    panel4.WallClampCount = 3
-    panel4.FloorHardware = "Clamp"
-    panel4.FloorClampCount = 3
-    panel4.Position = App.Vector(3600, 0, 0)
-    
+    panel4 = createFixedPanel("TogglePanel")
+    vs4 = _get_varset(panel4)
+    vs4.WallHardware = "Clamp"
+    vs4.WallClampCount = 2
+    vs4.WallMountEdge = "Left"
+    vs4.FloorHardware = "Clamp"
+    vs4.FloorClampCount = 2
+    vs4.ShowHardware = True
     doc.recompute()
-    
-    print(f"✓ Panel created: {panel4.Label}")
-    print(f"  - Wall Hardware: {panel4.WallHardware} ({panel4.WallClampCount} clamps)")
-    print(f"  - Floor Hardware: {panel4.FloorHardware} ({panel4.FloorClampCount} clamps)")
-    print(f"  - Weight: {panel4.Weight:.2f} kg")
-    
+
+    hw_count_on = len([c for c in panel4.Group
+                       if c.TypeId != "App::VarSet" and c.Label != "Glass"])
+    assert hw_count_on > 0, "Expected hardware children when ShowHardware=True"
+    print(f"  OK: {hw_count_on} hardware children when ShowHardware=True")
+
+    vs4.ShowHardware = False
+    doc.recompute()
+
+    hw_count_off = len([c for c in panel4.Group
+                        if c.TypeId != "App::VarSet" and c.Label != "Glass"])
+    assert hw_count_off == 0, f"Expected 0 hardware children when ShowHardware=False, got {hw_count_off}"
+    print(f"  OK: 0 hardware children when ShowHardware=False")
+
+    vs4.ShowHardware = True
+    doc.recompute()
+    hw_count_back = len([c for c in panel4.Group
+                         if c.TypeId != "App::VarSet" and c.Label != "Glass"])
+    assert hw_count_back > 0, "Expected hardware children when ShowHardware toggled back on"
+    print(f"  OK: Hardware restored when toggled back on")
+
 except Exception as e:
-    print(f"✗ Error: {e}")
+    print(f"  FAIL: {e}")
     import traceback
     traceback.print_exc()
 
-# Test 5: Test hardware visibility toggle
-print("\n" + "="*70)
-print("5. Testing hardware visibility toggle...")
-print("="*70)
+
+# Test 7: Changing dimensions updates Glass child
+print("\n" + "=" * 70)
+print("7. Testing dimension changes propagate to Glass...")
+print("=" * 70)
 
 try:
-    panel5 = createFixedPanel("TogglePanel")
-    panel5.Width = 900
-    panel5.Height = 2000
-    panel5.Thickness = 10
-    panel5.WallHardware = "Clamp"
-    panel5.FloorHardware = "Clamp"
-    panel5.ShowHardware = True
-    panel5.Position = App.Vector(5100, 0, 0)
-    
+    panel5 = createFixedPanel("DimensionPanel")
+    vs5 = _get_varset(panel5)
+    glass = _get_children_by_prefix(panel5, "Glass")[0]
+
+    vs5.Width = 1200
+    vs5.Height = 2400
+    vs5.Thickness = 12
     doc.recompute()
-    print("✓ Created panel with hardware visible")
-    
-    # Toggle off
-    panel5.ShowHardware = False
-    doc.recompute()
-    print("✓ Hardware hidden")
-    
-    # Toggle back on
-    panel5.ShowHardware = True
-    doc.recompute()
-    print("✓ Hardware visible again")
-    
+
+    assert glass.Width.Value == 1200, f"Expected Glass Width=1200, got {glass.Width.Value}"
+    assert glass.Height.Value == 2400, f"Expected Glass Height=2400, got {glass.Height.Value}"
+    assert glass.Thickness.Value == 12, f"Expected Glass Thickness=12, got {glass.Thickness.Value}"
+    print(f"  OK: Glass child dimensions updated")
+
+    # Check calculated properties
+    expected_area = (1200 / 1000) * (2400 / 1000)
+    assert abs(vs5.Area - expected_area) < 0.01, f"Expected Area~{expected_area}, got {vs5.Area}"
+    print(f"  OK: Calculated Area = {vs5.Area:.3f} m2")
+    assert vs5.Weight > 0, f"Expected positive Weight, got {vs5.Weight}"
+    print(f"  OK: Calculated Weight = {vs5.Weight:.2f} kg")
+
 except Exception as e:
-    print(f"✗ Error: {e}")
-
-# Test 6: Test clamp count validation
-print("\n" + "="*70)
-print("6. Testing clamp count validation...")
-print("="*70)
-
-try:
-    panel6 = createFixedPanel("ValidationPanel")
-    panel6.WallHardware = "Clamp"
-    
-    # Test minimum
-    panel6.WallClampCount = 1  # Should be adjusted to 2
-    doc.recompute()
-    print(f"  Set to 1, adjusted to: {panel6.WallClampCount}")
-    
-    # Test maximum
-    panel6.WallClampCount = 5  # Should be adjusted to 4
-    doc.recompute()
-    print(f"  Set to 5, adjusted to: {panel6.WallClampCount}")
-    
-    # Test valid
-    panel6.WallClampCount = 3  # Should stay at 3
-    doc.recompute()
-    print(f"  Set to 3, stays at: {panel6.WallClampCount}")
-    
-    print("✓ Clamp count validation working")
-    
-    # Clean up test panel
-    doc.removeObject(panel6.Name)
-    
-except Exception as e:
-    print(f"✗ Error: {e}")
-
-# Test 7: Test different clamp configurations
-print("\n" + "="*70)
-print("7. Creating panels with different clamp configurations...")
-print("="*70)
-
-configs = [
-    ("2_Clamps", 2, 300, 300),
-    ("3_Clamps", 3, 250, 250),
-    ("4_Clamps", 4, 200, 200),
-]
-
-y_offset = 2500
-for i, (name, count, offset_top, offset_bottom) in enumerate(configs):
-    try:
-        panel = createFixedPanel(name)
-        panel.Width = 600
-        panel.Height = 1800
-        panel.Thickness = 8
-        panel.WallHardware = "Clamp"
-        panel.WallClampCount = count
-        panel.WallClampOffsetTop = offset_top
-        panel.WallClampOffsetBottom = offset_bottom
-        panel.Position = App.Vector(i * 800, y_offset, 0)
-        doc.recompute()
-        
-        print(f"  ✓ {name}: {count} clamps, offsets {offset_top}/{offset_bottom}mm")
-        
-    except Exception as e:
-        print(f"  ✗ Error with {name}: {e}")
-
-# Test 8: Test floor channel
-print("\n" + "="*70)
-print("8. Creating fixed panel with floor channel...")
-print("="*70)
-
-try:
-    panel8 = createFixedPanel("FloorChannelPanel")
-    panel8.Width = 1000
-    panel8.Height = 2000
-    panel8.Thickness = 10
-    panel8.GlassType = "Low-Iron"
-    panel8.WallHardware = "None"
-    panel8.FloorHardware = "Channel"
-    panel8.ChannelWidth = 30
-    panel8.ChannelDepth = 15
-    panel8.Position = App.Vector(3000, 2500, 0)
-    
-    doc.recompute()
-    
-    print(f"✓ Panel created: {panel8.Label}")
-    print(f"  - Floor Hardware: {panel8.FloorHardware}")
-    print(f"  - Channel dimensions: {panel8.ChannelWidth}mm x {panel8.ChannelDepth}mm")
-    
-except Exception as e:
-    print(f"✗ Error: {e}")
+    print(f"  FAIL: {e}")
     import traceback
     traceback.print_exc()
 
-# Test 9: Test combination - wall channel + floor clamps
-print("\n" + "="*70)
-print("9. Creating panel with wall channel + floor clamps...")
-print("="*70)
+
+# Test 8: Combination - wall channel + floor clamps
+print("\n" + "=" * 70)
+print("8. Testing combination: wall channel + floor clamps...")
+print("=" * 70)
 
 try:
-    panel9 = createFixedPanel("ComboPanel")
-    panel9.Width = 1100
-    panel9.Height = 2100
-    panel9.Thickness = 10
-    panel9.GlassType = "Reeded"
-    panel9.WallHardware = "Channel"
-    panel9.FloorHardware = "Clamp"
-    panel9.FloorClampCount = 3
-    panel9.Position = App.Vector(4200, 2500, 0)
-    
+    panel6 = createFixedPanel("ComboPanel")
+    vs6 = _get_varset(panel6)
+    vs6.WallHardware = "Channel"
+    vs6.WallMountEdge = "Left"
+    vs6.FloorHardware = "Clamp"
+    vs6.FloorClampCount = 3
     doc.recompute()
-    
-    print(f"✓ Panel created: {panel9.Label}")
-    print(f"  - Wall: {panel9.WallHardware}")
-    print(f"  - Floor: {panel9.FloorHardware} ({panel9.FloorClampCount} clamps)")
-    
+
+    wall_channels = _get_children_by_prefix(panel6, "WallChannel")
+    floor_clamps = _get_children_by_prefix(panel6, "FloorClamp")
+    assert len(wall_channels) == 1, f"Expected 1 WallChannel, got {len(wall_channels)}"
+    assert len(floor_clamps) == 3, f"Expected 3 FloorClamps, got {len(floor_clamps)}"
+    print(f"  OK: 1 wall channel + 3 floor clamps created")
+
 except Exception as e:
-    print(f"✗ Error: {e}")
+    print(f"  FAIL: {e}")
+    import traceback
+    traceback.print_exc()
+
 
 # Summary
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("Summary")
-print("="*70)
+print("=" * 70)
 
-print(f"\nTotal objects created: {len(doc.Objects)}")
-print("\nHardware Types Tested:")
-print("  ✓ Wall Clamps (2, 3, 4 clamps)")
-print("  ✓ Wall Channel")
-print("  ✓ Floor Clamps (2, 3 clamps)")
-print("  ✓ Floor Channel")
-print("  ✓ Combined hardware configurations")
+total_objects = len(doc.Objects)
+assemblies = [o for o in doc.Objects if o.TypeId == "App::Part"]
+varsets = [o for o in doc.Objects if o.TypeId == "App::VarSet"]
+children = [o for o in doc.Objects if o.TypeId == "Part::FeaturePython"]
 
-print("\nFeatures Validated:")
-print("  ✓ Clamp count validation (2-4 range)")
-print("  ✓ Hardware visibility toggle")
-print("  ✓ Automatic clamp positioning")
-print("  ✓ Channel geometry creation")
-print("  ✓ Multiple glass types compatibility")
+print(f"\nTotal objects: {total_objects}")
+print(f"  App::Part assemblies: {len(assemblies)}")
+print(f"  App::VarSet objects: {len(varsets)}")
+print(f"  Part::FeaturePython children: {len(children)}")
 
-print("\nGlass Panel Properties:")
-print("  ✓ Width, Height, Thickness")
-print("  ✓ Glass Type (Clear, Frosted, Bronze, Grey, etc.)")
-print("  ✓ Weight calculation")
-print("  ✓ Position and placement")
+print("\nAssembly Features Tested:")
+print("  - App::Part container creation")
+print("  - VarSet property management")
+print("  - Glass child with own ViewProvider")
+print("  - Wall clamp children (variable count, Left/Right/Both)")
+print("  - Wall channel children")
+print("  - Floor clamp children")
+print("  - Floor channel children")
+print("  - ShowHardware toggle (add/remove children)")
+print("  - Dimension propagation to Glass child")
+print("  - Calculated properties (Weight, Area)")
+print("  - Combination hardware configurations")
 
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("Testing Complete!")
-print("="*70)
-
-print("""
-\nInstructions:
-1. Rotate the 3D view to see the hardware details
-2. Try changing hardware types in the property panel
-3. Adjust clamp counts and offsets
-4. Toggle ShowHardware to see panels with/without hardware
-
-Hardware Positioning:
-  • Wall clamps: Positioned at offsets from top and bottom edges
-  • Floor clamps: Positioned at offsets from left and right edges
-  • Channels: Run the full length/width of the panel
-
-To zoom to fit all panels:
-  View → Standard Views → Fit All
-""")
+print("=" * 70)
 
 # Fit all objects in view if GUI is up
 if App.GuiUp:
     try:
         import FreeCADGui as Gui
         Gui.SendMsgToActiveView("ViewFit")
-        print("\n✓ View fitted to show all panels")
-    except:
+        print("\nView fitted to show all panels")
+    except Exception:
         pass

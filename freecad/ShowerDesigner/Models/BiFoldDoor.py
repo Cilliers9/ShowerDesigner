@@ -2,530 +2,504 @@
 # SPDX-FileNotice: Part of the ShowerDesigner workbench.
 
 """
-Bi-fold shower door with two-panel folding mechanism.
-
-This module provides a BiFoldDoor class that extends GlassPanel with
-bi-fold hinge hardware, handle placement, and folded position visualization.
-Bi-fold hinges open 180 degrees in the primary direction and 45 degrees
-in the secondary direction. Left/Right hinge configuration determines
-whether the door folds inward or outward.
+Bi-fold shower door assembly — App::Part containing two glass panels,
+wall hinges, fold hinges, handle, and optional folded-position ghost.
 """
 
 import FreeCAD as App
 import Part
-from freecad.ShowerDesigner.Models.GlassPanel import GlassPanel
+from freecad.ShowerDesigner.Models.AssemblyBase import AssemblyController
+from freecad.ShowerDesigner.Models.ChildProxies import (
+    GlassChild,
+    HingeChild,
+    HandleChild,
+    GhostChild,
+)
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     BIFOLD_HINGE_SPECS,
     HINGE_SPECS,
     HINGE_PLACEMENT_DEFAULTS,
     HARDWARE_FINISHES,
 )
-from freecad.ShowerDesigner.Models.Hinge import createHingeShape
-from freecad.ShowerDesigner.Models.Handle import createHandleShape
+from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
 
-class BiFoldDoor(GlassPanel):
+def _setupGlassVP(obj):
+    from freecad.ShowerDesigner.Models.GlassPanelViewProvider import setupViewProvider
+    setupViewProvider(obj)
+
+
+def _setupHardwareVP(obj, finish="Chrome"):
+    from freecad.ShowerDesigner.Models.HardwareViewProvider import (
+        setupHardwareViewProvider,
+    )
+    setupHardwareViewProvider(obj, finish)
+
+
+def _setupGhostVP(obj):
+    """Set up a semi-transparent VP for the folded-position ghost."""
+    if not App.GuiUp:
+        return
+    obj.ViewObject.Proxy = 0
+    obj.ViewObject.Transparency = 80
+    obj.ViewObject.ShapeColor = (0.5, 0.5, 0.5)
+
+
+class BiFoldDoorAssembly(AssemblyController):
     """
-    Parametric bi-fold shower door with bi-fold hinge hardware.
+    Assembly controller for a bi-fold shower door.
 
-    Extends the base GlassPanel with bi-fold door-specific properties including
-    hinge configuration (Left/Right), handle positioning, and optional folded
-    position ghost for clearance checking. Bi-fold hinges allow 180 degrees
-    opening in the primary direction and 45 degrees in the secondary direction.
+    Creates an App::Part containing:
+      - VarSet with all user-editable properties
+      - WallPanel glass child (wall-side half)
+      - FreePanel glass child (free-side half)
+      - 2 WallHinge children (attach wall panel to wall)
+      - 2-3 FoldHinge children (at center fold joint)
+      - Handle child
+      - Optional Ghost child (folded position)
     """
 
-    def __init__(self, obj):
-        # Initialize base GlassPanel
-        super().__init__(obj)
+    def __init__(self, part_obj):
+        super().__init__(part_obj)
+        vs = self._getOrCreateVarSet(part_obj)
+        self._setupVarSetProperties(vs)
+        self._addChild(part_obj, "WallPanel", GlassChild, _setupGlassVP)
+        self._addChild(part_obj, "FreePanel", GlassChild, _setupGlassVP)
 
-        # Override attachment type to Hinged
-        obj.AttachmentType = "Hinged"
+    # ------------------------------------------------------------------
+    # VarSet property setup
+    # ------------------------------------------------------------------
 
-        # Door configuration properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "HingeConfiguration",
+    def _setupVarSetProperties(self, vs):
+        # Dimensions
+        vs.addProperty(
+            "App::PropertyLength", "Width", "Dimensions", "Total door width"
+        ).Width = 900
+        vs.addProperty(
+            "App::PropertyLength", "Height", "Dimensions", "Door height"
+        ).Height = 2000
+        vs.addProperty(
+            "App::PropertyLength", "Thickness", "Dimensions", "Glass thickness"
+        ).Thickness = 8
+
+        # Glass
+        vs.addProperty(
+            "App::PropertyEnumeration", "GlassType", "Glass", "Type of glass"
+        )
+        vs.GlassType = ["Clear", "Frosted", "Bronze", "Grey", "Reeded", "Low-Iron"]
+        vs.GlassType = "Clear"
+        vs.addProperty(
+            "App::PropertyEnumeration", "EdgeFinish", "Glass", "Edge finish type"
+        )
+        vs.EdgeFinish = ["Bright_Polish", "Dull_Polish"]
+        vs.EdgeFinish = "Bright_Polish"
+        vs.addProperty(
+            "App::PropertyEnumeration", "TemperType", "Glass", "Tempering type"
+        )
+        vs.TemperType = ["Tempered", "Laminated", "None"]
+        vs.TemperType = "Tempered"
+
+        # Door configuration
+        vs.addProperty(
+            "App::PropertyEnumeration", "HingeConfiguration",
             "Door Configuration",
             "Bi-fold hinge hand (Left=Inward, Right=Outward)"
         )
-        obj.HingeConfiguration = ["Left", "Right"]
-        obj.HingeConfiguration = "Left"
-
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "FoldDirection",
-            "Door Configuration",
+        vs.HingeConfiguration = ["Left", "Right"]
+        vs.HingeConfiguration = "Left"
+        vs.addProperty(
+            "App::PropertyEnumeration", "FoldDirection", "Door Configuration",
             "Direction the door folds (derived from hinge configuration)"
         )
-        obj.FoldDirection = ["Inward", "Outward"]
-        obj.FoldDirection = "Inward"
-        obj.setEditorMode("FoldDirection", 1)  # Read-only
-
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "HingeSide",
-            "Door Configuration",
+        vs.FoldDirection = ["Inward", "Outward"]
+        vs.FoldDirection = "Inward"
+        vs.setEditorMode("FoldDirection", 1)
+        vs.addProperty(
+            "App::PropertyEnumeration", "HingeSide", "Door Configuration",
             "Which side is attached to the wall"
         )
-        obj.HingeSide = ["Left", "Right"]
-        obj.HingeSide = "Left"
-
-        obj.addProperty(
-            "App::PropertyAngle",
-            "FoldAngle",
-            "Door Configuration",
-            "Current fold angle (0=closed, positive=primary, negative=secondary)"
+        vs.HingeSide = ["Left", "Right"]
+        vs.HingeSide = "Left"
+        vs.addProperty(
+            "App::PropertyAngle", "FoldAngle", "Door Configuration",
+            "Current fold angle (0=closed)"
         ).FoldAngle = 0
 
-        # Hinge hardware properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "HingeFinish",
-            "Hinge Hardware",
-            "Finish/color of bi-fold hinge hardware"
-        )
-        obj.HingeFinish = ["Chrome", "Brushed-Nickel", "Matte-Black", "Gold"]
-        obj.HingeFinish = "Chrome"
-
-        obj.addProperty(
-            "App::PropertyInteger",
-            "HingeCount",
-            "Hinge Hardware",
+        # Hinge hardware
+        vs.addProperty(
+            "App::PropertyInteger", "HingeCount", "Hinge Hardware",
             "Number of bi-fold hinges at fold joint (2-3)"
         ).HingeCount = 2
 
-        _hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HingeWidth",
-            "Hinge Hardware",
-            "Width of hinge hardware visualization"
-        ).HingeWidth = _hinge_dims["width"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HingeDepth",
-            "Hinge Hardware",
-            "Depth of hinge hardware visualization"
-        ).HingeDepth = _hinge_dims["depth"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HingeHeight",
-            "Hinge Hardware",
-            "Height of hinge hardware visualization"
-        ).HingeHeight = _hinge_dims["height"]
-
-        # Handle hardware properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "HandleType",
-            "Handle Hardware",
+        # Handle hardware
+        vs.addProperty(
+            "App::PropertyEnumeration", "HandleType", "Handle Hardware",
             "Type of door handle"
         )
-        obj.HandleType = ["None", "Knob", "Bar", "Pull"]
-        obj.HandleType = "Bar"
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleHeight",
-            "Handle Hardware",
+        vs.HandleType = ["None", "Knob", "Bar", "Pull"]
+        vs.HandleType = "Bar"
+        vs.addProperty(
+            "App::PropertyLength", "HandleHeight", "Handle Hardware",
             "Height of handle from floor"
-        ).HandleHeight = 1050  # mm - ergonomic height
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleOffset",
-            "Handle Hardware",
+        ).HandleHeight = 1050
+        vs.addProperty(
+            "App::PropertyLength", "HandleOffset", "Handle Hardware",
             "Distance from handle to door edge"
-        ).HandleOffset = 75  # mm
+        ).HandleOffset = 75
+        vs.addProperty(
+            "App::PropertyLength", "HandleLength", "Handle Hardware",
+            "Length of bar handle"
+        ).HandleLength = 300
 
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleLength",
-            "Handle Hardware",
-            "Length of bar handle (for Bar type)"
-        ).HandleLength = 300  # mm
-
-        # Hardware display properties
-        obj.addProperty(
-            "App::PropertyBool",
-            "ShowHardware",
-            "Hardware Display",
+        # Hardware display
+        vs.addProperty(
+            "App::PropertyEnumeration", "HardwareFinish", "Hardware Display",
+            "Finish for all hardware"
+        )
+        vs.HardwareFinish = HARDWARE_FINISHES[:]
+        vs.HardwareFinish = "Chrome"
+        vs.addProperty(
+            "App::PropertyBool", "ShowHardware", "Hardware Display",
             "Show hardware in 3D view"
         ).ShowHardware = True
-
-        obj.addProperty(
-            "App::PropertyBool",
-            "ShowFoldedPosition",
-            "Hardware Display",
+        vs.addProperty(
+            "App::PropertyBool", "ShowFoldedPosition", "Hardware Display",
             "Show folded position ghost"
         ).ShowFoldedPosition = False
 
-        # Calculated properties (read-only)
-        obj.addProperty(
-            "App::PropertyLength",
-            "PanelWidth",
-            "Calculated",
-            "Width of each panel (half total width, read-only)"
+        # Calculated (read-only)
+        vs.addProperty(
+            "App::PropertyFloat", "Weight", "Calculated",
+            "Weight of the door in kg"
         )
-        obj.setEditorMode("PanelWidth", 1)
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "FoldedWidth",
-            "Calculated",
-            "Width of folded stack (read-only)"
+        vs.setEditorMode("Weight", 1)
+        vs.addProperty(
+            "App::PropertyFloat", "Area", "Calculated",
+            "Area of the door in m²"
         )
-        obj.setEditorMode("FoldedWidth", 1)
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "OpeningWidth",
-            "Calculated",
-            "Clear opening when fully folded (read-only)"
+        vs.setEditorMode("Area", 1)
+        vs.addProperty(
+            "App::PropertyLength", "PanelWidth", "Calculated",
+            "Width of each panel"
         )
-        obj.setEditorMode("OpeningWidth", 1)
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "ClearanceDepth",
-            "Calculated",
-            "Depth clearance needed for folding (read-only)"
+        vs.setEditorMode("PanelWidth", 1)
+        vs.addProperty(
+            "App::PropertyLength", "FoldedWidth", "Calculated",
+            "Width of folded stack"
         )
-        obj.setEditorMode("ClearanceDepth", 1)
-
-        obj.addProperty(
-            "App::PropertyAngle",
-            "MaxFoldAngle",
-            "Calculated",
-            "Maximum fold angle in primary direction (read-only)"
+        vs.setEditorMode("FoldedWidth", 1)
+        vs.addProperty(
+            "App::PropertyLength", "OpeningWidth", "Calculated",
+            "Clear opening when folded"
         )
-        obj.setEditorMode("MaxFoldAngle", 1)
+        vs.setEditorMode("OpeningWidth", 1)
+        vs.addProperty(
+            "App::PropertyLength", "ClearanceDepth", "Calculated",
+            "Depth clearance for folding"
+        )
+        vs.setEditorMode("ClearanceDepth", 1)
+        vs.addProperty(
+            "App::PropertyAngle", "MaxFoldAngle", "Calculated",
+            "Max fold angle in primary direction"
+        )
+        vs.setEditorMode("MaxFoldAngle", 1)
 
-    def execute(self, obj):
-        """Rebuild the geometry when properties change."""
-        width = obj.Width.Value
-        height = obj.Height.Value
-        thickness = obj.Thickness.Value
+    # ------------------------------------------------------------------
+    # execute
+    # ------------------------------------------------------------------
 
-        if width < 400 or height <= 0 or thickness <= 0:
-            App.Console.PrintError("Invalid bi-fold door dimensions (min width: 400mm)\n")
+    def assemblyExecute(self, part_obj):
+        vs = self._getVarSet(part_obj)
+        if vs is None:
             return
 
-        shapes = []
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        if width < 400 or height <= 0 or thickness <= 0:
+            App.Console.PrintError(
+                "Invalid bi-fold door dimensions (min width: 400mm)\n"
+            )
+            return
 
-        # Create the two glass panels
-        panels = self._createPanels(obj)
-        shapes.extend(panels)
-
-        # Add hardware if enabled
-        if obj.ShowHardware:
-            # Wall-side hinges (attach wall panel to wall/fixed panel)
-            wall_hinges = self._createWallHinges(obj)
-            shapes.extend(wall_hinges)
-
-            # Bi-fold hinges at the center fold joint
-            fold_hinges = self._createBiFoldHinges(obj)
-            shapes.extend(fold_hinges)
-
-            handle = self._createHandle(obj)
-            if handle:
-                shapes.append(handle)
-
-        # Add folded position ghost if enabled
-        if obj.ShowFoldedPosition:
-            ghost = self._createFoldedGhost(obj)
-            if ghost:
-                shapes.append(ghost)
-
-        # Combine all shapes
-        if len(shapes) > 1:
-            compound = Part.makeCompound(shapes)
-            obj.Shape = compound
-        else:
-            obj.Shape = shapes[0]
-
-        # Apply position and rotation
-        obj.Placement.Base = obj.Position
-        new_rotation = App.Rotation(App.Vector(0, 0, 1), obj.Rotation)
-        obj.Placement.Rotation = new_rotation
-
-        # Update calculated properties
-        self._updateCalculatedProperties(obj)
-        self._updateBifoldProperties(obj)
-
-    def _createPanels(self, obj):
-        """Create two glass panels side by side."""
-        width = obj.Width.Value
-        height = obj.Height.Value
-        thickness = obj.Thickness.Value
         panel_width = width / 2
 
-        panels = []
+        # --- Update glass children ---
+        wall_panel = self._getChild(part_obj, "WallPanel")
+        if wall_panel:
+            wall_panel.Width = panel_width
+            wall_panel.Height = height
+            wall_panel.Thickness = thickness
+            if hasattr(wall_panel, "GlassType"):
+                wall_panel.GlassType = vs.GlassType
 
-        # Panel 1 (wall-side)
-        panel1 = Part.makeBox(panel_width, thickness, height)
-        panels.append(panel1)
+        free_panel = self._getChild(part_obj, "FreePanel")
+        if free_panel:
+            free_panel.Width = panel_width
+            free_panel.Height = height
+            free_panel.Thickness = thickness
+            if hasattr(free_panel, "GlassType"):
+                free_panel.GlassType = vs.GlassType
+            free_panel.Placement = App.Placement(
+                App.Vector(panel_width, 0, 0), App.Rotation()
+            )
 
-        # Panel 2 (free-side)
-        panel2 = Part.makeBox(panel_width, thickness, height)
-        panel2.translate(App.Vector(panel_width, 0, 0))
-        panels.append(panel2)
+        show_hw = vs.ShowHardware
+        finish = vs.HardwareFinish
 
-        return panels
+        # --- Wall hinges (always 2, top and bottom) ---
+        if show_hw:
+            self._updateWallHinges(part_obj, vs)
+        else:
+            self._syncChildCount(part_obj, "WallHinge", 0, HingeChild)
 
-    def _calculateHingePositions(self, obj):
-        """
-        Calculate evenly-spaced hinge positions along the door height.
+        # --- Fold hinges ---
+        if show_hw:
+            self._updateFoldHinges(part_obj, vs)
+        else:
+            self._syncChildCount(part_obj, "FoldHinge", 0, HingeChild)
 
-        Returns:
-            List of Z positions in mm (from bottom of panel)
-        """
-        height = obj.Height.Value
-        hinge_count = max(2, min(3, obj.HingeCount))
-        offset_top = HINGE_PLACEMENT_DEFAULTS["offset_top"]
-        offset_bottom = HINGE_PLACEMENT_DEFAULTS["offset_bottom"]
+        # --- Handle ---
+        if show_hw and vs.HandleType != "None":
+            self._updateHandle(part_obj, vs)
+        else:
+            if self._hasChild(part_obj, "Handle"):
+                self._removeChild(part_obj, "Handle")
 
-        positions = [offset_bottom, height - offset_top]
+        # --- Ghost ---
+        if vs.ShowFoldedPosition:
+            self._updateGhost(part_obj, vs)
+        else:
+            if self._hasChild(part_obj, "Ghost"):
+                self._removeChild(part_obj, "Ghost")
 
-        if hinge_count >= 3:
-            middle_z = (offset_bottom + (height - offset_top)) / 2
-            positions.insert(1, middle_z)
+        # --- Finish ---
+        self._updateAllHardwareFinish(part_obj, finish)
 
-        return sorted(positions)
+        # --- Calculated properties ---
+        self._updateCalculatedProperties(vs)
 
-    def _createWallHinges(self, obj):
-        """
-        Create wall-side hinges that attach the wall panel to the wall or fixed panel.
+    # ------------------------------------------------------------------
+    # Wall hinges (attach wall panel to wall)
+    # ------------------------------------------------------------------
 
-        Two hinges (top and bottom) on the hinge side edge of the wall panel.
-        """
-        hinges = []
+    def _updateWallHinges(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        hinge_side = vs.HingeSide
 
-        try:
-            width = obj.Width.Value
-            thickness = obj.Thickness.Value
-            hinge_side = obj.HingeSide
-            hinge_w = obj.HingeWidth.Value
-            hinge_d = obj.HingeDepth.Value
-            hinge_h = obj.HingeHeight.Value
+        hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
+        hinge_w = hinge_dims["width"]
+        hinge_d = hinge_dims["depth"]
+        hinge_h = hinge_dims["height"]
 
-            # Wall hinges always at top and bottom (2 hinges)
-            z_positions = self._calculateHingePositions(obj)
-            # Use only top and bottom positions for wall hinges
-            wall_z = [z_positions[0], z_positions[-1]]
+        positions = _calculateHingePositions(height, 2)
+        # Wall hinges: only top and bottom
+        wall_z = [positions[0], positions[-1]]
 
-            y_pos = thickness / 2 - hinge_d / 2
+        self._syncChildCount(
+            part_obj, "WallHinge", 2, HingeChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
 
-            for z_pos in wall_z:
-                hinge = createHingeShape(hinge_w, hinge_d, hinge_h)
-                z_offset = z_pos - hinge_h / 2
+        y_pos = thickness / 2 - hinge_d / 2
+        for i, z_pos in enumerate(wall_z):
+            child = self._getChild(part_obj, f"WallHinge{i + 1}")
+            if child is None:
+                continue
+            z_offset = z_pos - hinge_h / 2
+            if hinge_side == "Left":
+                x_pos = -hinge_w / 2
+            else:
+                x_pos = width - hinge_w / 2
+            child.Placement = App.Placement(
+                App.Vector(x_pos, y_pos, z_offset), App.Rotation()
+            )
 
-                if hinge_side == "Left":
-                    x_pos = -hinge_w / 2
-                else:
-                    x_pos = width - hinge_w / 2
+    # ------------------------------------------------------------------
+    # Fold hinges (center fold joint)
+    # ------------------------------------------------------------------
 
-                hinge.translate(App.Vector(x_pos, y_pos, z_offset))
-                hinges.append(hinge)
+    def _updateFoldHinges(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        hinge_count = max(2, min(3, vs.HingeCount))
+        panel_width = width / 2
 
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating wall hinges: {e}\n")
+        hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
+        hinge_w = hinge_dims["width"]
+        hinge_d = hinge_dims["depth"]
+        hinge_h = hinge_dims["height"]
 
-        return hinges
+        positions = _calculateHingePositions(height, hinge_count)
 
-    def _createBiFoldHinges(self, obj):
-        """
-        Create bi-fold hinge hardware at the center fold joint.
+        self._syncChildCount(
+            part_obj, "FoldHinge", hinge_count, HingeChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
 
-        Bi-fold hinges are box-shaped and mounted at the fold point
-        between the two panels.
-        """
-        hinges = []
+        center_x = panel_width - hinge_w / 2
+        y_pos = thickness / 2 - hinge_d / 2
 
-        try:
-            width = obj.Width.Value
-            thickness = obj.Thickness.Value
-            panel_width = width / 2
-            hinge_w = obj.HingeWidth.Value
-            hinge_d = obj.HingeDepth.Value
-            hinge_h = obj.HingeHeight.Value
+        for i, z_pos in enumerate(positions):
+            child = self._getChild(part_obj, f"FoldHinge{i + 1}")
+            if child is None:
+                continue
+            z_offset = z_pos - hinge_h / 2
+            child.Placement = App.Placement(
+                App.Vector(center_x, y_pos, z_offset), App.Rotation()
+            )
 
-            z_positions = self._calculateHingePositions(obj)
+    # ------------------------------------------------------------------
+    # Handle
+    # ------------------------------------------------------------------
 
-            # Center hinge at the fold joint between the two panels
-            center_x = panel_width - hinge_w / 2
-            y_pos = thickness / 2 - hinge_d / 2
+    def _updateHandle(self, part_obj, vs):
+        if not self._hasChild(part_obj, "Handle"):
+            self._addChild(
+                part_obj, "Handle", HandleChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+            )
 
-            for z_pos in z_positions:
-                hinge = createHingeShape(hinge_w, hinge_d, hinge_h)
-                z_offset = z_pos - hinge_h / 2
-                hinge.translate(App.Vector(center_x, y_pos, z_offset))
-                hinges.append(hinge)
+        child = self._getChild(part_obj, "Handle")
+        if child is None:
+            return
 
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating bi-fold hinges: {e}\n")
+        child.HandleType = vs.HandleType
+        child.HandleLength = vs.HandleLength.Value
 
-        return hinges
+        width = vs.Width.Value
+        thickness = vs.Thickness.Value
+        handle_height = min(vs.HandleHeight.Value, vs.Height.Value - 100)
+        handle_offset = vs.HandleOffset.Value
 
-    def _calculateHandlePosition(self, obj):
-        """Calculate handle position on the free edge (opposite HingeSide)."""
-        width = obj.Width.Value
-        height = obj.Height.Value
-        thickness = obj.Thickness.Value
-        handle_height = min(obj.HandleHeight.Value, height - 100)
-        handle_offset = obj.HandleOffset.Value
-        hinge_side = obj.HingeSide
-
-        if hinge_side == "Left":
+        if vs.HingeSide == "Left":
             x_pos = width - handle_offset
         else:
             x_pos = handle_offset
 
-        y_pos = thickness / 2
-        z_pos = handle_height
+        child.Placement = App.Placement(
+            App.Vector(x_pos, thickness / 2, handle_height), App.Rotation()
+        )
 
-        return App.Vector(x_pos, y_pos, z_pos)
+    # ------------------------------------------------------------------
+    # Folded position ghost
+    # ------------------------------------------------------------------
 
-    def _createHandle(self, obj):
-        """Create handle hardware visualization using shared shape function."""
-        if obj.HandleType == "None":
-            return None
+    def _updateGhost(self, part_obj, vs):
+        if not self._hasChild(part_obj, "Ghost"):
+            self._addChild(part_obj, "Ghost", GhostChild, _setupGhostVP)
 
+        child = self._getChild(part_obj, "Ghost")
+        if child is None:
+            return
+
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        panel_width = width / 2
+        folded_width = panel_width + thickness
+
+        child.GhostWidth = folded_width
+        child.GhostDepth = thickness * 2 + 5
+        child.GhostHeight = height
+
+        if vs.HingeSide == "Left":
+            x_pos = 0
+        else:
+            x_pos = width - folded_width
+
+        child.Placement = App.Placement(
+            App.Vector(x_pos, -thickness - 5, 0), App.Rotation()
+        )
+
+    # ------------------------------------------------------------------
+    # Calculated properties
+    # ------------------------------------------------------------------
+
+    def _updateCalculatedProperties(self, vs):
         try:
-            handle_pos = self._calculateHandlePosition(obj)
-            length = obj.HandleLength.Value if obj.HandleType == "Bar" else None
-            return createHandleShape(obj.HandleType, length, handle_pos)
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating handle: {e}\n")
-            return None
-
-    def _createFoldedGhost(self, obj):
-        """Create a thin box showing the folded stack position."""
-        try:
-            width = obj.Width.Value
-            height = obj.Height.Value
-            thickness = obj.Thickness.Value
+            width = vs.Width.Value
+            height = vs.Height.Value
+            thickness = vs.Thickness.Value
             panel_width = width / 2
-            hinge_side = obj.HingeSide
 
-            # Folded width: two panels stacked
-            folded_width = panel_width + thickness
+            width_m = width / 1000.0
+            height_m = height / 1000.0
+            area = width_m * height_m
+            if hasattr(vs, "Area"):
+                vs.Area = area
 
-            ghost = Part.makeBox(folded_width, thickness * 2 + 5, height)
-
-            if hinge_side == "Left":
-                x_pos = 0
+            thickness_key = f"{int(thickness)}mm"
+            if thickness_key in GLASS_SPECS:
+                weight_per_m2 = GLASS_SPECS[thickness_key]["weight_kg_m2"]
+                weight = area * weight_per_m2
             else:
-                x_pos = width - folded_width
+                weight = area * 2.5 * thickness
+            if hasattr(vs, "Weight"):
+                vs.Weight = weight
 
-            ghost.translate(App.Vector(x_pos, -thickness - 5, 0))
-            return ghost
+            spec = BIFOLD_HINGE_SPECS.get(vs.HingeConfiguration, {})
 
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating folded ghost: {e}\n")
-            return None
-
-    def _updateBifoldProperties(self, obj):
-        """Update bi-fold-specific calculated properties."""
-        try:
-            width = obj.Width.Value
-            thickness = obj.Thickness.Value
-            panel_width = width / 2
-            spec = BIFOLD_HINGE_SPECS[obj.HingeConfiguration]
-
-            if hasattr(obj, "PanelWidth"):
-                obj.PanelWidth = panel_width
-
-            # Folded width: panel width + glass thickness
+            if hasattr(vs, "PanelWidth"):
+                vs.PanelWidth = panel_width
             folded_width = panel_width + thickness
-            if hasattr(obj, "FoldedWidth"):
-                obj.FoldedWidth = folded_width
-
-            if hasattr(obj, "OpeningWidth"):
-                obj.OpeningWidth = width - folded_width
-
-            if hasattr(obj, "ClearanceDepth"):
-                obj.ClearanceDepth = panel_width
-
-            if hasattr(obj, "MaxFoldAngle"):
-                obj.MaxFoldAngle = spec["primary_angle"]
+            if hasattr(vs, "FoldedWidth"):
+                vs.FoldedWidth = folded_width
+            if hasattr(vs, "OpeningWidth"):
+                vs.OpeningWidth = width - folded_width
+            if hasattr(vs, "ClearanceDepth"):
+                vs.ClearanceDepth = panel_width
+            if hasattr(vs, "MaxFoldAngle"):
+                vs.MaxFoldAngle = spec.get("primary_angle", 180)
 
         except Exception as e:
-            App.Console.PrintWarning(f"Error updating bifold properties: {e}\n")
+            App.Console.PrintWarning(
+                f"Error updating calculated properties: {e}\n"
+            )
 
-    def onChanged(self, obj, prop):
-        """Called when a property changes."""
-        super().onChanged(obj, prop)
+    def assemblyOnChanged(self, part_obj, prop):
+        pass
 
-        # HingeConfiguration drives FoldDirection
-        if prop == "HingeConfiguration":
-            if hasattr(obj, "HingeConfiguration") and hasattr(obj, "FoldDirection"):
-                spec = BIFOLD_HINGE_SPECS[obj.HingeConfiguration]
-                obj.FoldDirection = spec["fold_direction"]
 
-        # Validate FoldAngle: -45 (secondary) to +180 (primary)
-        if prop == "FoldAngle":
-            if hasattr(obj, "FoldAngle") and hasattr(obj, "HingeConfiguration"):
-                spec = BIFOLD_HINGE_SPECS[obj.HingeConfiguration]
-                max_angle = spec["primary_angle"]
-                min_angle = -spec["secondary_angle"]
-                if obj.FoldAngle > max_angle:
-                    obj.FoldAngle = max_angle
-                elif obj.FoldAngle < min_angle:
-                    obj.FoldAngle = min_angle
+# ======================================================================
+# Helper
+# ======================================================================
 
-        # Validate HingeCount (2-3)
-        if prop == "HingeCount":
-            if hasattr(obj, "HingeCount"):
-                if obj.HingeCount < 2:
-                    obj.HingeCount = 2
-                elif obj.HingeCount > 3:
-                    obj.HingeCount = 3
+def _calculateHingePositions(height, count):
+    offset_top = HINGE_PLACEMENT_DEFAULTS["offset_top"]
+    offset_bottom = HINGE_PLACEMENT_DEFAULTS["offset_bottom"]
+    count = max(2, min(3, count))
+    positions = [offset_bottom, height - offset_top]
+    if count >= 3:
+        middle = (offset_bottom + (height - offset_top)) / 2
+        positions.insert(1, middle)
+    return sorted(positions)
 
-        # Validate HandleHeight (300-1800)
-        if prop == "HandleHeight":
-            if hasattr(obj, "HandleHeight"):
-                if obj.HandleHeight.Value < 300:
-                    obj.HandleHeight = 300
-                elif obj.HandleHeight.Value > 1800:
-                    obj.HandleHeight = 1800
 
-        # Validate minimum width (>= 400)
-        if prop == "Width":
-            if hasattr(obj, "Width"):
-                if obj.Width.Value < 400:
-                    obj.Width = 400
-
+# ======================================================================
+# Factory function
+# ======================================================================
 
 def createBiFoldDoor(name="BiFoldDoor"):
     """
-    Create a new bi-fold door in the active document.
+    Create a new bi-fold door assembly in the active document.
 
     Args:
-        name: Name for the door object (default: "BiFoldDoor")
+        name: Name for the assembly (default: "BiFoldDoor")
 
     Returns:
-        FreeCAD document object
+        App::Part assembly object
     """
     doc = App.ActiveDocument
     if doc is None:
         doc = App.newDocument("ShowerDesign")
 
-    obj = doc.addObject("Part::FeaturePython", name)
-    BiFoldDoor(obj)
-
-    if App.GuiUp:
-        try:
-            from freecad.ShowerDesigner.Models.GlassPanelViewProvider import setupViewProvider
-            setupViewProvider(obj)
-        except Exception:
-            obj.ViewObject.Proxy = 0
-            obj.ViewObject.Transparency = 70
+    part = doc.addObject("App::Part", name)
+    BiFoldDoorAssembly(part)
 
     doc.recompute()
-
     App.Console.PrintMessage(f"Bi-fold door '{name}' created\n")
-    return obj
+    return part

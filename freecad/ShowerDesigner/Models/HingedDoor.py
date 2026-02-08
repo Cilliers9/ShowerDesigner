@@ -2,510 +2,423 @@
 # SPDX-FileNotice: Part of the ShowerDesigner workbench.
 
 """
-Hinged shower door with swing direction and hardware mounting.
+Hinged shower door assembly — App::Part containing glass + hinges + handle.
 
-This module provides a HingedDoor class that extends GlassPanel with
-hinge hardware, handle placement, and swing arc visualization.
+Each hinge and the handle are individual Part::FeaturePython children
+with their own ViewProviders for independent display control.
 """
 
 import FreeCAD as App
 import Part
-import math
-from freecad.ShowerDesigner.Models.GlassPanel import GlassPanel
+from freecad.ShowerDesigner.Models.AssemblyBase import AssemblyController
+from freecad.ShowerDesigner.Models.ChildProxies import (
+    GlassChild,
+    HingeChild,
+    HandleChild,
+    SwingArcChild,
+)
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HINGE_SPECS,
     HINGE_PLACEMENT_DEFAULTS,
     HARDWARE_FINISHES,
 )
-from freecad.ShowerDesigner.Models.Hinge import createHingeShape
-from freecad.ShowerDesigner.Models.Handle import createHandleShape
+from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
 
-class HingedDoor(GlassPanel):
+def _setupGlassVP(obj):
+    from freecad.ShowerDesigner.Models.GlassPanelViewProvider import setupViewProvider
+    setupViewProvider(obj)
+
+
+def _setupHardwareVP(obj, finish="Chrome"):
+    from freecad.ShowerDesigner.Models.HardwareViewProvider import (
+        setupHardwareViewProvider,
+    )
+    setupHardwareViewProvider(obj, finish)
+
+
+class HingedDoorAssembly(AssemblyController):
     """
-    Parametric hinged shower door with hardware and swing visualization.
+    Assembly controller for a hinged shower door.
 
-    Extends the base GlassPanel with door-specific properties including
-    swing direction, hinge placement, handle positioning, and optional
-    swing arc visualization for clearance checking.
+    Creates an App::Part containing:
+      - VarSet with all user-editable properties
+      - Glass child (Part::FeaturePython + GlassPanelViewProvider)
+      - 2-3 Hinge children (Part::FeaturePython + HardwareViewProvider)
+      - Handle child (Part::FeaturePython + HardwareViewProvider)
+      - Optional SwingArc child for clearance visualization
     """
 
-    def __init__(self, obj):
-        """
-        Initialize the hinged door with hardware properties.
+    def __init__(self, part_obj):
+        super().__init__(part_obj)
+        vs = self._getOrCreateVarSet(part_obj)
+        self._setupVarSetProperties(vs)
+        self._addChild(part_obj, "Glass", GlassChild, _setupGlassVP)
 
-        Args:
-            obj: FreeCAD document object
-        """
-        # Initialize base GlassPanel
-        super().__init__(obj)
+    # ------------------------------------------------------------------
+    # VarSet property setup
+    # ------------------------------------------------------------------
 
-        # Override attachment type to Hinged
-        obj.AttachmentType = "Hinged"
+    def _setupVarSetProperties(self, vs):
+        # Dimensions
+        vs.addProperty(
+            "App::PropertyLength", "Width", "Dimensions", "Door width"
+        ).Width = 900
+        vs.addProperty(
+            "App::PropertyLength", "Height", "Dimensions", "Door height"
+        ).Height = 2000
+        vs.addProperty(
+            "App::PropertyLength", "Thickness", "Dimensions", "Glass thickness"
+        ).Thickness = 8
 
-        # Door configuration properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "SwingDirection",
-            "Door Configuration",
+        # Glass
+        vs.addProperty(
+            "App::PropertyEnumeration", "GlassType", "Glass", "Type of glass"
+        )
+        vs.GlassType = ["Clear", "Frosted", "Bronze", "Grey", "Reeded", "Low-Iron"]
+        vs.GlassType = "Clear"
+        vs.addProperty(
+            "App::PropertyEnumeration", "EdgeFinish", "Glass", "Edge finish type"
+        )
+        vs.EdgeFinish = ["Bright_Polish", "Dull_Polish"]
+        vs.EdgeFinish = "Bright_Polish"
+        vs.addProperty(
+            "App::PropertyEnumeration", "TemperType", "Glass", "Tempering type"
+        )
+        vs.TemperType = ["Tempered", "Laminated", "None"]
+        vs.TemperType = "Tempered"
+
+        # Door configuration
+        vs.addProperty(
+            "App::PropertyEnumeration", "SwingDirection", "Door Configuration",
             "Direction the door swings when opening"
         )
-        obj.SwingDirection = ["Inward", "Outward"]
-        obj.SwingDirection = "Inward"
-
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "HingeSide",
-            "Door Configuration",
+        vs.SwingDirection = ["Inward", "Outward"]
+        vs.SwingDirection = "Inward"
+        vs.addProperty(
+            "App::PropertyEnumeration", "HingeSide", "Door Configuration",
             "Which side the hinges are mounted"
         )
-        obj.HingeSide = ["Left", "Right"]
-        obj.HingeSide = "Left"
-
-        obj.addProperty(
-            "App::PropertyAngle",
-            "OpeningAngle",
-            "Door Configuration",
+        vs.HingeSide = ["Left", "Right"]
+        vs.HingeSide = "Left"
+        vs.addProperty(
+            "App::PropertyAngle", "OpeningAngle", "Door Configuration",
             "Maximum opening angle (max 110 degrees)"
         ).OpeningAngle = 90
 
-        # Hinge hardware properties
-        obj.addProperty(
-            "App::PropertyInteger",
-            "HingeCount",
-            "Hinge Hardware",
+        # Hinge hardware
+        vs.addProperty(
+            "App::PropertyInteger", "HingeCount", "Hinge Hardware",
             "Number of hinges (2-3)"
-        )
-        obj.HingeCount = 2
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HingeOffsetTop",
-            "Hinge Hardware",
+        ).HingeCount = 2
+        vs.addProperty(
+            "App::PropertyLength", "HingeOffsetTop", "Hinge Hardware",
             "Distance from top edge to top hinge"
-        ).HingeOffsetTop = 300  # mm
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HingeOffsetBottom",
-            "Hinge Hardware",
+        ).HingeOffsetTop = HINGE_PLACEMENT_DEFAULTS["offset_top"]
+        vs.addProperty(
+            "App::PropertyLength", "HingeOffsetBottom", "Hinge Hardware",
             "Distance from bottom edge to bottom hinge"
-        ).HingeOffsetBottom = 300  # mm
+        ).HingeOffsetBottom = HINGE_PLACEMENT_DEFAULTS["offset_bottom"]
 
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "HingeFinish",
-            "Hinge Hardware",
-            "Finish/color of hinge hardware"
-        )
-        obj.HingeFinish = ["Chrome", "Brushed-Nickel", "Matte-Black", "Gold"]
-        obj.HingeFinish = "Chrome"
-
-        # Handle hardware properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "HandleType",
-            "Handle Hardware",
+        # Handle hardware
+        vs.addProperty(
+            "App::PropertyEnumeration", "HandleType", "Handle Hardware",
             "Type of door handle"
         )
-        obj.HandleType = ["None", "Knob", "Bar", "Pull"]
-        obj.HandleType = "Bar"
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleHeight",
-            "Handle Hardware",
+        vs.HandleType = ["None", "Knob", "Bar", "Pull"]
+        vs.HandleType = "Bar"
+        vs.addProperty(
+            "App::PropertyLength", "HandleHeight", "Handle Hardware",
             "Height of handle from floor"
-        ).HandleHeight = 1050  # mm - ergonomic height
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleOffset",
-            "Handle Hardware",
+        ).HandleHeight = 1050
+        vs.addProperty(
+            "App::PropertyLength", "HandleOffset", "Handle Hardware",
             "Distance from handle to door edge"
-        ).HandleOffset = 75  # mm
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleLength",
-            "Handle Hardware",
+        ).HandleOffset = 75
+        vs.addProperty(
+            "App::PropertyLength", "HandleLength", "Handle Hardware",
             "Length of bar handle (for Bar type)"
-        ).HandleLength = 300  # mm
+        ).HandleLength = 300
 
-        # Hardware display properties
-        obj.addProperty(
-            "App::PropertyBool",
-            "ShowHardware",
-            "Hardware Display",
+        # Hardware display
+        vs.addProperty(
+            "App::PropertyEnumeration", "HardwareFinish", "Hardware Display",
+            "Finish for all hardware"
+        )
+        vs.HardwareFinish = HARDWARE_FINISHES[:]
+        vs.HardwareFinish = "Chrome"
+        vs.addProperty(
+            "App::PropertyBool", "ShowHardware", "Hardware Display",
             "Show hardware in 3D view"
         ).ShowHardware = True
-
-        obj.addProperty(
-            "App::PropertyBool",
-            "ShowSwingArc",
-            "Hardware Display",
+        vs.addProperty(
+            "App::PropertyBool", "ShowSwingArc", "Hardware Display",
             "Show swing arc on floor plane"
         ).ShowSwingArc = False
 
-        _hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HingeWidth",
-            "Hardware Display",
-            "Width of hinge hardware visualization"
-        ).HingeWidth = _hinge_dims["width"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HingeDepth",
-            "Hardware Display",
-            "Depth of hinge hardware visualization"
-        ).HingeDepth = _hinge_dims["depth"]
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HingeHeight",
-            "Hardware Display",
-            "Height of hinge hardware visualization"
-        ).HingeHeight = _hinge_dims["height"]
-
-        # Calculated properties (read-only)
-        obj.addProperty(
-            "App::PropertyInteger",
-            "RecommendedHingeCount",
-            "Calculated",
+        # Calculated (read-only)
+        vs.addProperty(
+            "App::PropertyFloat", "Weight", "Calculated",
+            "Weight of the door in kg"
+        )
+        vs.setEditorMode("Weight", 1)
+        vs.addProperty(
+            "App::PropertyFloat", "Area", "Calculated",
+            "Area of the door in m²"
+        )
+        vs.setEditorMode("Area", 1)
+        vs.addProperty(
+            "App::PropertyInteger", "RecommendedHingeCount", "Calculated",
             "Recommended hinge count based on door weight"
         )
-        obj.setEditorMode("RecommendedHingeCount", 1)  # Make read-only
+        vs.setEditorMode("RecommendedHingeCount", 1)
 
-    def execute(self, obj):
-        """
-        Rebuild the geometry when properties change.
+    # ------------------------------------------------------------------
+    # execute
+    # ------------------------------------------------------------------
 
-        Creates the glass panel and adds hardware visualization if enabled.
+    def assemblyExecute(self, part_obj):
+        vs = self._getVarSet(part_obj)
+        if vs is None:
+            return
 
-        Args:
-            obj: FreeCAD document object
-        """
-        # Get dimensions
-        width = obj.Width.Value
-        height = obj.Height.Value
-        thickness = obj.Thickness.Value
-
-        # Validate dimensions
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
         if width <= 0 or height <= 0 or thickness <= 0:
             App.Console.PrintError("Invalid door dimensions\n")
             return
 
-        # Create the glass panel shape
-        panel = Part.makeBox(width, thickness, height)
-        shapes = [panel]
+        # --- Update Glass child ---
+        glass = self._getChild(part_obj, "Glass")
+        if glass:
+            glass.Width = width
+            glass.Height = height
+            glass.Thickness = thickness
+            if hasattr(glass, "GlassType"):
+                glass.GlassType = vs.GlassType
 
-        # Add hardware if enabled
-        if obj.ShowHardware:
-            # Add hinges
-            hinges = self._createHinges(obj)
-            shapes.extend(hinges)
+        show_hw = vs.ShowHardware
+        finish = vs.HardwareFinish
 
-            # Add handle
-            handle = self._createHandle(obj)
-            if handle:
-                shapes.append(handle)
-
-        # Add swing arc if enabled
-        if obj.ShowSwingArc:
-            arc = self._createSwingArc(obj)
-            if arc:
-                shapes.append(arc)
-
-        # Combine all shapes
-        if len(shapes) > 1:
-            compound = Part.makeCompound(shapes)
-            obj.Shape = compound
+        # --- Hinges ---
+        if show_hw:
+            self._updateHinges(part_obj, vs)
         else:
-            obj.Shape = shapes[0]
+            self._syncChildCount(part_obj, "Hinge", 0, HingeChild)
 
-        # Apply position and rotation
-        obj.Placement.Base = obj.Position
-        new_rotation = App.Rotation(App.Vector(0, 0, 1), obj.Rotation)
-        obj.Placement.Rotation = new_rotation
+        # --- Handle ---
+        if show_hw and vs.HandleType != "None":
+            self._updateHandle(part_obj, vs)
+        else:
+            if self._hasChild(part_obj, "Handle"):
+                self._removeChild(part_obj, "Handle")
 
-        # Update calculated properties
-        self._updateCalculatedProperties(obj)
-        self._updateRecommendedHingeCount(obj)
+        # --- Swing Arc ---
+        if vs.ShowSwingArc:
+            self._updateSwingArc(part_obj, vs)
+        else:
+            if self._hasChild(part_obj, "SwingArc"):
+                self._removeChild(part_obj, "SwingArc")
 
-    def _calculateHingePositions(self, obj):
-        """
-        Calculate evenly-spaced hinge positions along the door height.
+        # --- Hardware finish ---
+        self._updateAllHardwareFinish(part_obj, finish)
 
-        Industry standard placement:
-        - Top hinge: HingeOffsetTop from top edge
-        - Bottom hinge: HingeOffsetBottom from bottom edge
-        - Third hinge (if used): centered between top and bottom
+        # --- Calculated properties ---
+        self._updateCalculatedProperties(vs)
 
-        Args:
-            obj: FreeCAD document object
+    # ------------------------------------------------------------------
+    # Hinge management
+    # ------------------------------------------------------------------
 
-        Returns:
-            List of Z positions in mm (from bottom of panel)
-        """
-        height = obj.Height.Value
-        offset_top = obj.HingeOffsetTop.Value
-        offset_bottom = obj.HingeOffsetBottom.Value
-        hinge_count = max(2, min(3, obj.HingeCount))
+    def _updateHinges(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        hinge_count = max(2, min(3, vs.HingeCount))
+        hinge_side = vs.HingeSide
 
-        positions = []
+        # Get hinge dimensions from specs
+        hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
+        hinge_w = hinge_dims["width"]
+        hinge_d = hinge_dims["depth"]
+        hinge_h = hinge_dims["height"]
 
-        # Bottom hinge position
-        positions.append(offset_bottom)
+        # Calculate positions
+        positions = _calculateHingePositions(
+            height, hinge_count,
+            vs.HingeOffsetTop.Value, vs.HingeOffsetBottom.Value
+        )
 
-        # Top hinge position
-        positions.append(height - offset_top)
+        self._syncChildCount(
+            part_obj, "Hinge", hinge_count, HingeChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
 
-        # Middle hinge if count is 3
-        if hinge_count >= 3:
-            middle_z = (offset_bottom + (height - offset_top)) / 2
-            positions.insert(1, middle_z)
+        for i, z_pos in enumerate(positions):
+            child = self._getChild(part_obj, f"Hinge{i + 1}")
+            if child is None:
+                continue
 
-        return sorted(positions)
-
-    def _createHinges(self, obj):
-        """
-        Create hinge hardware visualization.
-
-        Args:
-            obj: FreeCAD document object
-
-        Returns:
-            List of Part shapes for hinges
-        """
-        hinges = []
-
-        try:
-            width = obj.Width.Value
-            height = obj.Height.Value
-            thickness = obj.Thickness.Value
-            hinge_side = obj.HingeSide
-            hinge_w = obj.HingeWidth.Value
-            hinge_d = obj.HingeDepth.Value
-            hinge_h = obj.HingeHeight.Value
-
-            # Calculate hinge positions
-            positions = self._calculateHingePositions(obj)
-
-            for z_pos in positions:
-                hinge = createHingeShape(hinge_w, hinge_d, hinge_h)
-
-                # Position based on hinge side
-                if hinge_side == "Left":
-                    x_pos = -10  # 10 mm from left edge
-                else:  # Right
-                    x_pos = width - hinge_w + 10  # 10mm from right edge
-
-                y_pos = thickness / 2 - hinge_d / 2
-                z_offset = z_pos - hinge_h / 2
-
-                hinge.translate(App.Vector(x_pos, y_pos, z_offset))
-                hinges.append(hinge)
-
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating hinges: {e}\n")
-
-        return hinges
-
-    def _calculateHandlePosition(self, obj):
-        """
-        Calculate handle position based on configuration.
-
-        Handle is always on opposite side from hinges.
-
-        Args:
-            obj: FreeCAD document object
-
-        Returns:
-            App.Vector for handle center position
-        """
-        width = obj.Width.Value
-        height = obj.Height.Value
-        thickness = obj.Thickness.Value
-        handle_height = min(obj.HandleHeight.Value, height - 100)
-        handle_offset = obj.HandleOffset.Value
-        hinge_side = obj.HingeSide
-
-        # X position depends on hinge side (handle is opposite)
-        if hinge_side == "Left":
-            x_pos = width - handle_offset
-        else:  # Right
-            x_pos = handle_offset
-
-        # Y position at center of glass thickness
-        y_pos = thickness / 2
-
-        # Z position is handle height
-        z_pos = handle_height
-
-        return App.Vector(x_pos, y_pos, z_pos)
-
-    def _createHandle(self, obj):
-        """
-        Create handle hardware visualization using shared shape function.
-
-        Args:
-            obj: FreeCAD document object
-
-        Returns:
-            Part.Shape or None if HandleType is "None"
-        """
-        if obj.HandleType == "None":
-            return None
-
-        try:
-            handle_pos = self._calculateHandlePosition(obj)
-            length = obj.HandleLength.Value if obj.HandleType == "Bar" else None
-            return createHandleShape(obj.HandleType, length, handle_pos)
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating handle: {e}\n")
-            return None
-
-    def _createSwingArc(self, obj):
-        """
-        Create a 2D arc showing the door swing clearance on the floor plane.
-
-        Args:
-            obj: FreeCAD document object
-
-        Returns:
-            Part.Shape representing the swing arc, or None
-        """
-        try:
-            width = obj.Width.Value
-            thickness = obj.Thickness.Value
-            opening_angle = obj.OpeningAngle.Value
-            hinge_side = obj.HingeSide
-            swing_direction = obj.SwingDirection
-
-            # Arc radius is the door width
-            radius = width
-
-            # Determine arc center and angles based on configuration
             if hinge_side == "Left":
-                center = App.Vector(0, thickness / 2, 0)
-                if swing_direction == "Inward":
-                    start_angle = 0
-                    end_angle = 0 + opening_angle
-                else:  # Outward
-                    start_angle = 0 - opening_angle
-                    end_angle = 0
-            else:  # Right
-                center = App.Vector(width, thickness / 2, 0)
-                if swing_direction == "Inward":
-                    start_angle = 180 - opening_angle
-                    end_angle = 180
-                else:  # Outward
-                    start_angle = 180
-                    end_angle = 180 + opening_angle
+                x_pos = -10
+            else:
+                x_pos = width - hinge_w + 10
 
-            # Create arc at floor level (Z=0)
-            arc = Part.makeCircle(
-                radius,
-                center,
-                App.Vector(0, 0, 1),  # Normal pointing up
-                start_angle,
-                end_angle
+            y_pos = thickness / 2 - hinge_d / 2
+            z_offset = z_pos - hinge_h / 2
+
+            child.Placement = App.Placement(
+                App.Vector(x_pos, y_pos, z_offset), App.Rotation()
             )
 
-            return arc
+    # ------------------------------------------------------------------
+    # Handle management
+    # ------------------------------------------------------------------
 
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating swing arc: {e}\n")
-            return None
+    def _updateHandle(self, part_obj, vs):
+        if not self._hasChild(part_obj, "Handle"):
+            self._addChild(
+                part_obj, "Handle", HandleChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+            )
 
-    def _updateRecommendedHingeCount(self, obj):
-        """
-        Calculate recommended hinge count based on door weight.
-
-        Industry guidelines:
-        - Up to 45kg: 2 hinges sufficient
-        - Over 45kg: 3 hinges recommended
-        """
-        if not hasattr(obj, "Weight") or not hasattr(obj, "RecommendedHingeCount"):
+        child = self._getChild(part_obj, "Handle")
+        if child is None:
             return
 
-        try:
-            weight = obj.Weight
-            threshold = HINGE_PLACEMENT_DEFAULTS["weight_threshold_3_hinges"]
-            if weight <= threshold:
-                obj.RecommendedHingeCount = 2
+        child.HandleType = vs.HandleType
+        child.HandleLength = vs.HandleLength.Value
+
+        # Calculate handle position (opposite side from hinges)
+        width = vs.Width.Value
+        thickness = vs.Thickness.Value
+        handle_height = min(vs.HandleHeight.Value, vs.Height.Value - 100)
+        handle_offset = vs.HandleOffset.Value
+
+        if vs.HingeSide == "Left":
+            x_pos = width - handle_offset
+        else:
+            x_pos = handle_offset
+
+        y_pos = thickness / 2
+        z_pos = handle_height
+
+        child.Placement = App.Placement(
+            App.Vector(x_pos, y_pos, z_pos), App.Rotation()
+        )
+
+    # ------------------------------------------------------------------
+    # Swing Arc management
+    # ------------------------------------------------------------------
+
+    def _updateSwingArc(self, part_obj, vs):
+        if not self._hasChild(part_obj, "SwingArc"):
+            self._addChild(part_obj, "SwingArc", SwingArcChild, None)
+
+        child = self._getChild(part_obj, "SwingArc")
+        if child is None:
+            return
+
+        width = vs.Width.Value
+        thickness = vs.Thickness.Value
+        opening_angle = vs.OpeningAngle.Value
+
+        child.Radius = width
+
+        if vs.HingeSide == "Left":
+            center = App.Vector(0, thickness / 2, 0)
+            if vs.SwingDirection == "Inward":
+                child.StartAngle = 0
+                child.EndAngle = opening_angle
             else:
-                obj.RecommendedHingeCount = 3
-        except Exception:
-            pass
+                child.StartAngle = -opening_angle
+                child.EndAngle = 0
+        else:
+            center = App.Vector(width, thickness / 2, 0)
+            if vs.SwingDirection == "Inward":
+                child.StartAngle = 180 - opening_angle
+                child.EndAngle = 180
+            else:
+                child.StartAngle = 180
+                child.EndAngle = 180 + opening_angle
 
-    def onChanged(self, obj, prop):
-        """
-        Called when a property changes.
+        child.Placement = App.Placement(center, App.Rotation())
 
-        Args:
-            obj: FreeCAD document object
-            prop: Name of the property that changed
-        """
-        # Call parent onChanged
-        super().onChanged(obj, prop)
+    # ------------------------------------------------------------------
+    # Calculated properties
+    # ------------------------------------------------------------------
 
-        # Validate hinge count (2-3)
-        if prop == "HingeCount":
-            if hasattr(obj, "HingeCount"):
-                if obj.HingeCount < 2:
-                    obj.HingeCount = 2
-                elif obj.HingeCount > 3:
-                    obj.HingeCount = 3
+    def _updateCalculatedProperties(self, vs):
+        try:
+            width_m = vs.Width.Value / 1000.0
+            height_m = vs.Height.Value / 1000.0
+            area = width_m * height_m
+            if hasattr(vs, "Area"):
+                vs.Area = area
 
-        # Validate opening angle (max 110)
-        if prop == "OpeningAngle":
-            if hasattr(obj, "OpeningAngle"):
-                if obj.OpeningAngle > 110:
-                    obj.OpeningAngle = 110
-                elif obj.OpeningAngle < 0:
-                    obj.OpeningAngle = 0
+            thickness_key = f"{int(vs.Thickness.Value)}mm"
+            if thickness_key in GLASS_SPECS:
+                weight_per_m2 = GLASS_SPECS[thickness_key]["weight_kg_m2"]
+                weight = area * weight_per_m2
+            else:
+                weight = area * 2.5 * vs.Thickness.Value
+            if hasattr(vs, "Weight"):
+                vs.Weight = weight
 
-        # Validate handle height (reasonable range)
-        if prop == "HandleHeight":
-            if hasattr(obj, "HandleHeight"):
-                if obj.HandleHeight.Value < 300:
-                    obj.HandleHeight = 300
-                elif obj.HandleHeight.Value > 1800:
-                    obj.HandleHeight = 1800
+            # Recommended hinge count
+            if hasattr(vs, "RecommendedHingeCount"):
+                threshold = HINGE_PLACEMENT_DEFAULTS["weight_threshold_3_hinges"]
+                vs.RecommendedHingeCount = 2 if weight <= threshold else 3
 
+        except Exception as e:
+            App.Console.PrintWarning(
+                f"Error updating calculated properties: {e}\n"
+            )
+
+    # ------------------------------------------------------------------
+    # onChanged
+    # ------------------------------------------------------------------
+
+    def assemblyOnChanged(self, part_obj, prop):
+        pass
+
+
+# ======================================================================
+# Helper
+# ======================================================================
+
+def _calculateHingePositions(height, count, offset_top, offset_bottom):
+    """Calculate evenly-spaced hinge Z positions along a door."""
+    count = max(2, min(3, count))
+    positions = [offset_bottom, height - offset_top]
+    if count >= 3:
+        middle = (offset_bottom + (height - offset_top)) / 2
+        positions.insert(1, middle)
+    return sorted(positions)
+
+
+# ======================================================================
+# Factory function
+# ======================================================================
 
 def createHingedDoor(name="HingedDoor"):
     """
-    Create a new hinged door in the active document.
+    Create a new hinged door assembly in the active document.
 
     Args:
-        name: Name for the door object (default: "HingedDoor")
+        name: Name for the assembly (default: "HingedDoor")
 
     Returns:
-        FreeCAD document object
+        App::Part assembly object
     """
     doc = App.ActiveDocument
     if doc is None:
         doc = App.newDocument("ShowerDesign")
 
-    obj = doc.addObject("Part::FeaturePython", name)
-    HingedDoor(obj)
-
-    if App.GuiUp:
-        # Use custom view provider if available
-        try:
-            from freecad.ShowerDesigner.Models.GlassPanelViewProvider import setupViewProvider
-            setupViewProvider(obj)
-        except Exception:
-            # Fallback to simple view provider
-            obj.ViewObject.Proxy = 0
-            obj.ViewObject.Transparency = 70
+    part = doc.addObject("App::Part", name)
+    HingedDoorAssembly(part)
 
     doc.recompute()
-
     App.Console.PrintMessage(f"Hinged door '{name}' created\n")
-    return obj
+    return part

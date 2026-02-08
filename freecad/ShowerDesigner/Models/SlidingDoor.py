@@ -2,598 +2,514 @@
 # SPDX-FileNotice: Part of the ShowerDesigner workbench.
 
 """
-Sliding shower door with track-based mechanism.
-
-This module provides a SlidingDoor class that extends GlassPanel with
-track hardware, roller placement, and support for single and bypass configurations.
+Sliding shower door assembly — App::Part containing glass panel(s),
+top track, bottom guide, rollers, and handle.
 """
 
 import FreeCAD as App
 import Part
-from freecad.ShowerDesigner.Models.GlassPanel import GlassPanel
+from freecad.ShowerDesigner.Models.AssemblyBase import AssemblyController
+from freecad.ShowerDesigner.Models.ChildProxies import (
+    GlassChild,
+    HandleChild,
+    TrackChild,
+    GuideChild,
+    RollerChild,
+)
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     TRACK_PROFILES,
     ROLLER_SPECS,
     BOTTOM_GUIDE_SPECS,
+    HARDWARE_FINISHES,
 )
-from freecad.ShowerDesigner.Models.Handle import createHandleShape
+from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
 
-class SlidingDoor(GlassPanel):
+def _setupGlassVP(obj):
+    from freecad.ShowerDesigner.Models.GlassPanelViewProvider import setupViewProvider
+    setupViewProvider(obj)
+
+
+def _setupHardwareVP(obj, finish="Chrome"):
+    from freecad.ShowerDesigner.Models.HardwareViewProvider import (
+        setupHardwareViewProvider,
+    )
+    setupHardwareViewProvider(obj, finish)
+
+
+class SlidingDoorAssembly(AssemblyController):
     """
-    Parametric sliding shower door with track and roller hardware.
+    Assembly controller for a sliding shower door.
 
-    Extends the base GlassPanel with sliding door-specific properties including
-    track type, panel count (for bypass configuration), roller visualization,
-    and calculated travel/opening widths.
+    Creates an App::Part containing:
+      - VarSet with all user-editable properties
+      - 1-2 Glass panel children (single or bypass)
+      - TopTrack child
+      - BottomGuide child
+      - 2-4 Roller children (2 per panel)
+      - Handle child
     """
 
-    def __init__(self, obj):
-        """
-        Initialize the sliding door with track and hardware properties.
+    def __init__(self, part_obj):
+        super().__init__(part_obj)
+        vs = self._getOrCreateVarSet(part_obj)
+        self._setupVarSetProperties(vs)
+        self._addChild(part_obj, "Panel1", GlassChild, _setupGlassVP)
 
-        Args:
-            obj: FreeCAD document object
-        """
-        # Initialize base GlassPanel
-        super().__init__(obj)
+    # ------------------------------------------------------------------
+    # VarSet property setup
+    # ------------------------------------------------------------------
 
-        # Override attachment type to Sliding
-        obj.AttachmentType = "Sliding"
+    def _setupVarSetProperties(self, vs):
+        # Dimensions
+        vs.addProperty(
+            "App::PropertyLength", "Width", "Dimensions", "Door width"
+        ).Width = 900
+        vs.addProperty(
+            "App::PropertyLength", "Height", "Dimensions", "Door height"
+        ).Height = 2000
+        vs.addProperty(
+            "App::PropertyLength", "Thickness", "Dimensions", "Glass thickness"
+        ).Thickness = 8
 
-        # Door configuration properties
-        obj.addProperty(
-            "App::PropertyInteger",
-            "PanelCount",
-            "Door Configuration",
-            "Number of panels (1=single, 2=bypass)"
+        # Glass
+        vs.addProperty(
+            "App::PropertyEnumeration", "GlassType", "Glass", "Type of glass"
         )
-        obj.PanelCount = 1
+        vs.GlassType = ["Clear", "Frosted", "Bronze", "Grey", "Reeded", "Low-Iron"]
+        vs.GlassType = "Clear"
+        vs.addProperty(
+            "App::PropertyEnumeration", "EdgeFinish", "Glass", "Edge finish type"
+        )
+        vs.EdgeFinish = ["Bright_Polish", "Dull_Polish"]
+        vs.EdgeFinish = "Bright_Polish"
+        vs.addProperty(
+            "App::PropertyEnumeration", "TemperType", "Glass", "Tempering type"
+        )
+        vs.TemperType = ["Tempered", "Laminated", "None"]
+        vs.TemperType = "Tempered"
 
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "TrackType",
-            "Door Configuration",
+        # Door configuration
+        vs.addProperty(
+            "App::PropertyInteger", "PanelCount", "Door Configuration",
+            "Number of panels (1=single, 2=bypass)"
+        ).PanelCount = 1
+        vs.addProperty(
+            "App::PropertyEnumeration", "TrackType", "Door Configuration",
             "Type of sliding track system"
         )
-        obj.TrackType = ["Edge", "City", "Ezy", "Soft-Close"]
-        obj.TrackType = "Edge"
-
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "SlideDirection",
-            "Door Configuration",
+        vs.TrackType = ["Edge", "City", "Ezy", "Soft-Close"]
+        vs.TrackType = "Edge"
+        vs.addProperty(
+            "App::PropertyEnumeration", "SlideDirection", "Door Configuration",
             "Direction the door slides when opening"
         )
-        obj.SlideDirection = ["Left", "Right"]
-        obj.SlideDirection = "Right"
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "OverlapWidth",
-            "Door Configuration",
-            "Overlap width for bypass doors (mm)"
+        vs.SlideDirection = ["Left", "Right"]
+        vs.SlideDirection = "Right"
+        vs.addProperty(
+            "App::PropertyLength", "OverlapWidth", "Door Configuration",
+            "Overlap width for bypass doors"
         ).OverlapWidth = 50
 
-        # Track hardware properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "RollerType",
-            "Track Hardware",
+        # Track hardware
+        vs.addProperty(
+            "App::PropertyEnumeration", "RollerType", "Track Hardware",
             "Type of roller mechanism"
         )
-        obj.RollerType = ["Standard", "Soft-Close"]
-        obj.RollerType = "Standard"
+        vs.RollerType = ["Standard", "Soft-Close"]
+        vs.RollerType = "Standard"
 
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "TrackFinish",
-            "Track Hardware",
-            "Finish/color of track hardware"
-        )
-        obj.TrackFinish = ["Chrome", "Brushed-Nickel", "Matte-Black"]
-        obj.TrackFinish = "Chrome"
-
-        # Handle hardware properties
-        obj.addProperty(
-            "App::PropertyEnumeration",
-            "HandleType",
-            "Handle Hardware",
+        # Handle hardware
+        vs.addProperty(
+            "App::PropertyEnumeration", "HandleType", "Handle Hardware",
             "Type of door handle"
         )
-        obj.HandleType = ["None", "Knob", "Bar", "Pull"]
-        obj.HandleType = "Bar"
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleHeight",
-            "Handle Hardware",
+        vs.HandleType = ["None", "Knob", "Bar", "Pull"]
+        vs.HandleType = "Bar"
+        vs.addProperty(
+            "App::PropertyLength", "HandleHeight", "Handle Hardware",
             "Height of handle from floor"
-        ).HandleHeight = 1050  # mm - ergonomic height
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleOffset",
-            "Handle Hardware",
+        ).HandleHeight = 1050
+        vs.addProperty(
+            "App::PropertyLength", "HandleOffset", "Handle Hardware",
             "Distance from handle to door edge"
-        ).HandleOffset = 75  # mm
+        ).HandleOffset = 75
+        vs.addProperty(
+            "App::PropertyLength", "HandleLength", "Handle Hardware",
+            "Length of bar handle"
+        ).HandleLength = 300
 
-        obj.addProperty(
-            "App::PropertyLength",
-            "HandleLength",
-            "Handle Hardware",
-            "Length of bar handle (for Bar type)"
-        ).HandleLength = 300  # mm
-
-        # Hardware display properties
-        obj.addProperty(
-            "App::PropertyBool",
-            "ShowHardware",
-            "Hardware Display",
-            "Show track and roller hardware in 3D view"
+        # Hardware display
+        vs.addProperty(
+            "App::PropertyEnumeration", "HardwareFinish", "Hardware Display",
+            "Finish for all hardware"
+        )
+        vs.HardwareFinish = HARDWARE_FINISHES[:]
+        vs.HardwareFinish = "Chrome"
+        vs.addProperty(
+            "App::PropertyBool", "ShowHardware", "Hardware Display",
+            "Show track and roller hardware"
         ).ShowHardware = True
 
-        # Calculated properties (read-only)
-        obj.addProperty(
-            "App::PropertyLength",
-            "TrackLength",
-            "Calculated",
-            "Total length of the top track (read-only)"
+        # Calculated (read-only)
+        vs.addProperty(
+            "App::PropertyFloat", "Weight", "Calculated",
+            "Weight of the door in kg"
         )
-        obj.setEditorMode("TrackLength", 1)  # Make read-only
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "TrackHeight",
-            "Calculated",
-            "Height of the top track profile (read-only)"
+        vs.setEditorMode("Weight", 1)
+        vs.addProperty(
+            "App::PropertyFloat", "Area", "Calculated",
+            "Area of the door in m²"
         )
-        obj.setEditorMode("TrackHeight", 1)  # Make read-only
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "TravelDistance",
-            "Calculated",
-            "How far the door can slide (read-only)"
+        vs.setEditorMode("Area", 1)
+        vs.addProperty(
+            "App::PropertyLength", "TrackLength", "Calculated",
+            "Total track length"
         )
-        obj.setEditorMode("TravelDistance", 1)  # Make read-only
-
-        obj.addProperty(
-            "App::PropertyLength",
-            "OpeningWidth",
-            "Calculated",
-            "Clear opening when fully open (read-only)"
+        vs.setEditorMode("TrackLength", 1)
+        vs.addProperty(
+            "App::PropertyLength", "TrackHeight", "Calculated",
+            "Track profile height"
         )
-        obj.setEditorMode("OpeningWidth", 1)  # Make read-only
+        vs.setEditorMode("TrackHeight", 1)
+        vs.addProperty(
+            "App::PropertyLength", "TravelDistance", "Calculated",
+            "How far the door can slide"
+        )
+        vs.setEditorMode("TravelDistance", 1)
+        vs.addProperty(
+            "App::PropertyLength", "OpeningWidth", "Calculated",
+            "Clear opening when fully open"
+        )
+        vs.setEditorMode("OpeningWidth", 1)
 
-    def execute(self, obj):
-        """
-        Rebuild the geometry when properties change.
+    # ------------------------------------------------------------------
+    # execute
+    # ------------------------------------------------------------------
 
-        Creates the glass panel(s) and adds track/roller visualization if enabled.
+    def assemblyExecute(self, part_obj):
+        vs = self._getVarSet(part_obj)
+        if vs is None:
+            return
 
-        Args:
-            obj: FreeCAD document object
-        """
-        # Get dimensions
-        width = obj.Width.Value
-        height = obj.Height.Value
-        thickness = obj.Thickness.Value
-        panel_count = max(1, min(2, obj.PanelCount))
-
-        # Validate dimensions
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
         if width <= 0 or height <= 0 or thickness <= 0:
             App.Console.PrintError("Invalid door dimensions\n")
             return
 
-        shapes = []
+        panel_count = max(1, min(2, vs.PanelCount))
 
-        # Create glass panel(s)
-        if panel_count == 1:
-            # Single panel
-            panel = Part.makeBox(width, thickness, height)
-            shapes.append(panel)
+        # --- Glass panels ---
+        self._updatePanels(part_obj, vs, panel_count)
+
+        show_hw = vs.ShowHardware
+        finish = vs.HardwareFinish
+
+        # --- Top track ---
+        if show_hw:
+            self._updateTopTrack(part_obj, vs)
         else:
-            # Bypass (2 panels)
-            overlap = obj.OverlapWidth.Value
-            panel1 = Part.makeBox(width, thickness, height)
-            shapes.append(panel1)
+            if self._hasChild(part_obj, "TopTrack"):
+                self._removeChild(part_obj, "TopTrack")
 
-            # Second panel offset by overlap
-            panel2 = Part.makeBox(width, thickness, height)
-            panel2.translate(App.Vector(width - overlap, thickness + 25, 0))
-            shapes.append(panel2)
-
-        # Add hardware if enabled
-        if obj.ShowHardware:
-            # Add top track
-            track = self._createTopTrack(obj)
-            if track:
-                shapes.append(track)
-
-            # Add bottom guide
-            guide = self._createBottomGuide(obj)
-            if guide:
-                shapes.append(guide)
-
-            # Add rollers
-            rollers = self._createRollers(obj)
-            shapes.extend(rollers)
-
-            # Add handle
-            handle = self._createHandle(obj)
-            if handle:
-                shapes.append(handle)
-
-        # Combine all shapes
-        if len(shapes) > 1:
-            compound = Part.makeCompound(shapes)
-            obj.Shape = compound
+        # --- Bottom guide ---
+        if show_hw:
+            self._updateBottomGuide(part_obj, vs)
         else:
-            obj.Shape = shapes[0]
+            if self._hasChild(part_obj, "BottomGuide"):
+                self._removeChild(part_obj, "BottomGuide")
 
-        # Apply position and rotation
-        obj.Placement.Base = obj.Position
-        new_rotation = App.Rotation(App.Vector(0, 0, 1), obj.Rotation)
-        obj.Placement.Rotation = new_rotation
-
-        # Update calculated properties
-        self._updateCalculatedProperties(obj)
-        self._updateSlidingProperties(obj)
-
-    def _calculateTrackLength(self, obj):
-        """
-        Calculate total track length based on panel configuration.
-
-        Single panel: Panel width + 50mm clearance each side
-        Bypass: Panel width * 2 - OverlapWidth + clearances
-
-        Args:
-            obj: FreeCAD document object
-
-        Returns:
-            Track length in mm
-        """
-        width = obj.Width.Value
-        panel_count = max(1, min(2, obj.PanelCount))
-        clearance = 50  # 50mm clearance on each side
-
-        if panel_count == 1:
-            return width * 2 + clearance * 2
+        # --- Rollers ---
+        if show_hw:
+            self._updateRollers(part_obj, vs, panel_count)
         else:
-            overlap = obj.OverlapWidth.Value
-            return width * 3 - overlap + clearance * 2
+            self._syncChildCount(part_obj, "Roller", 0, RollerChild)
 
-    def _createTopTrack(self, obj):
-        """
-        Create top track profile shape.
+        # --- Handle ---
+        if show_hw and vs.HandleType != "None":
+            self._updateHandle(part_obj, vs)
+        else:
+            if self._hasChild(part_obj, "Handle"):
+                self._removeChild(part_obj, "Handle")
 
-        Args:
-            obj: FreeCAD document object
+        # --- Finish ---
+        self._updateAllHardwareFinish(part_obj, finish)
 
-        Returns:
-            Part.Shape for the track, or None
-        """
-        try:
-            track_type = obj.TrackType
-            track_spec = TRACK_PROFILES.get(track_type, TRACK_PROFILES["Edge"])
-            track_width = track_spec["width"]
-            track_height = track_spec["height"]
-            sliding_direction = obj.SlideDirection
+        # --- Calculated properties ---
+        self._updateCalculatedProperties(vs)
 
-            track_length = self._calculateTrackLength(obj)
-            height = obj.Height.Value
-            thickness = obj.Thickness.Value
+    # ------------------------------------------------------------------
+    # Panel management
+    # ------------------------------------------------------------------
 
-            # Create track as extruded box (U-channel profile simplified to box)
-            track = Part.makeBox(track_length, track_width, track_height)
+    def _updatePanels(self, part_obj, vs, panel_count):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
 
-            # Position at top of panel, Centered based on sliding direction
-            if sliding_direction == "Right":
-                x_offset = -50  # Start 50mm before panel
-            else: #Left
-                x_offset = -track_length / 2
-            y_offset = thickness / 2 - track_width / 2
-            z_offset = height + 5  # 5mm above glass
+        # Panel 1 always exists
+        panel1 = self._getChild(part_obj, "Panel1")
+        if panel1:
+            panel1.Width = width
+            panel1.Height = height
+            panel1.Thickness = thickness
+            if hasattr(panel1, "GlassType"):
+                panel1.GlassType = vs.GlassType
 
-            track.translate(App.Vector(x_offset, y_offset, z_offset))
-            return track
+        # Panel 2: add or remove based on panel count
+        if panel_count == 2:
+            if not self._hasChild(part_obj, "Panel2"):
+                self._addChild(part_obj, "Panel2", GlassChild, _setupGlassVP)
+            panel2 = self._getChild(part_obj, "Panel2")
+            if panel2:
+                panel2.Width = width
+                panel2.Height = height
+                panel2.Thickness = thickness
+                if hasattr(panel2, "GlassType"):
+                    panel2.GlassType = vs.GlassType
+                overlap = vs.OverlapWidth.Value
+                panel2.Placement = App.Placement(
+                    App.Vector(width - overlap, thickness + 25, 0),
+                    App.Rotation()
+                )
+        else:
+            if self._hasChild(part_obj, "Panel2"):
+                self._removeChild(part_obj, "Panel2")
 
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating track: {e}\n")
-            return None
+    # ------------------------------------------------------------------
+    # Track management
+    # ------------------------------------------------------------------
 
-    def _createBottomGuide(self, obj):
-        """
-        Create bottom floor guide channel.
+    def _updateTopTrack(self, part_obj, vs):
+        if not self._hasChild(part_obj, "TopTrack"):
+            self._addChild(
+                part_obj, "TopTrack", TrackChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+            )
 
-        Args:
-            obj: FreeCAD document object
+        child = self._getChild(part_obj, "TopTrack")
+        if child is None:
+            return
 
-        Returns:
-            Part.Shape for the guide, or None
-        """
-        try:
-            track_length = self._calculateTrackLength(obj)
-            thickness = obj.Thickness.Value
-            sliding_direction = obj.SlideDirection
+        track_length = _calculateTrackLength(vs)
+        child.TrackType = vs.TrackType
+        child.TrackLength = track_length
 
-            guide_width = BOTTOM_GUIDE_SPECS["width"]
-            guide_height = BOTTOM_GUIDE_SPECS["height"]
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        track_spec = TRACK_PROFILES.get(vs.TrackType, TRACK_PROFILES["Edge"])
+        track_width = track_spec["width"]
 
-            guide = Part.makeBox(track_length, guide_width, guide_height)
+        if vs.SlideDirection == "Right":
+            x_offset = -50
+        else:
+            x_offset = -track_length / 2
 
-            # Position at floor level, Centered based on sliding direction
-            if sliding_direction == "Right":
-                x_offset = -50  # Start 50mm before panel
-            else: #Left
-                x_offset = -track_length / 2
-            y_offset = thickness / 2 - guide_width / 2
-            z_offset = -guide_height  # Below floor level
+        y_offset = thickness / 2 - track_width / 2
+        z_offset = height + 5
 
-            guide.translate(App.Vector(x_offset, y_offset, z_offset))
-            return guide
+        child.Placement = App.Placement(
+            App.Vector(x_offset, y_offset, z_offset), App.Rotation()
+        )
 
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating bottom guide: {e}\n")
-            return None
+    # ------------------------------------------------------------------
+    # Guide management
+    # ------------------------------------------------------------------
 
-    def _createRollers(self, obj):
-        """
-        Create roller hardware visualization.
+    def _updateBottomGuide(self, part_obj, vs):
+        if not self._hasChild(part_obj, "BottomGuide"):
+            self._addChild(
+                part_obj, "BottomGuide", GuideChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+            )
 
-        Args:
-            obj: FreeCAD document object
+        child = self._getChild(part_obj, "BottomGuide")
+        if child is None:
+            return
 
-        Returns:
-            List of Part shapes for rollers
-        """
-        rollers = []
+        track_length = _calculateTrackLength(vs)
+        child.GuideLength = track_length
 
-        try:
-            width = obj.Width.Value
-            height = obj.Height.Value
-            thickness = obj.Thickness.Value
-            panel_count = max(1, min(2, obj.PanelCount))
+        thickness = vs.Thickness.Value
+        guide_width = BOTTOM_GUIDE_SPECS["width"]
+        guide_height = BOTTOM_GUIDE_SPECS["height"]
 
-            roller_type = obj.RollerType if hasattr(obj, "RollerType") else "Standard"
-            roller_spec = ROLLER_SPECS.get(roller_type, ROLLER_SPECS["Standard"])
-            roller_radius = roller_spec["radius"]
-            roller_height = roller_spec["height"]
+        if vs.SlideDirection == "Right":
+            x_offset = -50
+        else:
+            x_offset = -track_length / 2
 
-            # Rollers at panel edges (top)
-            for panel_idx in range(panel_count):
-                if panel_idx == 0:
-                    # First panel
-                    x_positions = [20, width - 20]  # 20mm from edges
-                    y_offset = thickness / 2
-                else:
-                    # Second panel (offset for bypass)
-                    overlap = obj.OverlapWidth.Value
-                    base_x = width - overlap
-                    x_positions = [base_x + 20, base_x + width - 20]
-                    y_offset = thickness / 2 + thickness + 5
+        y_offset = thickness / 2 - guide_width / 2
+        z_offset = -guide_height
 
-                z_pos = height + 5 + 15  # Above track
+        child.Placement = App.Placement(
+            App.Vector(x_offset, y_offset, z_offset), App.Rotation()
+        )
 
-                for x_pos in x_positions:
-                    roller = Part.makeCylinder(
-                        roller_radius,
-                        roller_height,
-                        App.Vector(x_pos, y_offset, z_pos),
-                        App.Vector(0, 0, 1)
+    # ------------------------------------------------------------------
+    # Roller management
+    # ------------------------------------------------------------------
+
+    def _updateRollers(self, part_obj, vs, panel_count):
+        roller_count = panel_count * 2
+        self._syncChildCount(
+            part_obj, "Roller", roller_count, RollerChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
+
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+
+        idx = 1
+        for panel_idx in range(panel_count):
+            if panel_idx == 0:
+                x_positions = [20, width - 20]
+                y_offset = thickness / 2
+            else:
+                overlap = vs.OverlapWidth.Value
+                base_x = width - overlap
+                x_positions = [base_x + 20, base_x + width - 20]
+                y_offset = thickness / 2 + thickness + 5
+
+            z_pos = height + 5 + 15
+
+            for x_pos in x_positions:
+                child = self._getChild(part_obj, f"Roller{idx}")
+                if child:
+                    child.RollerType = vs.RollerType
+                    child.Placement = App.Placement(
+                        App.Vector(x_pos, y_offset, z_pos), App.Rotation()
                     )
-                    rollers.append(roller)
+                idx += 1
 
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating rollers: {e}\n")
+    # ------------------------------------------------------------------
+    # Handle management
+    # ------------------------------------------------------------------
 
-        return rollers
+    def _updateHandle(self, part_obj, vs):
+        if not self._hasChild(part_obj, "Handle"):
+            self._addChild(
+                part_obj, "Handle", HandleChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+            )
 
-    def _calculateHandlePosition(self, obj):
-        """
-        Calculate handle position based on slide direction.
+        child = self._getChild(part_obj, "Handle")
+        if child is None:
+            return
 
-        Handle is placed on the leading edge (the edge the user grabs to slide).
+        child.HandleType = vs.HandleType
+        child.HandleLength = vs.HandleLength.Value
 
-        Args:
-            obj: FreeCAD document object
+        width = vs.Width.Value
+        thickness = vs.Thickness.Value
+        handle_height = min(vs.HandleHeight.Value, vs.Height.Value - 100)
+        handle_offset = vs.HandleOffset.Value
 
-        Returns:
-            App.Vector for handle center position
-        """
-        width = obj.Width.Value
-        height = obj.Height.Value
-        thickness = obj.Thickness.Value
-        handle_height = min(obj.HandleHeight.Value, height - 100)
-        handle_offset = obj.HandleOffset.Value
-        slide_direction = obj.SlideDirection
-
-        # Handle on the leading edge (opposite to slide direction)
-        if slide_direction == "Right":
+        if vs.SlideDirection == "Right":
             x_pos = handle_offset
-        else:  # Left
+        else:
             x_pos = width - handle_offset
 
-        y_pos = thickness / 2
-        z_pos = handle_height
+        child.Placement = App.Placement(
+            App.Vector(x_pos, thickness / 2, handle_height), App.Rotation()
+        )
 
-        return App.Vector(x_pos, y_pos, z_pos)
+    # ------------------------------------------------------------------
+    # Calculated properties
+    # ------------------------------------------------------------------
 
-    def _createHandle(self, obj):
-        """
-        Create handle hardware visualization using shared shape function.
-
-        Args:
-            obj: FreeCAD document object
-
-        Returns:
-            Part.Shape or None if HandleType is "None"
-        """
-        if obj.HandleType == "None":
-            return None
-
+    def _updateCalculatedProperties(self, vs):
         try:
-            handle_pos = self._calculateHandlePosition(obj)
-            length = obj.HandleLength.Value if obj.HandleType == "Bar" else None
-            return createHandleShape(obj.HandleType, length, handle_pos)
-        except Exception as e:
-            App.Console.PrintWarning(f"Error creating handle: {e}\n")
-            return None
+            width = vs.Width.Value
+            height = vs.Height.Value
+            thickness = vs.Thickness.Value
+            panel_count = max(1, min(2, vs.PanelCount))
+            overlap = vs.OverlapWidth.Value
 
-    def _updateSlidingProperties(self, obj):
-        """
-        Update sliding-specific calculated properties.
+            width_m = width / 1000.0
+            height_m = height / 1000.0
+            area = width_m * height_m
+            if hasattr(vs, "Area"):
+                vs.Area = area
 
-        Args:
-            obj: FreeCAD document object
-        """
-        try:
-            width = obj.Width.Value
-            panel_count = max(1, min(2, obj.PanelCount))
-            overlap = obj.OverlapWidth.Value
+            thickness_key = f"{int(thickness)}mm"
+            if thickness_key in GLASS_SPECS:
+                weight_per_m2 = GLASS_SPECS[thickness_key]["weight_kg_m2"]
+                weight = area * weight_per_m2
+            else:
+                weight = area * 2.5 * thickness
+            if hasattr(vs, "Weight"):
+                vs.Weight = weight
 
-            # Track length
-            track_length = self._calculateTrackLength(obj)
-            if hasattr(obj, "TrackLength"):
-                obj.TrackLength = track_length
+            track_length = _calculateTrackLength(vs)
+            if hasattr(vs, "TrackLength"):
+                vs.TrackLength = track_length
 
-            # Track height from profile
-            track_type = obj.TrackType
-            track_spec = TRACK_PROFILES.get(track_type, TRACK_PROFILES["Edge"])
-            if hasattr(obj, "TrackHeight"):
-                obj.TrackHeight = track_spec["height"]
+            track_spec = TRACK_PROFILES.get(vs.TrackType, TRACK_PROFILES["Edge"])
+            if hasattr(vs, "TrackHeight"):
+                vs.TrackHeight = track_spec["height"]
 
-            # Travel distance
             if panel_count == 1:
                 travel = width
-            else:
-                travel = width - overlap
-            if hasattr(obj, "TravelDistance"):
-                obj.TravelDistance = travel
-
-            # Opening width
-            if panel_count == 1:
                 opening = width
             else:
+                travel = width - overlap
                 opening = width - overlap
-            if hasattr(obj, "OpeningWidth"):
-                obj.OpeningWidth = opening
+            if hasattr(vs, "TravelDistance"):
+                vs.TravelDistance = travel
+            if hasattr(vs, "OpeningWidth"):
+                vs.OpeningWidth = opening
 
         except Exception as e:
-            App.Console.PrintWarning(f"Error updating sliding properties: {e}\n")
+            App.Console.PrintWarning(
+                f"Error updating calculated properties: {e}\n"
+            )
 
-    def onChanged(self, obj, prop):
-        """
-        Called when a property changes.
+    def assemblyOnChanged(self, part_obj, prop):
+        pass
 
-        Enforces constraints:
-        - PanelCount=2 only allowed with Soft-Close track type
-        - Ezy track type only compatible with 10mm or 12mm glass
 
-        Args:
-            obj: FreeCAD document object
-            prop: Name of the property that changed
-        """
-        # Call parent onChanged
-        super().onChanged(obj, prop)
+# ======================================================================
+# Helpers
+# ======================================================================
 
-        # Validate PanelCount (1-2)
-        if prop == "PanelCount":
-            if hasattr(obj, "PanelCount"):
-                if obj.PanelCount < 1:
-                    obj.PanelCount = 1
-                elif obj.PanelCount > 2:
-                    obj.PanelCount = 2
+def _calculateTrackLength(vs):
+    """Calculate total track length based on panel configuration."""
+    width = vs.Width.Value
+    panel_count = max(1, min(2, vs.PanelCount))
+    clearance = 50
 
-                # Enforce: Only Soft-Close supports 2-panel bypass
-                if hasattr(obj, "TrackType"):
-                    if obj.PanelCount == 2 and obj.TrackType != "Soft-Close":
-                        App.Console.PrintWarning(
-                            "Bypass (2-panel) configuration requires Soft-Close track. "
-                            "Resetting PanelCount to 1.\n"
-                        )
-                        obj.PanelCount = 1
+    if panel_count == 1:
+        return width * 2 + clearance * 2
+    else:
+        overlap = vs.OverlapWidth.Value
+        return width * 3 - overlap + clearance * 2
 
-        # Validate TrackType changes
-        if prop == "TrackType":
-            if hasattr(obj, "TrackType") and hasattr(obj, "PanelCount"):
-                # If switching away from Soft-Close with 2 panels, reset to 1
-                if obj.TrackType != "Soft-Close" and obj.PanelCount == 2:
-                    App.Console.PrintWarning(
-                        f"{obj.TrackType} track only supports single panel. "
-                        "Resetting PanelCount to 1.\n"
-                    )
-                    obj.PanelCount = 1
 
-            # Ezy track only compatible with 10mm or 12mm glass
-            if hasattr(obj, "TrackType") and hasattr(obj, "Thickness"):
-                if obj.TrackType == "Ezy":
-                    thickness_mm = int(obj.Thickness.Value)
-                    if thickness_mm not in [10, 12]:
-                        App.Console.PrintWarning(
-                            f"Ezy track only compatible with 10mm or 12mm glass "
-                            f"(current: {thickness_mm}mm). Consider changing glass "
-                            "thickness or track type.\n"
-                        )
-
-        # Validate thickness for Ezy track
-        if prop == "Thickness":
-            if hasattr(obj, "TrackType") and hasattr(obj, "Thickness"):
-                if obj.TrackType == "Ezy":
-                    thickness_mm = int(obj.Thickness.Value)
-                    if thickness_mm not in [10, 12]:
-                        App.Console.PrintWarning(
-                            f"Ezy track only compatible with 10mm or 12mm glass "
-                            f"(current: {thickness_mm}mm). Consider changing glass "
-                            "thickness or track type.\n"
-                        )
-
-        # Validate handle height (reasonable range)
-        if prop == "HandleHeight":
-            if hasattr(obj, "HandleHeight"):
-                if obj.HandleHeight.Value < 300:
-                    obj.HandleHeight = 300
-                elif obj.HandleHeight.Value > 1800:
-                    obj.HandleHeight = 1800
-
-        # Validate overlap width
-        if prop == "OverlapWidth":
-            if hasattr(obj, "OverlapWidth") and hasattr(obj, "Width"):
-                if obj.OverlapWidth.Value < 20:
-                    obj.OverlapWidth = 20
-                elif obj.OverlapWidth.Value > obj.Width.Value / 2:
-                    obj.OverlapWidth = obj.Width.Value / 2
-
+# ======================================================================
+# Factory function
+# ======================================================================
 
 def createSlidingDoor(name="SlidingDoor"):
     """
-    Create a new sliding door in the active document.
+    Create a new sliding door assembly in the active document.
 
     Args:
-        name: Name for the door object (default: "SlidingDoor")
+        name: Name for the assembly (default: "SlidingDoor")
 
     Returns:
-        FreeCAD document object
+        App::Part assembly object
     """
     doc = App.ActiveDocument
     if doc is None:
         doc = App.newDocument("ShowerDesign")
 
-    obj = doc.addObject("Part::FeaturePython", name)
-    SlidingDoor(obj)
-
-    if App.GuiUp:
-        # Use custom view provider if available
-        try:
-            from freecad.ShowerDesigner.Models.GlassPanelViewProvider import setupViewProvider
-            setupViewProvider(obj)
-        except Exception:
-            # Fallback to simple view provider
-            obj.ViewObject.Proxy = 0
-            obj.ViewObject.Transparency = 70
+    part = doc.addObject("App::Part", name)
+    SlidingDoorAssembly(part)
 
     doc.recompute()
-
     App.Console.PrintMessage(f"Sliding door '{name}' created\n")
-    return obj
+    return part

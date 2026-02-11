@@ -16,6 +16,7 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     BEVEL_HINGE_SPECS,
     BEVEL_FINISHES,
     HARDWARE_FINISHES,
+    MONZA_BIFOLD_HINGE_SPECS,
 )
 
 
@@ -40,42 +41,14 @@ def createHingeShape(width, depth, height):
 # Bevel hinge shape builders
 # ======================================================================
 
-def _makeGlassClamp(plate_w, plate_t, height, glass_t, cutout_depth):
+def _makeGlassClamp(dims, glass_t):
     """
-    Create a C-channel glass clamp: outer box with a glass slot cut out.
-
-    The clamp extends in +Y. The slot is centered in X, runs full height,
-    and is sized to accept the glass panel.
-
-    Args:
-        plate_w: Plate width (X)
-        plate_t: Plate total depth (Y) — includes cutout
-        height: Body height (Z)
-        glass_t: Glass thickness for the slot
-        cutout_depth: Depth of the glass slot
+    Create a glass clamp: outer box with a glass slot cut out.
 
     Returns:
         Part.Shape
     """
-    outer = Part.makeBox(plate_w, plate_t, height)
-    slot_x = (plate_w - glass_t) / 2
-    slot = Part.makeBox(glass_t, cutout_depth, height)
-    slot.translate(App.Vector(slot_x, 0, 0))
-    return outer.cut(slot)
-
-
-def _buildWallToGlass(dims, glass_t):
-    """
-    Build a Wall-to-Glass Bevel hinge shape (L-profile from top view).
-
-    - Wall plate extends in -Y (toward wall)
-    - Glass clamp extends in +Y (toward room)
-    - Knuckle cylinder centered on Z axis at the join
-
-    Origin: bottom-center of knuckle barrel.
-    """
     body_h = dims["body_height"]                # 90 mm
-    wall_pw = dims["wall_plate_width"]          # 50 mm
     glass_pw = dims["glass_plate_width"]        # 55 mm
     cutout_depth = dims["glass_cutout_depth"]   # 41 mm
     cutout_width =dims["glass_cutout_width"]    # 63 mm
@@ -84,7 +57,6 @@ def _buildWallToGlass(dims, glass_t):
     knuckle_w = dims["knuckle_width"]           # 58 mm
     plate_t = 5  # plate thickness
 
-    # Glass Cutout
     cutout_base = Part.makeBox(
         cutout_depth,  glass_t, cutout_width,
         App.Vector(0, 0, -cutout_width / 2))
@@ -101,7 +73,7 @@ def _buildWallToGlass(dims, glass_t):
         360
     )
     cutout = cutout_base.fuse(knuckle_b).fuse(knuckle_t)
-    #Make beveled front plate
+
     front_plate = Part.makeBox(
         glass_pw, plate_t, body_h,
         App.Vector(0, -plate_t, -body_h/2)
@@ -119,16 +91,47 @@ def _buildWallToGlass(dims, glass_t):
     beveled_plate.Placement.Rotation = rotation
     beveled_plate.translate(App.Vector(0, glass_t, 0))
     glass_clamp = front_cutout.fuse(beveled_plate)
-    #Hinge cut
+    return glass_clamp
+
+
+def _buildWallToGlass(dims, glass_t, sub_type):
+    """
+    Build a Wall-to-Glass Bevel hinge shape (L-profile from top view).
+
+    Origin: Center of out side edge of glass clamp.
+    """
+    body_h = dims["body_height"]                # 90 mm
+    wall_pw = dims["wall_plate_width"]          # 50 mm
+    glass_pw = dims["glass_plate_width"]        # 55 mm
+    cutout_depth = dims["glass_cutout_depth"]   # 41 mm
+    cutout_width =dims["glass_cutout_width"]    # 63 mm
+    knuckle_dia = dims["knuckle_diameter"]      # 16 mm
+    knuckle_dep = dims["knuckle_depth"]         # 37 mm
+    knuckle_w = dims["knuckle_width"]           # 58 mm
+    wg_offset = dims["wall_to_glass_offset"]    # 10 mm
+    plate_t = 5  # plate thickness
+
+    glass_clamp = _makeGlassClamp(dims, glass_t)
+
     hinge_cut = Part.makeBox(
         27, glass_t + plate_t*2, 45,
         App.Vector(0, -plate_t, -45/2)
     )
+    glass_clamp_cut = glass_clamp.cut(hinge_cut)
+    wall_plate = Part.makeBox(
+        plate_t, wall_pw, body_h,
+        App.Vector(-wg_offset, -wall_pw/2 + glass_t/2, -body_h/2)
+    )
+    if sub_type == "Bevel 90° Wall to Glass Hinge — Half Plate":
+        wall_plate.translate(App.Vector(0, wall_pw/2 - 8, 0))
+    hinge_plate = Part.makeBox(
+        wg_offset + 27, glass_t, 45,
+        App.Vector(-wg_offset, 0, -45/2)
+    )
+    return glass_clamp_cut.fuse(hinge_plate).fuse(wall_plate)
 
-    return glass_clamp.cut(hinge_cut)
 
-
-def _buildGlassToGlass(dims, glass_t):
+def _buildGlassToGlass(dims, glass_t, sub_type):
     """
     Build a Glass-to-Glass Bevel hinge shape (two clamps mirrored about knuckle).
 
@@ -150,12 +153,12 @@ def _buildGlassToGlass(dims, glass_t):
 
     # Positive-Y clamp (door side)
     depth_pos = plate_t + cd_pos
-    clamp_pos = _makeGlassClamp(pw_pos, depth_pos, body_h, glass_t, cd_pos)
+    clamp_pos = _makeGlassClamp(dims, glass_t)
     clamp_pos.translate(App.Vector(-pw_pos / 2, 0, 0))
 
     # Negative-Y clamp (fixed side) — mirror by building in +Y then flipping
     depth_neg = plate_t + cd_neg
-    clamp_neg = _makeGlassClamp(pw_neg, depth_neg, body_h, glass_t, cd_neg)
+    clamp_neg = _makeGlassClamp(dims, glass_t)
     clamp_neg.translate(App.Vector(-pw_neg / 2, 0, 0))
     # Mirror about XZ plane: reflect Y
     mirror_mat = App.Matrix()
@@ -172,7 +175,7 @@ def _buildGlassToGlass(dims, glass_t):
     return clamp_pos.fuse(clamp_neg).fuse(knuckle)
 
 
-def _buildPivotHinge(dims, glass_t):
+def _buildPivotHinge(dims, glass_t, sub_type):
     """
     Build a Pivot Bevel hinge shape (glass clamp + pivot body + knuckle).
 
@@ -187,7 +190,7 @@ def _buildPivotHinge(dims, glass_t):
 
     # Glass clamp (extends in +Y)
     clamp_depth = plate_t + cutout_depth
-    clamp = _makeGlassClamp(glass_ph, clamp_depth, body_h, glass_t, cutout_depth)
+    clamp = _makeGlassClamp(dims, glass_t)
     clamp.translate(App.Vector(-glass_ph / 2, 0, 0))
 
     # Pivot body (extends in -Y)
@@ -206,7 +209,7 @@ def _buildPivotHinge(dims, glass_t):
     return clamp.fuse(pivot).fuse(knuckle)
 
 
-def _buildTeeHinge(dims, glass_t):
+def _buildTeeHinge(dims, glass_t, sub_type):
     """
     Build a Tee Bevel hinge shape.
 
@@ -225,12 +228,12 @@ def _buildTeeHinge(dims, glass_t):
     cd = dims.get("glass_cutout_depth", 41)
     depth = plate_t + cd
 
-    clamp_pos = _makeGlassClamp(pw, depth, body_h, glass_t, cd)
+    clamp_pos = _makeGlassClamp(dims, glass_t)
     clamp_pos.translate(App.Vector(-pw / 2, 0, 0))
 
     # Fixed panel clamp (negative Y)
     fp_w = dims.get("fixed_plate_width", 60)
-    clamp_neg = _makeGlassClamp(fp_w, depth, body_h, glass_t, cd)
+    clamp_neg = _makeGlassClamp(dims, glass_t)
     clamp_neg.translate(App.Vector(-fp_w / 2, 0, 0))
     mirror_mat = App.Matrix()
     mirror_mat.A22 = -1
@@ -276,6 +279,119 @@ _BEVEL_BUILDERS = {
 }
 
 
+# ======================================================================
+# Monza bi-fold self-rising hinge shape builders
+# ======================================================================
+
+def createMonzaWallHingeShape(glass_thickness=8):
+    """
+    Create the Monza 90° Wall-to-Glass self-rising hinge shape.
+
+    Simplified representation: wall plate + glass clamp + knuckle cylinder.
+    Origin at the wall-side face center-bottom of the hinge body.
+
+    Args:
+        glass_thickness: Glass thickness in mm (default 8)
+
+    Returns:
+        Part.Shape
+    """
+    dims = MONZA_BIFOLD_HINGE_SPECS["monza_90_wall_to_glass"]["dimensions"]
+    wall_pw = dims["wall_plate_width"]    # 35
+    glass_pw = dims["glass_plate_width"]  # 35
+    body_h = dims["body_height"]          # 80
+    body_w = dims["body_width"]           # 60
+    knuckle_d = dims["knuckle_diameter"]  # 14
+    knuckle_w = dims["knuckle_width"]     # 45
+    offset = dims["wall_to_glass_offset"]  # 10
+    plate_t = 5
+
+    try:
+        # Wall plate (flat against wall, extends in -X from origin)
+        wall_plate = Part.makeBox(plate_t, wall_pw, body_h,
+                                  App.Vector(-offset - plate_t,
+                                             -wall_pw / 2 + glass_thickness / 2, 0))
+
+        # Glass clamp body (wraps around glass)
+        glass_outer = Part.makeBox(glass_pw, glass_thickness + plate_t * 2, body_h,
+                                   App.Vector(0, -plate_t, 0))
+        glass_slot = Part.makeBox(glass_pw - plate_t, glass_thickness, body_h,
+                                  App.Vector(plate_t, 0, 0))
+        glass_clamp = glass_outer.cut(glass_slot)
+
+        # Connecting bridge between wall plate and glass clamp
+        bridge = Part.makeBox(offset + plate_t, glass_thickness, body_h,
+                              App.Vector(-offset, 0, 0))
+
+        # Knuckle cylinder at junction
+        knuckle = Part.makeCylinder(
+            knuckle_d / 2, knuckle_w,
+            App.Vector(0, glass_thickness / 2, (body_h - knuckle_w) / 2),
+            App.Vector(0, 0, 1)
+        )
+
+        return glass_clamp.fuse(bridge).fuse(wall_plate).fuse(knuckle)
+    except Exception as e:
+        App.Console.PrintError(
+            f"Monza wall hinge CSG failed: {e} — using fallback box\n"
+        )
+        return Part.makeBox(body_w, 20, body_h)
+
+
+def createMonzaFoldHingeShape(glass_thickness=8):
+    """
+    Create the Monza 180° Glass-to-Glass self-rising hinge shape.
+
+    Simplified representation: two mirrored glass clamps + knuckle.
+    Origin at the knuckle center-bottom.
+
+    Args:
+        glass_thickness: Glass thickness in mm (default 8)
+
+    Returns:
+        Part.Shape
+    """
+    dims = MONZA_BIFOLD_HINGE_SPECS["monza_180_glass_to_glass"]["dimensions"]
+    glass_pw = dims["glass_plate_width"]  # 35
+    body_h = dims["body_height"]          # 80
+    body_w = dims["body_width"]           # 98
+    knuckle_d = dims["knuckle_diameter"]  # 14
+    knuckle_w = dims["knuckle_width"]     # 45
+    gg_offset = dims["glass_to_glass_offset"]  # 6
+    plate_t = 5
+
+    try:
+        # Positive-Y glass clamp (first panel side)
+        clamp_pos = Part.makeBox(glass_pw, glass_thickness + plate_t * 2, body_h,
+                                 App.Vector(-glass_pw / 2, 0, 0))
+        slot_pos = Part.makeBox(glass_pw - plate_t, glass_thickness, body_h,
+                                App.Vector(-glass_pw / 2 + plate_t, plate_t, 0))
+        clamp_pos = clamp_pos.cut(slot_pos)
+
+        # Negative-Y glass clamp (second panel side, mirrored)
+        clamp_neg = Part.makeBox(glass_pw, glass_thickness + plate_t * 2, body_h,
+                                 App.Vector(-glass_pw / 2,
+                                            -(glass_thickness + plate_t * 2), 0))
+        slot_neg = Part.makeBox(glass_pw - plate_t, glass_thickness, body_h,
+                                App.Vector(-glass_pw / 2 + plate_t,
+                                           -(glass_thickness + plate_t), 0))
+        clamp_neg = clamp_neg.cut(slot_neg)
+
+        # Knuckle cylinder at center
+        knuckle = Part.makeCylinder(
+            knuckle_d / 2, knuckle_w,
+            App.Vector(0, 0, (body_h - knuckle_w) / 2),
+            App.Vector(0, 0, 1)
+        )
+
+        return clamp_pos.fuse(clamp_neg).fuse(knuckle)
+    except Exception as e:
+        App.Console.PrintError(
+            f"Monza fold hinge CSG failed: {e} — using fallback box\n"
+        )
+        return Part.makeBox(body_w, 20, body_h)
+
+
 def createBevelHingeShape(hinge_type, glass_thickness=8):
     """
     Create a 3D shape for a Bevel-range hinge.
@@ -297,6 +413,7 @@ def createBevelHingeShape(hinge_type, glass_thickness=8):
 
     dims = spec["dimensions"]
     mounting = spec["mounting_type"]
+    sub_type = spec["name"]
     builder = _BEVEL_BUILDERS.get(mounting)
 
     if builder is None:
@@ -308,7 +425,7 @@ def createBevelHingeShape(hinge_type, glass_thickness=8):
         return Part.makeBox(bw, 20, bh)
 
     try:
-        return builder(dims, glass_thickness)
+        return builder(dims, glass_thickness, sub_type)
     except Exception as e:
         App.Console.PrintError(
             f"Bevel hinge CSG failed for '{hinge_type}': {e} — using fallback box\n"

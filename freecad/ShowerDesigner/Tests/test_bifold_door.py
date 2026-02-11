@@ -54,7 +54,7 @@ def test_basic_creation():
         assert vs.Width.Value == 900
         assert vs.Height.Value == 2000
         assert vs.Thickness.Value == 8
-        assert vs.HingeConfiguration == "Left"
+        assert vs.FoldDirection == "Inward"
         assert vs.HingeSide == "Left"
         assert vs.FoldAngle.Value == 0
         assert vs.HandleType == "Bar"
@@ -202,17 +202,17 @@ def test_hinge_configurations():
     print("=" * 70)
 
     configs = [
-        ("LeftHinge2", "Left", "Left", 2),
-        ("RightHinge2", "Right", "Right", 2),
-        ("LeftHinge3", "Left", "Left", 3),
+        ("LeftHinge2", "Left", "Inward", 2),
+        ("RightHinge2", "Right", "Outward", 2),
+        ("LeftHinge3", "Left", "Inward", 3),
     ]
 
-    for name, hinge_side, hinge_config, hinge_count in configs:
+    for name, hinge_side, fold_direction, hinge_count in configs:
         try:
             door = createBiFoldDoor(name)
             vs = _get_varset(door)
             vs.HingeSide = hinge_side
-            vs.HingeConfiguration = hinge_config
+            vs.FoldDirection = fold_direction
             vs.HingeCount = hinge_count
             App.ActiveDocument.recompute()
 

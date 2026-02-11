@@ -429,7 +429,7 @@ BEVEL_HINGE_SPECS = {
     },
 }
 
-# Bi-fold hinge specs (moved from BiFoldDoor.py)
+# Bi-fold hinge configuration (fold direction by hand)
 BIFOLD_HINGE_SPECS = {
     "Left": {
         "primary_angle": 180,
@@ -443,11 +443,145 @@ BIFOLD_HINGE_SPECS = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# Monza bi-fold self-rising hinge specifications
+# ---------------------------------------------------------------------------
+
+MONZA_FINISHES = ["Bright Chrome", "Matte Black"]
+
+MONZA_BIFOLD_HINGE_SPECS = {
+    # ------------------------------------------------------------------
+    # 1. Monza 90° Wall to Glass Self Rising Hinge
+    # ------------------------------------------------------------------
+    "monza_90_wall_to_glass": {
+        "name": "Monza 90° Wall to Glass Self Rising Hinge",
+        "mounting_type": "Wall-to-Glass",
+        "hinge_category": "Bi-Fold",
+        "angle": 90,
+        "self_rising": True,
+        "rise_height": 8,
+        "handed": True,
+        "dimensions": {
+            "wall_plate_width": 35,
+            "glass_plate_width": 35,
+            "knuckle_depth": 35,
+            "knuckle_width": 45,
+            "body_height": 80,
+            "body_width": 60,
+            "knuckle_diameter": 14,
+            "wall_to_glass_offset": 10,
+        },
+        "product_codes": [
+            {"code": "STM-WGH-90L", "hand": "Left", "material": "Brass",
+             "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "STM-WGH-90R", "hand": "Right", "material": "Brass",
+             "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "MWGH-90LMB", "hand": "Left", "material": "Brass",
+             "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "MWGH-90RMB", "hand": "Right", "material": "Brass",
+             "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 2. Monza 180° Glass to Glass Self Rising Hinge
+    # ------------------------------------------------------------------
+    "monza_180_glass_to_glass": {
+        "name": "Monza 180° Glass to Glass Self Rising Hinge",
+        "mounting_type": "Glass-to-Glass",
+        "hinge_category": "Bi-Fold",
+        "angle": 180,
+        "self_rising": True,
+        "rise_height": 8,
+        "handed": True,
+        "dimensions": {
+            "glass_plate_width": 35,
+            "knuckle_depth": 30,
+            "knuckle_width": 45,
+            "body_height": 80,
+            "body_width": 98,
+            "knuckle_diameter": 14,
+            "glass_to_glass_offset": 6,
+        },
+        "product_codes": [
+            {"code": "STM-GGH-180L", "hand": "Left", "material": "Brass",
+             "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "STM-GGH-180R", "hand": "Right", "material": "Brass",
+             "finish": "Bright Chrome",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "MGGH-180LMB", "hand": "Left", "material": "Brass",
+             "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "MGGH-180RMB", "hand": "Right", "material": "Brass",
+             "finish": "Matte Black",
+             "weight_capacity_kg": 45, "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+}
+
+# Configuration pairing: which hand for wall/fold hinge given side + direction
+MONZA_PAIRING = {
+    ("Left", "Inward"):   {"wall": "Right", "fold": "Left"},
+    ("Right", "Inward"):  {"wall": "Left",  "fold": "Right"},
+    ("Left", "Outward"):  {"wall": "Left",  "fold": "Right"},
+    ("Right", "Outward"): {"wall": "Right", "fold": "Left"},
+}
+
 HINGE_PLACEMENT_DEFAULTS = {
     "offset_top": 300,       # mm from top edge
     "offset_bottom": 300,    # mm from bottom edge
     "weight_threshold_3_hinges": 45,  # kg — above this, use 3 hinges
 }
+
+# ---------------------------------------------------------------------------
+# Door mounting variant → compatible hinge mapping
+# ---------------------------------------------------------------------------
+DOOR_MOUNTING_VARIANTS = {
+    "Wall Mounted": {
+        "legacy_types": ["standard_wall_mount", "heavy_duty_wall_mount"],
+        "bevel_mounting_types": ["Wall-to-Glass"],
+    },
+    "Glass Mounted": {
+        "legacy_types": ["standard_glass_to_glass"],
+        "bevel_mounting_types": ["Glass-to-Glass", "Glass-to-Glass-Tee"],
+    },
+    "Pivot": {
+        "legacy_types": [],
+        "bevel_mounting_types": ["Glass-to-Wall-Pivot", "Glass-to-Glass-Pivot"],
+    },
+}
+
+
+def getHingeModelsForVariant(variant):
+    """
+    Return a list of hinge model keys compatible with a door mounting variant.
+
+    Args:
+        variant: Key into DOOR_MOUNTING_VARIANTS ("Wall Mounted", etc.)
+
+    Returns:
+        list[str]: ["Legacy", ...bevel keys...] or just bevel keys
+    """
+    info = DOOR_MOUNTING_VARIANTS.get(variant)
+    if info is None:
+        return ["Legacy"]
+
+    models = []
+    # Add "Legacy" entry if there are compatible legacy hinge types
+    if info["legacy_types"]:
+        models.append("Legacy")
+
+    # Add matching Bevel hinge keys
+    for key, spec in BEVEL_HINGE_SPECS.items():
+        if spec["mounting_type"] in info["bevel_mounting_types"]:
+            models.append(key)
+
+    return models if models else ["Legacy"]
 
 # ---------------------------------------------------------------------------
 # Handle specifications
@@ -757,7 +891,7 @@ def calculateClampPlacement(total_length, count, offset_start=None, offset_end=N
         offset_end = CLAMP_PLACEMENT_DEFAULTS["wall_offset_top"]
 
     if count == 1:
-        return [total_length / 2]
+        return [total_length - offset_end]
     elif count == 2:
         return [offset_start, total_length - offset_end]
     else:

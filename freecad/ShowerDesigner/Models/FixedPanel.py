@@ -105,7 +105,7 @@ class FixedPanelAssembly(AssemblyController):
         vs.WallMountEdge = "Left"
         vs.addProperty(
             "App::PropertyInteger", "WallClampCount", "Wall Hardware",
-            "Number of wall clamps per edge (2-4)"
+            "Number of wall clamps per edge (1-4)"
         ).WallClampCount = 2
         vs.addProperty(
             "App::PropertyLength", "WallClampOffsetTop", "Wall Hardware",
@@ -141,7 +141,7 @@ class FixedPanelAssembly(AssemblyController):
         vs.FloorHardware = "Clamp"
         vs.addProperty(
             "App::PropertyInteger", "FloorClampCount", "Floor Hardware",
-            "Number of floor clamps (2-4)"
+            "Number of floor clamps (1-4)"
         ).FloorClampCount = 2
         vs.addProperty(
             "App::PropertyLength", "FloorClampOffsetLeft", "Floor Hardware",
@@ -245,7 +245,7 @@ class FixedPanelAssembly(AssemblyController):
     def _updateWallClamps(self, part_obj, vs):
         width = vs.Width.Value
         height = vs.Height.Value
-        clamp_count = max(2, min(4, vs.WallClampCount))
+        clamp_count = vs.WallClampCount
         mount_edge = vs.WallMountEdge
         clamp_type = vs.WallClampType
 
@@ -319,12 +319,13 @@ class FixedPanelAssembly(AssemblyController):
                 channel_depth = vs.ChannelDepth.Value
                 if edge == "Left":
                     child.Placement = App.Placement(
-                        App.Vector(-2, 2, 0), App.Rotation()
+                        App.Vector(-2, 13, 0),
+                        App.Rotation(App.Vector(0,0,1), -90)
                     )
                 else:
                     child.Placement = App.Placement(
-                        App.Vector(width - channel_depth + 2, 2, 0),
-                        App.Rotation()
+                        App.Vector(width + 2, -2, 0),
+                        App.Rotation(App.Vector(0,0,1), 90)
                     )
 
     def _removeWallChannels(self, part_obj):
@@ -336,7 +337,7 @@ class FixedPanelAssembly(AssemblyController):
 
     def _updateFloorClamps(self, part_obj, vs):
         width = vs.Width.Value
-        clamp_count = max(2, min(4, vs.FloorClampCount))
+        clamp_count = vs.FloorClampCount
         clamp_type = vs.FloorClampType
 
         positions = _calculateClampPositions(
@@ -378,8 +379,10 @@ class FixedPanelAssembly(AssemblyController):
             child.ChannelLocation = "floor"
             child.ChannelLength = width
             child.Placement = App.Placement(
-                App.Vector(0, -2, -2), App.Rotation()
+                App.Vector(0, -2, -2),
+                App.Rotation(0, 90, 0)
             )
+            child.Placement.Rotation = App.Rotation(App.Vector(1, 0, 0), 90) * child.Placement.Rotation
 
     def _removeFloorChannel(self, part_obj):
         if self._hasChild(part_obj, "FloorChannel1"):

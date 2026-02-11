@@ -14,12 +14,16 @@ from freecad.ShowerDesigner.Models.ChildProxies import (
     HingeChild,
     HandleChild,
     GhostChild,
+    MonzaWallHingeChild,
+    MonzaFoldHingeChild,
 )
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     BIFOLD_HINGE_SPECS,
     HINGE_SPECS,
     HINGE_PLACEMENT_DEFAULTS,
     HARDWARE_FINISHES,
+    MONZA_BIFOLD_HINGE_SPECS,
+    MONZA_FINISHES,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
@@ -101,19 +105,11 @@ class BiFoldDoorAssembly(AssemblyController):
 
         # Door configuration
         vs.addProperty(
-            "App::PropertyEnumeration", "HingeConfiguration",
-            "Door Configuration",
-            "Bi-fold hinge hand (Left=Inward, Right=Outward)"
-        )
-        vs.HingeConfiguration = ["Left", "Right"]
-        vs.HingeConfiguration = "Left"
-        vs.addProperty(
             "App::PropertyEnumeration", "FoldDirection", "Door Configuration",
-            "Direction the door folds (derived from hinge configuration)"
+            "Direction the door folds when opening"
         )
         vs.FoldDirection = ["Inward", "Outward"]
         vs.FoldDirection = "Inward"
-        vs.setEditorMode("FoldDirection", 1)
         vs.addProperty(
             "App::PropertyEnumeration", "HingeSide", "Door Configuration",
             "Which side is attached to the wall"
@@ -126,6 +122,12 @@ class BiFoldDoorAssembly(AssemblyController):
         ).FoldAngle = 0
 
         # Hinge hardware
+        vs.addProperty(
+            "App::PropertyEnumeration", "HingeModel", "Hinge Hardware",
+            "Hinge product line (Legacy = simple box, Monza = self-rising)"
+        )
+        vs.HingeModel = ["Legacy", "Monza"]
+        vs.HingeModel = "Legacy"
         vs.addProperty(
             "App::PropertyInteger", "HingeCount", "Hinge Hardware",
             "Number of bi-fold hinges at fold joint (2-3)"
@@ -152,11 +154,14 @@ class BiFoldDoorAssembly(AssemblyController):
         ).HandleLength = 300
 
         # Hardware display
+        all_finishes = HARDWARE_FINISHES[:] + [
+            f for f in MONZA_FINISHES if f not in HARDWARE_FINISHES
+        ]
         vs.addProperty(
             "App::PropertyEnumeration", "HardwareFinish", "Hardware Display",
             "Finish for all hardware"
         )
-        vs.HardwareFinish = HARDWARE_FINISHES[:]
+        vs.HardwareFinish = all_finishes
         vs.HardwareFinish = "Chrome"
         vs.addProperty(
             "App::PropertyBool", "ShowHardware", "Hardware Display",
@@ -246,18 +251,41 @@ class BiFoldDoorAssembly(AssemblyController):
 
         show_hw = vs.ShowHardware
         finish = vs.HardwareFinish
+        use_monza = hasattr(vs, "HingeModel") and vs.HingeModel == "Monza"
 
         # --- Wall hinges (always 2, top and bottom) ---
         if show_hw:
-            self._updateWallHinges(part_obj, vs)
+            if use_monza:
+                # Remove legacy wall hinges if present, then use Monza
+                self._syncChildCount(part_obj, "WallHinge", 0, HingeChild)
+                self._updateWallHingesMonza(part_obj, vs)
+            else:
+                # Remove Monza wall hinges if present, then use legacy
+                self._syncChildCount(
+                    part_obj, "MonzaWallHinge", 0, MonzaWallHingeChild
+                )
+                self._updateWallHinges(part_obj, vs)
         else:
             self._syncChildCount(part_obj, "WallHinge", 0, HingeChild)
+            self._syncChildCount(
+                part_obj, "MonzaWallHinge", 0, MonzaWallHingeChild
+            )
 
         # --- Fold hinges ---
         if show_hw:
-            self._updateFoldHinges(part_obj, vs)
+            if use_monza:
+                self._syncChildCount(part_obj, "FoldHinge", 0, HingeChild)
+                self._updateFoldHingesMonza(part_obj, vs)
+            else:
+                self._syncChildCount(
+                    part_obj, "MonzaFoldHinge", 0, MonzaFoldHingeChild
+                )
+                self._updateFoldHinges(part_obj, vs)
         else:
             self._syncChildCount(part_obj, "FoldHinge", 0, HingeChild)
+            self._syncChildCount(
+                part_obj, "MonzaFoldHinge", 0, MonzaFoldHingeChild
+            )
 
         # --- Handle ---
         if show_hw and vs.HandleType != "None":
@@ -353,6 +381,84 @@ class BiFoldDoorAssembly(AssemblyController):
             )
 
     # ------------------------------------------------------------------
+    # Monza wall hinges (self-rising, wall-to-glass)
+    # ------------------------------------------------------------------
+
+    def _updateWallHingesMonza(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        hinge_side = vs.HingeSide
+
+        dims = MONZA_BIFOLD_HINGE_SPECS["monza_90_wall_to_glass"]["dimensions"]
+        body_h = dims["body_height"]
+
+        positions = _calculateHingePositions(height, 2)
+        wall_z = [positions[0], positions[-1]]
+
+        self._syncChildCount(
+            part_obj, "MonzaWallHinge", 2, MonzaWallHingeChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
+
+        for i, z_pos in enumerate(wall_z):
+            child = self._getChild(part_obj, f"MonzaWallHinge{i + 1}")
+            if child is None:
+                continue
+            if hasattr(child, "GlassThickness"):
+                child.GlassThickness = thickness
+
+            # Origin at wall-side face, hinge-side edge of door
+            if hinge_side == "Left":
+                x_pos = 0
+                y_pos = 0
+                rot = App.Rotation()
+            else:
+                x_pos = width
+                y_pos = thickness
+                rot = App.Rotation(App.Vector(0, 0, 1), 180)
+
+            child.Placement = App.Placement(
+                App.Vector(x_pos, y_pos, z_pos - body_h / 2), rot
+            )
+
+    # ------------------------------------------------------------------
+    # Monza fold hinges (self-rising, glass-to-glass)
+    # ------------------------------------------------------------------
+
+    def _updateFoldHingesMonza(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        hinge_count = max(2, min(3, vs.HingeCount))
+        panel_width = width / 2
+
+        dims = MONZA_BIFOLD_HINGE_SPECS["monza_180_glass_to_glass"]["dimensions"]
+        body_h = dims["body_height"]
+
+        positions = _calculateHingePositions(height, hinge_count)
+
+        self._syncChildCount(
+            part_obj, "MonzaFoldHinge", hinge_count, MonzaFoldHingeChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
+
+        for i, z_pos in enumerate(positions):
+            child = self._getChild(part_obj, f"MonzaFoldHinge{i + 1}")
+            if child is None:
+                continue
+            if hasattr(child, "GlassThickness"):
+                child.GlassThickness = thickness
+
+            # Origin at knuckle center, positioned at fold joint
+            x_pos = panel_width
+            y_pos = thickness / 2
+
+            child.Placement = App.Placement(
+                App.Vector(x_pos, y_pos, z_pos - body_h / 2), App.Rotation()
+            )
+
+    # ------------------------------------------------------------------
     # Handle
     # ------------------------------------------------------------------
 
@@ -441,7 +547,9 @@ class BiFoldDoorAssembly(AssemblyController):
             if hasattr(vs, "Weight"):
                 vs.Weight = weight
 
-            spec = BIFOLD_HINGE_SPECS.get(vs.HingeConfiguration, {})
+            # Map FoldDirection to BIFOLD_HINGE_SPECS key
+            fold_key = "Left" if vs.FoldDirection == "Inward" else "Right"
+            spec = BIFOLD_HINGE_SPECS.get(fold_key, {})
 
             if hasattr(vs, "PanelWidth"):
                 vs.PanelWidth = panel_width

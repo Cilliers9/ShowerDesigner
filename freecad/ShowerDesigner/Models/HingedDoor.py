@@ -23,6 +23,8 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     BEVEL_FINISHES,
     HINGE_PLACEMENT_DEFAULTS,
     HARDWARE_FINISHES,
+    DOOR_MOUNTING_VARIANTS,
+    getHingeModelsForVariant,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
@@ -92,6 +94,12 @@ class HingedDoorAssembly(AssemblyController):
 
         # Door configuration
         vs.addProperty(
+            "App::PropertyEnumeration", "MountingType", "Door Configuration",
+            "How the door is mounted (Wall, Glass-to-Glass, or Pivot)"
+        )
+        vs.MountingType = list(DOOR_MOUNTING_VARIANTS.keys())
+        vs.MountingType = "Wall Mounted"
+        vs.addProperty(
             "App::PropertyEnumeration", "SwingDirection", "Door Configuration",
             "Direction the door swings when opening"
         )
@@ -105,20 +113,17 @@ class HingedDoorAssembly(AssemblyController):
         vs.HingeSide = "Left"
         vs.addProperty(
             "App::PropertyAngle", "OpeningAngle", "Door Configuration",
-            "Maximum opening angle (max 110 degrees)"
+            "Maximum opening angle"
         ).OpeningAngle = 90
 
         # Hinge hardware
-        _wall_bevel_keys = [
-            k for k, v in BEVEL_HINGE_SPECS.items()
-            if v["mounting_type"] == "Wall-to-Glass"
-        ]
+        _initial_models = getHingeModelsForVariant("Wall Mounted")
         vs.addProperty(
             "App::PropertyEnumeration", "HingeModel", "Hinge Hardware",
             "Hinge product line (Legacy = simple box hinges)"
         )
-        vs.HingeModel = ["Legacy"] + _wall_bevel_keys
-        vs.HingeModel = "Legacy"
+        vs.HingeModel = _initial_models
+        vs.HingeModel = _initial_models[0]
         vs.addProperty(
             "App::PropertyInteger", "HingeCount", "Hinge Hardware",
             "Number of hinges (2-3)"
@@ -204,6 +209,23 @@ class HingedDoorAssembly(AssemblyController):
             App.Console.PrintError("Invalid door dimensions\n")
             return
 
+        # --- Sync HingeModel choices to current MountingType ---
+        mounting = vs.MountingType if hasattr(vs, "MountingType") else "Wall Mounted"
+        available = getHingeModelsForVariant(mounting)
+        current_model = vs.HingeModel
+        vs.HingeModel = available
+        if current_model in available:
+            vs.HingeModel = current_model
+        else:
+            vs.HingeModel = available[0]
+
+        # --- Pivot forces HingeCount to 2 ---
+        if mounting == "Pivot":
+            vs.HingeCount = 2
+            vs.setEditorMode("HingeCount", 1)  # Read-only
+        else:
+            vs.setEditorMode("HingeCount", 0)  # Editable
+
         # --- Update Glass child ---
         glass = self._getChild(part_obj, "Glass")
         if glass:
@@ -247,6 +269,19 @@ class HingedDoorAssembly(AssemblyController):
     # ------------------------------------------------------------------
 
     def _updateHinges(self, part_obj, vs):
+        mounting = vs.MountingType if hasattr(vs, "MountingType") else "Wall Mounted"
+        if mounting == "Pivot":
+            self._updateHingesPivot(part_obj, vs)
+        elif mounting == "Glass Mounted":
+            self._updateHingesGlassMounted(part_obj, vs)
+        else:
+            self._updateHingesWallMounted(part_obj, vs)
+
+    # ------------------------------------------------------------------
+    # Wall Mounted hinges (original logic)
+    # ------------------------------------------------------------------
+
+    def _updateHingesWallMounted(self, part_obj, vs):
         width = vs.Width.Value
         height = vs.Height.Value
         thickness = vs.Thickness.Value
@@ -257,7 +292,6 @@ class HingedDoorAssembly(AssemblyController):
         if hasattr(vs, "HingeModel"):
             hinge_model = vs.HingeModel
 
-        # Calculate positions
         positions = _calculateHingePositions(
             height, hinge_count,
             vs.HingeOffsetTop.Value, vs.HingeOffsetBottom.Value
@@ -272,8 +306,6 @@ class HingedDoorAssembly(AssemblyController):
 
         if use_bevel:
             bevel_dims = BEVEL_HINGE_SPECS[hinge_model]["dimensions"]
-            body_h = bevel_dims["body_height"]
-            offset_x = bevel_dims.get("wall_to_glass_offset", 16)
         else:
             hinge_dims = HINGE_SPECS["standard_wall_mount"]["dimensions"]
             hinge_w = hinge_dims["width"]
@@ -290,18 +322,17 @@ class HingedDoorAssembly(AssemblyController):
                 if hasattr(child, "GlassThickness"):
                     child.GlassThickness = thickness
 
-                # Bevel shapes have origin at knuckle bottom-center
                 if hinge_side == "Left":
-                    x_pos = -offset_x
+                    x_pos = 0
                 else:
-                    x_pos = width + offset_x
+                    x_pos = width
 
-                y_pos = thickness / 2
-                z_offset = z_pos - body_h / 2
+                y_pos = 0
+                z_offset = z_pos
 
                 if hinge_side == "Right":
-                    # Rotate 180° around Z so wall plate faces right wall
                     rot = App.Rotation(App.Vector(0, 0, 1), 180)
+                    y_pos = thickness
                 else:
                     rot = App.Rotation()
 
@@ -322,6 +353,132 @@ class HingedDoorAssembly(AssemblyController):
                 child.Placement = App.Placement(
                     App.Vector(x_pos, y_pos, z_offset), App.Rotation()
                 )
+
+    # ------------------------------------------------------------------
+    # Glass Mounted hinges (Glass-to-Glass)
+    # ------------------------------------------------------------------
+
+    def _updateHingesGlassMounted(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        hinge_count = max(2, min(3, vs.HingeCount))
+        hinge_side = vs.HingeSide
+
+        hinge_model = "Legacy"
+        if hasattr(vs, "HingeModel"):
+            hinge_model = vs.HingeModel
+
+        positions = _calculateHingePositions(
+            height, hinge_count,
+            vs.HingeOffsetTop.Value, vs.HingeOffsetBottom.Value
+        )
+
+        self._syncChildCount(
+            part_obj, "Hinge", hinge_count, HingeChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
+
+        use_bevel = hinge_model != "Legacy" and hinge_model in BEVEL_HINGE_SPECS
+
+        if use_bevel:
+            bevel_dims = BEVEL_HINGE_SPECS[hinge_model]["dimensions"]
+        else:
+            hinge_dims = HINGE_SPECS["standard_glass_to_glass"]["dimensions"]
+            hinge_w = hinge_dims["width"]
+            hinge_d = hinge_dims["depth"]
+            hinge_h = hinge_dims["height"]
+
+        for i, z_pos in enumerate(positions):
+            child = self._getChild(part_obj, f"Hinge{i + 1}")
+            if child is None:
+                continue
+
+            if use_bevel:
+                child.HingeType = hinge_model
+                if hasattr(child, "GlassThickness"):
+                    child.GlassThickness = thickness
+
+                # Glass-to-Glass bevel: origin at knuckle center,
+                # positioned at the hinge-side glass edge
+                if hinge_side == "Left":
+                    x_pos = 0
+                    y_pos = thickness / 2
+                    rot = App.Rotation()
+                else:
+                    x_pos = width
+                    y_pos = thickness / 2
+                    rot = App.Rotation(App.Vector(0, 0, 1), 180)
+
+                child.Placement = App.Placement(
+                    App.Vector(x_pos, y_pos, z_pos), rot
+                )
+            else:
+                child.HingeType = "standard_glass_to_glass"
+
+                # Legacy glass-to-glass: centered on glass edge
+                if hinge_side == "Left":
+                    x_pos = -hinge_w / 2
+                else:
+                    x_pos = width - hinge_w / 2
+
+                y_pos = thickness / 2 - hinge_d / 2
+                z_offset = z_pos - hinge_h / 2
+
+                child.Placement = App.Placement(
+                    App.Vector(x_pos, y_pos, z_offset), App.Rotation()
+                )
+
+    # ------------------------------------------------------------------
+    # Pivot hinges (top + bottom)
+    # ------------------------------------------------------------------
+
+    def _updateHingesPivot(self, part_obj, vs):
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+        hinge_side = vs.HingeSide
+
+        hinge_model = vs.HingeModel if hasattr(vs, "HingeModel") else ""
+
+        # Pivot always uses exactly 2 hinges: bottom and top
+        hinge_count = 2
+        self._syncChildCount(
+            part_obj, "Hinge", hinge_count, HingeChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
+
+        if hinge_model not in BEVEL_HINGE_SPECS:
+            return
+
+        bevel_dims = BEVEL_HINGE_SPECS[hinge_model]["dimensions"]
+        body_h = bevel_dims["body_height"]
+        floor_offset = bevel_dims.get("floor_offset", 15)
+
+        # Pivot positions: bottom near floor, top near ceiling
+        positions = [floor_offset, height - floor_offset - body_h]
+
+        for i, z_pos in enumerate(positions):
+            child = self._getChild(part_obj, f"Hinge{i + 1}")
+            if child is None:
+                continue
+
+            child.HingeType = hinge_model
+            if hasattr(child, "GlassThickness"):
+                child.GlassThickness = thickness
+
+            if hinge_side == "Left":
+                x_pos = 0
+                y_pos = thickness / 2
+                rot = App.Rotation()
+            else:
+                x_pos = width
+                y_pos = thickness / 2
+                rot = App.Rotation(App.Vector(0, 0, 1), 180)
+
+            child.Placement = App.Placement(
+                App.Vector(x_pos, y_pos, z_pos), rot
+            )
 
     # ------------------------------------------------------------------
     # Handle management

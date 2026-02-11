@@ -23,6 +23,7 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     ROLLER_SPECS,
     BOTTOM_GUIDE_SPECS,
     CHANNEL_SPECS,
+    MONZA_BIFOLD_HINGE_SPECS,
 )
 
 
@@ -435,6 +436,64 @@ class GhostChild:
         if w <= 0 or d <= 0 or h <= 0:
             return
         obj.Shape = Part.makeBox(w, d, h)
+
+    def onChanged(self, obj, prop):
+        pass
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+# ======================================================================
+# Monza Wall Hinge (bi-fold wall-to-glass self-rising)
+# ======================================================================
+
+class MonzaWallHingeChild:
+    """Proxy for a Monza 90° wall-to-glass self-rising hinge child."""
+
+    def __init__(self, obj):
+        obj.Proxy = self
+        obj.addProperty(
+            "App::PropertyLength", "GlassThickness", "Hinge",
+            "Glass thickness for slot sizing"
+        ).GlassThickness = 8
+
+    def execute(self, obj):
+        glass_t = obj.GlassThickness.Value or 8
+        from freecad.ShowerDesigner.Models.Hinge import createMonzaWallHingeShape
+        obj.Shape = createMonzaWallHingeShape(glass_t)
+
+    def onChanged(self, obj, prop):
+        pass
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+# ======================================================================
+# Monza Fold Hinge (bi-fold glass-to-glass self-rising)
+# ======================================================================
+
+class MonzaFoldHingeChild:
+    """Proxy for a Monza 180° glass-to-glass self-rising hinge child."""
+
+    def __init__(self, obj):
+        obj.Proxy = self
+        obj.addProperty(
+            "App::PropertyLength", "GlassThickness", "Hinge",
+            "Glass thickness for slot sizing"
+        ).GlassThickness = 8
+
+    def execute(self, obj):
+        glass_t = obj.GlassThickness.Value or 8
+        from freecad.ShowerDesigner.Models.Hinge import createMonzaFoldHingeShape
+        obj.Shape = createMonzaFoldHingeShape(glass_t)
 
     def onChanged(self, obj, prop):
         pass

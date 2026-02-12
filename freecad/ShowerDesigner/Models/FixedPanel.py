@@ -340,10 +340,20 @@ class FixedPanelAssembly(AssemblyController):
         clamp_count = vs.FloorClampCount
         clamp_type = vs.FloorClampType
 
-        positions = _calculateClampPositions(
-            width, clamp_count,
-            vs.FloorClampOffsetLeft.Value, vs.FloorClampOffsetRight.Value
-        )
+        # Single floor clamp: place opposite the wall clamp side,
+        # or centered if walls on both sides (or no wall clamps).
+        if clamp_count == 1 and vs.WallHardware in ("Clamp", "Channel"):
+            if vs.WallMountEdge == "Left":
+                positions = [width - vs.FloorClampOffsetRight.Value]
+            elif vs.WallMountEdge == "Right":
+                positions = [vs.FloorClampOffsetLeft.Value]
+            else:  # Both
+                positions = [width / 2]
+        else:
+            positions = _calculateClampPositions(
+                width, clamp_count,
+                vs.FloorClampOffsetLeft.Value, vs.FloorClampOffsetRight.Value
+            )
 
         self._syncChildCount(
             part_obj, "FloorClamp", len(positions), ClampChild,
@@ -428,7 +438,7 @@ class FixedPanelAssembly(AssemblyController):
 def _calculateClampPositions(total_length, clamp_count, offset_start, offset_end):
     """Calculate evenly-spaced clamp positions along a length."""
     if clamp_count == 1:
-        return [total_length / 2]
+        return [total_length - offset_start]
     elif clamp_count == 2:
         return [offset_start, total_length - offset_end]
     else:

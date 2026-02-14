@@ -613,6 +613,376 @@ HANDLE_SPECS = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# Catalogue handle/knob/towel-rail specifications — from Showers-Ex-Sliding
+# ---------------------------------------------------------------------------
+
+CATALOGUE_HANDLE_FINISHES = [
+    "Bright Polished",
+    "Bright Chrome",
+    "Brushed",
+    "Satin Chrome",
+    "Antique Brass",
+    "Matte Black",
+]
+
+CATALOGUE_HANDLE_SPECS = {
+    # ------------------------------------------------------------------
+    # 1. Door Knobs
+    # ------------------------------------------------------------------
+    "mushroom_knob_b2b": {
+        "name": "Back to Back Mushroom Knob",
+        "category": "Knob",
+        "mounting_type": "Through-bolt",
+        "back_to_back": True,
+        "hole_size": 14,
+        "dimensions": {
+            "knob_diameter": 35,
+            "projection": 22,
+            "base_diameter": 22,
+        },
+        "product_codes": [
+            {"code": "DK-201", "material": "Brass", "finish": "Bright Chrome"},
+            {"code": "DK-291", "material": "Brass", "finish": "Matte Black"},
+            {"code": "DK-201A", "material": "Aluminium", "finish": "Bright Chrome"},
+            {"code": "DK-211A", "material": "Aluminium", "finish": "Brushed"},
+            {"code": "DK-281A", "material": "Aluminium", "finish": "Antique Brass"},
+            {"code": "DK-291A", "material": "Aluminium", "finish": "Matte Black"},
+            {"code": "DK-501", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "DK-511", "material": "S/S 304", "finish": "Brushed"},
+        ],
+    },
+    "groove_knob_b2b": {
+        "name": "Back to Back Small Groove Knob",
+        "category": "Knob",
+        "mounting_type": "Through-bolt",
+        "back_to_back": True,
+        "hole_size": 14,
+        "dimensions": {
+            "knob_diameter": 30,
+            "projection": 28,
+            "groove_diameter": 27,
+        },
+        "product_codes": [
+            {"code": "DK-204A", "material": "Aluminium", "finish": "Bright Chrome"},
+            {"code": "DK-504", "material": "S/S 304", "finish": "Bright Polished"},
+        ],
+    },
+    "square_knob_b2b": {
+        "name": "Back to Back Square Knob",
+        "category": "Knob",
+        "mounting_type": "Through-bolt",
+        "back_to_back": True,
+        "hole_size": 14,
+        "dimensions": {
+            "knob_width": 30,
+            "projection": 30,
+            "base_diameter": 22,
+        },
+        "product_codes": [
+            {"code": "DK-202A", "material": "Aluminium", "finish": "Bright Chrome"},
+            {"code": "DK-292A", "material": "Aluminium", "finish": "Matte Black"},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 2. Pull Handles
+    # ------------------------------------------------------------------
+    "pull_handle_round": {
+        "name": "Pull Handle (Round)",
+        "category": "Pull",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 14,
+        "dimensions": {
+            "ctc": 200,
+            "tube_diameter": 19,
+            "projection": 61,
+            "standoff_depth": 42,
+        },
+        "product_codes": [
+            {"code": "BH-010", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "BH-810", "material": "S/S 304", "finish": "Antique Brass"},
+            {"code": "BH-910", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "pull_handle_square": {
+        "name": "Square Pull Handle",
+        "category": "Pull",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 14,
+        "dimensions": {
+            "ctc": 200,
+            "tube_size": 19,
+            "projection": 61,
+            "standoff_depth": 42,
+        },
+        "product_codes": [
+            {"code": "SH-010", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "SH-810", "material": "S/S 304", "finish": "Antique Brass"},
+            {"code": "SH-910", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 3. Towel Rails
+    # ------------------------------------------------------------------
+    "towel_rail_round_finnial": {
+        "name": "Towel Rail with Finnials (Round)",
+        "category": "Towel_Bar",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 14,
+        "rail_lengths": [300, 400, 600],
+        "dimensions": {
+            "tube_diameter": 19,
+            "projection": 61,
+            "finnial_width": 42,
+            "rail_offset": 24,
+        },
+        "product_codes": [
+            {"code": "BH-030", "rail_length": 300,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "BH-040", "rail_length": 400,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "BH-060", "rail_length": 600,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "BH-840", "rail_length": 400,
+             "material": "S/S 304", "finish": "Antique Brass"},
+            {"code": "BH-930", "rail_length": 300,
+             "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "BH-940", "rail_length": 400,
+             "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "BH-960", "rail_length": 600,
+             "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "towel_rail_square_finnial": {
+        "name": "Square Towel Rail with Finnials",
+        "category": "Towel_Bar",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 14,
+        "rail_lengths": [300, 400, 600],
+        "dimensions": {
+            "tube_size": 19,
+            "projection": 61,
+            "finnial_width": 42,
+        },
+        "product_codes": [
+            {"code": "SH-0300", "rail_length": 300,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "SH-0400", "rail_length": 400,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "SH-0600", "rail_length": 600,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "SH-9400", "rail_length": 400,
+             "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "SH-9600", "rail_length": 600,
+             "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "towel_rail_round_knob": {
+        "name": "Towel Rail with Back Knob (Round)",
+        "category": "Towel_Bar",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 14,
+        "rail_lengths": [300, 400, 600],
+        "dimensions": {
+            "tube_diameter": 19,
+            "projection": 61,
+            "knob_end_width": 42,
+        },
+        "product_codes": [
+            {"code": "DK-201-H300", "rail_length": 300,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "DK-201-H400", "rail_length": 400,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "DK-201-H600", "rail_length": 600,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "DK-211-H400", "rail_length": 400,
+             "material": "S/S 304", "finish": "Brushed"},
+            {"code": "DK-281-H400", "rail_length": 400,
+             "material": "S/S 304", "finish": "Antique Brass"},
+            {"code": "DK-291-H300", "rail_length": 300,
+             "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "DK-291-H400", "rail_length": 400,
+             "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "DK-291-H600", "rail_length": 600,
+             "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "towel_rail_square_knob": {
+        "name": "Square Towel Rail with Back Knob",
+        "category": "Towel_Bar",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 14,
+        "rail_lengths": [300, 400, 600],
+        "dimensions": {
+            "tube_size": 19,
+            "projection": 61,
+            "knob_end_width": 42,
+        },
+        "product_codes": [
+            {"code": "DK-202-H300", "rail_length": 300,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "DK-202-H400", "rail_length": 400,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "DK-202-H600", "rail_length": 600,
+             "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "DK-292-H400", "rail_length": 400,
+             "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "DK-292-H600", "rail_length": 600,
+             "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "towel_rail_bow_handle": {
+        "name": "Towel Rail with Pull Handle (Bow)",
+        "category": "Towel_Bar",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 14,
+        "dimensions": {
+            "rail_ctc": 400,
+            "handle_ctc": 200,
+            "tube_diameter": 19,
+            "projection": 61,
+            "standoff_depth": 42,
+        },
+        "product_codes": [
+            {"code": "BH-001", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "BH-901", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 4. Flush Handles
+    # ------------------------------------------------------------------
+    "flush_handle_with_plate": {
+        "name": "Flush Handle with Plate",
+        "category": "Flush",
+        "mounting_type": "Flush",
+        "back_to_back": False,
+        "hole_size": 57,
+        "dimensions": {
+            "outer_diameter": 65,
+            "plate_diameter": 54,
+            "plate_thickness": 5,
+            "recess_depth": 6,
+        },
+        "product_codes": [
+            {"code": "FH-055P", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "FH-055N", "material": "S/S 304", "finish": "Brushed"},
+            {"code": "FH-055MB", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "flush_handle_no_plate": {
+        "name": "Flush Handle — No Plate",
+        "category": "Flush",
+        "mounting_type": "Flush",
+        "back_to_back": False,
+        "hole_size": 57,
+        "dimensions": {
+            "outer_diameter": 65,
+            "total_depth": 48,
+        },
+        "product_codes": [
+            {"code": "FH-155P", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "FH-155MB", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 5. Custom Kits (variable length)
+    # ------------------------------------------------------------------
+    "custom_towel_rail_handle_kit": {
+        "name": "Custom Towel Rail and Handle Kit",
+        "category": "Custom_Kit",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 12,
+        "variable_length": True,
+        "dimensions": {
+            "tube_diameter": 19,
+            "projection": 60,
+            "standoff_depth": 48,
+            "bracket_depth": 37,
+            "offset": 25,
+        },
+        "product_codes": [
+            {"code": "BTK-ET", "material": "S/S 304", "finish": "Bright Polished"},
+        ],
+    },
+    "custom_glass_towel_rail_kit": {
+        "name": "Custom Glass Towel Rail Kit",
+        "category": "Custom_Kit",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 12,
+        "variable_length": True,
+        "dimensions": {
+            "tube_diameter": 19,
+            "projection": 60,
+            "standoff_depth": 47,
+        },
+        "product_codes": [
+            {"code": "STA-TRK-ET", "material": "S/S 304", "finish": "Bright Polished"},
+        ],
+    },
+    "custom_glass_towel_rail_knob_kit": {
+        "name": "Custom Glass Towel Rail Kit with Back Knob",
+        "category": "Custom_Kit",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 12,
+        "variable_length": True,
+        "dimensions": {
+            "tube_diameter": 19,
+            "projection": 60,
+            "standoff_depth": 47,
+        },
+        "product_codes": [
+            {"code": "STA-TRKK-ET", "material": "S/S 304", "finish": "Bright Polished"},
+        ],
+    },
+    "custom_double_towel_rail_kit": {
+        "name": "Custom Double Towel Rail Kit Wall Mount",
+        "category": "Custom_Kit",
+        "mounting_type": "Wall-mount",
+        "back_to_back": False,
+        "hole_size": 12,
+        "variable_length": True,
+        "dimensions": {
+            "tube_diameter": 19,
+            "total_projection": 140,
+            "bracket_width": 50,
+            "rail_spacing": 76,
+        },
+        "product_codes": [
+            {"code": "SS-DTR-KIT", "material": "S/S 304", "finish": "Bright Polished"},
+        ],
+    },
+    "custom_pull_handle_kit": {
+        "name": "Custom Pull Handle Kit",
+        "category": "Custom_Kit",
+        "mounting_type": "Through-bolt",
+        "back_to_back": False,
+        "hole_size": 12,
+        "variable_length": True,
+        "dimensions": {
+            "tube_diameter": 19,
+            "projection": 48,
+            "standoff_depth": 35,
+        },
+        "product_codes": [
+            {"code": "STA-PH-KIT", "material": "S/S 304", "finish": "Bright Polished"},
+        ],
+    },
+}
+
 HANDLE_PLACEMENT_DEFAULTS = {
     "height": 1050,           # mm from floor
     "min_height": 300,        # mm
@@ -680,7 +1050,7 @@ SEAL_SPECS = {
 CLAMP_SPECS = {
     "U_Clamp": {
         "load_capacity_kg": 45,
-        "glass_thickness_range": [6, 8, 10],
+        "glass_thickness_range": [6, 8, 10, 12],
         "default_mounting": "Floor",
         "dimensions": {
             "base_size": 45,
@@ -691,6 +1061,11 @@ CLAMP_SPECS = {
             "chamfer_size": 3,
         },
         "bounding_box": {"width": 45, "depth": 19, "height": 45},
+        "product_codes": [
+            {"code": "GC-401", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "GC-491", "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "GC-481", "material": "S/S 304", "finish": "Antique Brass"},
+        ],
     },
     "L_Clamp": {
         "load_capacity_kg": 45,
@@ -705,10 +1080,15 @@ CLAMP_SPECS = {
             "chamfer_size": 3,
         },
         "bounding_box": {"width": 45, "depth": 60, "height": 45},
+        "product_codes": [
+            {"code": "GC-402", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "GC-492", "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "GC-482", "material": "S/S 304", "finish": "Antique Brass"},
+        ],
     },
     "180DEG_Clamp": {
         "load_capacity_kg": 45,
-        "glass_thickness_range": [6, 8, 10],
+        "glass_thickness_range": [6, 8, 10, 12],
         "default_mounting": "Floor",
         "dimensions": {
             "base_size": 45,
@@ -719,10 +1099,15 @@ CLAMP_SPECS = {
             "chamfer_size": 3,
         },
         "bounding_box": {"width": 45, "depth": 19, "height": 90},
+        "product_codes": [
+            {"code": "GC-403", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "GC-483", "material": "S/S 304", "finish": "Antique Brass"},
+            {"code": "GC-493", "material": "S/S 304", "finish": "Matte Black"},
+        ],
     },
     "135DEG_Clamp": {
         "load_capacity_kg": 45,
-        "glass_thickness_range": [6, 8, 10],
+        "glass_thickness_range": [6, 8, 10, 12],
         "default_mounting": "Floor",
         "dimensions": {
             "base_size": 45,
@@ -733,6 +1118,380 @@ CLAMP_SPECS = {
             "chamfer_size": 3,
         },
         "bounding_box": {"width": 45, "depth": 70, "height": 90},
+        "product_codes": [
+            {"code": "GC-405", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "GC-495", "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "GC-485", "material": "S/S 304", "finish": "Antique Brass"},
+        ],
+    },
+    "90DEG_G2G_Clamp": {
+        "load_capacity_kg": 45,
+        "glass_thickness_range": [6, 8, 10, 12],
+        "default_mounting": "Floor",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 45, "depth": 45, "height": 45},
+        "product_codes": [
+            {"code": "GC-404", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "GC-494", "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "GC-484", "material": "S/S 304", "finish": "Antique Brass"},
+        ],
+    },
+    "180DEG_G2G_Clamp": {
+        "load_capacity_kg": 45,
+        "glass_thickness_range": [6, 8, 10, 12],
+        "default_mounting": "Floor",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 45, "depth": 19, "height": 101},
+        "product_codes": [
+            {"code": "GC-406", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "GC-496", "material": "S/S 304", "finish": "Matte Black"},
+            {"code": "GC-486", "material": "S/S 304", "finish": "Antique Brass"},
+        ],
+    },
+    "90DEG_Tee_Clamp": {
+        "load_capacity_kg": 45,
+        "glass_thickness_range": [6, 8, 10, 12],
+        "default_mounting": "Floor",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 90, "depth": 45, "height": 62},
+        "product_codes": [
+            {"code": "GC-407", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "GC-487", "material": "S/S 304", "finish": "Antique Brass"},
+            {"code": "GC-497", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Bevel clamp specifications — from Showers-Ex-Sliding-Catalogue, pp. 12–15
+# ---------------------------------------------------------------------------
+
+BEVEL_CLAMP_SPECS = {
+    # ------------------------------------------------------------------
+    # Wall to Glass — S/S 304 (45 mm body, R9)
+    # ------------------------------------------------------------------
+    "bevel_90_u_clamp_w2g": {
+        "name": "Bevel 90° (U-Clamp) Wall to Glass Single Fix Clamp",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 90,
+        "clamp_shape": "U_Clamp",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 9,
+            "chamfer_size": 3,
+            "wall_gap": 5,
+        },
+        "bounding_box": {"width": 45, "depth": 19, "height": 45},
+        "product_codes": [
+            {"code": "GC-401", "material": "S/S 304", "finish": "Bright Polished",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-491", "material": "S/S 304", "finish": "Matte Black",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-481", "material": "S/S 304", "finish": "Antique Brass",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_90_l_clamp_w2g": {
+        "name": "Bevel 90° (L-Clamp) Wall to Glass Clamp",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 90,
+        "clamp_shape": "L_Clamp",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 9,
+            "chamfer_size": 3,
+            "wall_gap": 5,
+        },
+        "bounding_box": {"width": 45, "depth": 60, "height": 45},
+        "product_codes": [
+            {"code": "GC-402", "material": "S/S 304", "finish": "Bright Polished",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-492", "material": "S/S 304", "finish": "Matte Black",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-482", "material": "S/S 304", "finish": "Antique Brass",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_180_w2g": {
+        "name": "Bevel 180° Wall to Glass Clamp",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 180,
+        "clamp_shape": "180DEG_Clamp",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 9,
+            "chamfer_size": 3,
+            "wall_gap": 5,
+        },
+        "bounding_box": {"width": 45, "depth": 19, "height": 101},
+        "product_codes": [
+            {"code": "GC-403", "material": "S/S 304", "finish": "Bright Polished",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-483", "material": "S/S 304", "finish": "Antique Brass",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-493", "material": "S/S 304", "finish": "Matte Black",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Glass to Glass — S/S 304 (45 mm body, R9)
+    # ------------------------------------------------------------------
+    "bevel_90_g2g": {
+        "name": "Bevel 90° Glass to Glass Clamp",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 90,
+        "clamp_shape": "90DEG_G2G_Clamp",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 9,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 45, "depth": 45, "height": 45},
+        "product_codes": [
+            {"code": "GC-404", "material": "S/S 304", "finish": "Bright Polished",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-494", "material": "S/S 304", "finish": "Matte Black",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-484", "material": "S/S 304", "finish": "Antique Brass",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_135_g2g": {
+        "name": "Bevel 135° Glass to Glass Clamp",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 135,
+        "clamp_shape": "135DEG_Clamp",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 9,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 45, "depth": 70, "height": 92},
+        "product_codes": [
+            {"code": "GC-405", "material": "S/S 304", "finish": "Bright Polished",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-495", "material": "S/S 304", "finish": "Matte Black",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-485", "material": "S/S 304", "finish": "Antique Brass",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_180_g2g": {
+        "name": "Bevel 180° Glass to Glass Clamp",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 180,
+        "clamp_shape": "180DEG_G2G_Clamp",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 9,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 45, "depth": 19, "height": 101},
+        "product_codes": [
+            {"code": "GC-406", "material": "S/S 304", "finish": "Bright Polished",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-496", "material": "S/S 304", "finish": "Matte Black",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-486", "material": "S/S 304", "finish": "Antique Brass",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_90_g2g_tee": {
+        "name": "Bevel 90° Glass to Glass Tee Clamp",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 90,
+        "clamp_shape": "90DEG_Tee_Clamp",
+        "dimensions": {
+            "base_size": 45,
+            "base_thickness": 4.5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 9,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 90, "depth": 45, "height": 62},
+        "product_codes": [
+            {"code": "GC-407", "material": "S/S 304", "finish": "Bright Polished",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-487", "material": "S/S 304", "finish": "Antique Brass",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-497", "material": "S/S 304", "finish": "Matte Black",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Wall to Glass — Brass (50 mm body, R10)
+    # ------------------------------------------------------------------
+    "bevel_90_u_clamp_w2g_brass": {
+        "name": "Bevel 90° (U-Clamp) Wall to Glass Single Fix Clamp (Brass)",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 90,
+        "clamp_shape": "U_Clamp",
+        "dimensions": {
+            "base_size": 50,
+            "base_thickness": 5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+            "wall_gap": 5,
+        },
+        "bounding_box": {"width": 50, "depth": 20, "height": 50},
+        "product_codes": [
+            {"code": "GC-701", "material": "Brass", "finish": "Bright Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-711", "material": "Brass", "finish": "Satin Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_90_l_clamp_w2g_brass": {
+        "name": "Bevel 90° (L-Clamp) Wall to Glass Clamp (Brass)",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 90,
+        "clamp_shape": "L_Clamp",
+        "dimensions": {
+            "base_size": 50,
+            "base_thickness": 5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+            "wall_gap": 5,
+        },
+        "bounding_box": {"width": 50, "depth": 65, "height": 50},
+        "product_codes": [
+            {"code": "GC-702", "material": "Brass", "finish": "Bright Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-712", "material": "Brass", "finish": "Satin Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_180_w2g_brass": {
+        "name": "Bevel 180° Wall to Glass Clamp (Brass)",
+        "mounting_type": "Wall-to-Glass",
+        "angle": 180,
+        "clamp_shape": "180DEG_Clamp",
+        "dimensions": {
+            "base_size": 50,
+            "base_thickness": 5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+            "wall_gap": 5,
+        },
+        "bounding_box": {"width": 50, "depth": 20, "height": 101},
+        "product_codes": [
+            {"code": "GC-703", "material": "Brass", "finish": "Bright Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-713", "material": "Brass", "finish": "Satin Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Glass to Glass — Brass (50 mm body, R10)
+    # ------------------------------------------------------------------
+    "bevel_90_g2g_brass": {
+        "name": "Bevel 90° Glass to Glass Clamp (Brass)",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 90,
+        "clamp_shape": "90DEG_G2G_Clamp",
+        "dimensions": {
+            "base_size": 50,
+            "base_thickness": 5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 50, "depth": 50, "height": 50},
+        "product_codes": [
+            {"code": "GC-704", "material": "Brass", "finish": "Bright Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-714", "material": "Brass", "finish": "Satin Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_135_g2g_brass": {
+        "name": "Bevel 135° Glass to Glass Clamp (Brass)",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 135,
+        "clamp_shape": "135DEG_Clamp",
+        "dimensions": {
+            "base_size": 50,
+            "base_thickness": 5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 50, "depth": 75, "height": 103},
+        "product_codes": [
+            {"code": "GC-705", "material": "Brass", "finish": "Bright Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-715", "material": "Brass", "finish": "Satin Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
+    },
+    "bevel_180_g2g_brass": {
+        "name": "Bevel 180° Glass to Glass Clamp (Brass)",
+        "mounting_type": "Glass-to-Glass",
+        "angle": 180,
+        "clamp_shape": "180DEG_G2G_Clamp",
+        "dimensions": {
+            "base_size": 50,
+            "base_thickness": 5,
+            "glass_gap": 10,
+            "cutout_depth": 20,
+            "cutout_radius": 10,
+            "chamfer_size": 3,
+        },
+        "bounding_box": {"width": 50, "depth": 20, "height": 101},
+        "product_codes": [
+            {"code": "GC-706", "material": "Brass", "finish": "Bright Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+            {"code": "GC-716", "material": "Brass", "finish": "Satin Chrome",
+             "glass_thickness_range": [6, 8, 10, 12]},
+        ],
     },
 }
 
@@ -775,6 +1534,176 @@ ROLLER_SPECS = {
 BOTTOM_GUIDE_SPECS = {
     "width": 15,   # mm
     "height": 5,   # mm
+}
+
+# ---------------------------------------------------------------------------
+# Floor guide specifications (shared across all slider systems)
+# ---------------------------------------------------------------------------
+FLOOR_GUIDE_SPECS = {
+    "code": "SL-0099P",
+    "width": 30,    # mm
+    "height": 23,   # mm
+    "length": 50,   # mm
+    "depth": 19,    # mm
+}
+
+# ---------------------------------------------------------------------------
+# Slider system specifications — from Showers-Catalogue-Including-Sliders
+# ---------------------------------------------------------------------------
+
+SLIDER_FINISHES = ["Bright Polished", "Matte Black", "Natural"]
+
+SLIDER_SYSTEM_SPECS = {
+    # ------------------------------------------------------------------
+    # 1. Duplo — Double tube support bar system
+    # ------------------------------------------------------------------
+    "duplo": {
+        "name": "Duplo Double Tube Slider System",
+        "system_type": "tube",
+        "max_door_width": 750,
+        "max_weight_kg": 27,
+        "door_glass_thickness": [6],
+        "fixed_glass_thickness": [6, 8],
+        "dimensions": {
+            "tube_diameter": 19,
+            "tube_length_stock": 2000,
+            "tube_spacing_ctc": 46,
+            "door_fixed_height_diff": 88,
+            "lower_tube_to_fixed_panel": 24,
+            "fixed_panel_to_door_clearance": 13,
+            "fixed_panel_floor_deduction": 5,
+            "door_panel_floor_clearance": 10,
+            "door_fixed_overlap": 50,
+            "door_wheel_hole_diameter": 12,
+            "door_wheel_hole_from_top": 42,
+            "door_wheel_hole_from_handle_side": 43,
+            "door_wheel_hole_from_fixed_side": 20,
+            "return_panel_width_deduction": 25,
+            "return_panel_tube_hole_diameter": 12,
+            "return_panel_tube_hole_from_front": 25,
+            "return_panel_tube_hole_from_top": 20,
+            "roller_wheel_diameter": 25,
+            "roller_wheel_width": 26,
+            "wall_flange_projection": 10,
+        },
+        "components": {
+            "tube":         {"code": "SB19-2000B", "qty_per_system": 2},
+            "wall_flange":  {"code": "DP-FLW",     "qty_per_system": 4},
+            "wall_plate":   {"code": "DP-FPL",     "qty_per_system": 2},
+            "roller_wheel": {"code": "DP-RWH",     "qty_per_system": 2},
+            "tube_support": {"code": "DP-TSGP",    "qty_per_system": 1},
+            "floor_guide":  {"code": "SL-0099P",   "qty_per_system": 1},
+        },
+        "product_codes": [
+            {"code": "SB19-2000B", "material": "S/S 304",
+             "finish": "Bright Polished"},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 2. Edge Slider — Rectangular tube track system
+    # ------------------------------------------------------------------
+    "edge_slider": {
+        "name": "Edge Slider System",
+        "system_type": "track",
+        "max_door_width": 850,
+        "max_weight_kg": 45,
+        "door_glass_thickness": [6, 8],
+        "fixed_glass_thickness": [8, 10],
+        "adjustable_height": True,
+        "dimensions": {
+            "track_width": 10,
+            "track_height": 30,
+            "track_length_stock": 2000,
+            "wall_flange_projection": 30,
+            "wheel_center_from_top": 60,
+            "wheel_ctc_to_antilift": 60,
+            "track_center_from_top": 90,
+            "door_floor_clearance": 12,
+            "fixed_panel_floor_deduction": 5,
+            "fixed_panel_door_clearance": 26,
+            "door_fixed_overlap": 50,
+            "track_to_fixed_hole_diameter": 12,
+            "track_to_fixed_hole_from_top": 90,
+            "track_to_fixed_hole_from_side": 60,
+            "door_wheel_hole_diameter": 16,
+            "door_wheel_antilift_from_side": 80,
+            "door_antilift_hole_diameter": 10,
+            "return_panel_track_hole_diameter": 10,
+            "return_panel_track_hole_from_top": 90,
+            "return_panel_track_hole_from_front": 18,
+            "roller_wheel_diameter": 30,
+        },
+        "components": {
+            "slider_track":          {"code": "RST-2000B", "qty_per_system": 1},
+            "roller_wheel":          {"code": "EDS-RWH",   "qty_per_system": 2},
+            "anti_lift_pin":         {"code": "EDS-ALP",   "qty_per_system": 2},
+            "door_stop":             {"code": "EDS-DS",    "qty_per_system": 2},
+            "wall_flange":           {"code": "EDS-WFL",   "qty_per_system": 2},
+            "glass_connector_clamp": {"code": "EDS-GCC",   "qty_per_system": 2},
+            "floor_guide":           {"code": "SL-0099P",  "qty_per_system": 1},
+        },
+        "product_codes": [
+            {"code": "RST-2000B", "material": "S/S 304",
+             "finish": "Bright Polished"},
+            {"code": "RST-2000MB", "material": "S/S 304",
+             "finish": "Matte Black"},
+        ],
+    },
+
+    # ------------------------------------------------------------------
+    # 3. City Slider — Track + fixed adapter system
+    # ------------------------------------------------------------------
+    "city_slider": {
+        "name": "City Slider System",
+        "system_type": "track",
+        "max_door_width": 900,
+        "max_weight_kg": 45,
+        "door_glass_thickness": [6, 8, 10],
+        "fixed_glass_thickness": [6, 8],
+        "has_fixed_adapter": True,
+        "corner_slider_capable": True,
+        "mounting_options": ["inline", "corner", "ceiling", "wall"],
+        "dimensions": {
+            "track_width": 50,
+            "track_height": 50,
+            "track_length_stock": 2000,
+            "fixed_adapter_length_stock": 2000,
+            "fixing_deduction_top": 26,
+            "door_top_deduction_hd": 54,
+            "door_top_deduction_clip": 56,
+            "door_bottom_deduction": 10,
+            "glass_cutout_depth_hd": 24,
+            "glass_cutout_depth_clip": 26,
+            "fixed_door_clearance_hd": 16,
+            "fixed_door_clearance_clip": 12,
+            "door_runner_hole_diameter": 14,
+            "door_runner_hole_from_sides": 100,
+            "mounting_hole_spacing": 100,
+        },
+        "roller_variants": {
+            "clip_in":    {"code": "CSL-RWH",    "glass_cutout_depth": 26,
+                           "door_top_deduction": 56, "fixed_door_clearance": 12},
+            "heavy_duty": {"code": "CSL-RWH-HD", "glass_cutout_depth": 24,
+                           "door_top_deduction": 54, "fixed_door_clearance": 16},
+        },
+        "components": {
+            "slider_track":  {"code": "CSLT-2000B", "qty_per_system": 1},
+            "fixed_adapter": {"code": "CSLF-2000B", "qty_per_system": 1},
+            "roller_wheel":  {"code": "CSL-RWH",    "qty_per_system": 2,
+                              "variant_hd": "CSL-RWH-HD"},
+            "door_stopper":  {"code": "CSL-DBC",    "qty_per_system": 2},
+            "floor_guide":   {"code": "SL-0099P",   "qty_per_system": 1},
+        },
+        "product_codes": [
+            {"code": "CSLT-2000B", "material": "S/S 304",
+             "finish": "Bright Polished"},
+            {"code": "CSLT-2000MB", "material": "S/S 304",
+             "finish": "Matte Black"},
+            {"code": "CSLF-2000B", "material": "Aluminium",
+             "finish": "Natural"},
+        ],
+    },
 }
 
 
@@ -985,6 +1914,115 @@ def validateHandlePlacement(handle_height, ada_required=False):
                 f"(current: {handle_height}mm)"
             )
     return True, "Handle placement OK"
+
+
+def getHandleModelsForCategory(category):
+    """
+    Return catalogue handle model keys matching a legacy handle category.
+
+    Args:
+        category: Legacy HANDLE_SPECS key ("Knob", "Bar", "Pull", "Towel_Bar")
+                  or extended category ("Flush", "Custom_Kit")
+
+    Returns:
+        list[str]: Matching keys from CATALOGUE_HANDLE_SPECS
+    """
+    return [
+        key for key, spec in CATALOGUE_HANDLE_SPECS.items()
+        if spec["category"] == category
+    ]
+
+
+def lookupHandleProductCode(code):
+    """
+    Find the catalogue entry and variant for a product code.
+
+    Args:
+        code: Product code string (e.g. "DK-201", "BH-040")
+
+    Returns:
+        tuple: (handle_key, product_code_dict) or (None, None)
+    """
+    for key, spec in CATALOGUE_HANDLE_SPECS.items():
+        for pc in spec["product_codes"]:
+            if pc["code"] == code:
+                return key, pc
+    return None, None
+
+
+def validateSliderSystem(system_key, door_width, door_weight, glass_thickness):
+    """
+    Validate that a slider system can support the given door configuration.
+
+    Args:
+        system_key: Key into SLIDER_SYSTEM_SPECS
+        door_width: Door width in mm
+        door_weight: Door weight in kg
+        glass_thickness: Glass thickness in mm
+
+    Returns:
+        tuple: (is_valid, message)
+    """
+    if system_key not in SLIDER_SYSTEM_SPECS:
+        return False, f"Unknown slider system: {system_key}"
+
+    spec = SLIDER_SYSTEM_SPECS[system_key]
+
+    if door_width > spec["max_door_width"]:
+        return False, (
+            f"Door width ({door_width}mm) exceeds {spec['name']} maximum "
+            f"({spec['max_door_width']}mm)"
+        )
+
+    if door_weight > spec["max_weight_kg"]:
+        return False, (
+            f"Door weight ({door_weight:.1f}kg) exceeds {spec['name']} maximum "
+            f"({spec['max_weight_kg']}kg)"
+        )
+
+    thickness = int(glass_thickness)
+    if thickness not in spec["door_glass_thickness"]:
+        return False, (
+            f"Glass thickness ({thickness}mm) not supported by {spec['name']} "
+            f"(supported: {spec['door_glass_thickness']})"
+        )
+
+    return True, f"{spec['name']} configuration OK"
+
+
+def getSliderSystemsByType(system_type=None):
+    """
+    Return slider system keys, optionally filtered by system type.
+
+    Args:
+        system_type: "tube" or "track" to filter, or None for all
+
+    Returns:
+        list[str]: Matching keys from SLIDER_SYSTEM_SPECS
+    """
+    if system_type is None:
+        return list(SLIDER_SYSTEM_SPECS.keys())
+    return [
+        key for key, spec in SLIDER_SYSTEM_SPECS.items()
+        if spec["system_type"] == system_type
+    ]
+
+
+def lookupSliderProductCode(code):
+    """
+    Find the slider system entry for a product code.
+
+    Args:
+        code: Product code string (e.g. "RST-2000B", "CSLT-2000B")
+
+    Returns:
+        tuple: (system_key, product_code_dict) or (None, None)
+    """
+    for key, spec in SLIDER_SYSTEM_SPECS.items():
+        for pc in spec["product_codes"]:
+            if pc["code"] == code:
+                return key, pc
+    return None, None
 
 
 def selectSeal(location, glass_thickness, gap):

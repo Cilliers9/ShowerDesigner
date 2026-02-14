@@ -40,6 +40,17 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     requiresSupportBar,
     validateHandlePlacement,
     selectSeal,
+    CATALOGUE_HANDLE_FINISHES,
+    CATALOGUE_HANDLE_SPECS,
+    getHandleModelsForCategory,
+    lookupHandleProductCode,
+    SLIDER_SYSTEM_SPECS,
+    SLIDER_FINISHES,
+    FLOOR_GUIDE_SPECS,
+    validateSliderSystem,
+    getSliderSystemsByType,
+    lookupSliderProductCode,
+    BEVEL_CLAMP_SPECS,
 )
 
 
@@ -88,6 +99,46 @@ def test_clamp_specs_have_required_keys():
         assert "width" in bb and "depth" in bb and "height" in bb
         assert "glass_thickness_range" in spec
         assert "default_mounting" in spec
+        assert "product_codes" in spec, f"{key} missing product_codes"
+        for pc in spec["product_codes"]:
+            assert "code" in pc and "material" in pc and "finish" in pc
+
+
+def test_bevel_clamp_specs_have_required_keys():
+    assert len(BEVEL_CLAMP_SPECS) == 13  # 7 S/S 304 + 6 Brass
+    for key, spec in BEVEL_CLAMP_SPECS.items():
+        assert "name" in spec, f"{key} missing name"
+        assert "mounting_type" in spec, f"{key} missing mounting_type"
+        assert spec["mounting_type"] in ("Wall-to-Glass", "Glass-to-Glass"), (
+            f"{key} invalid mounting_type: {spec['mounting_type']}"
+        )
+        assert "angle" in spec, f"{key} missing angle"
+        assert spec["angle"] in (90, 135, 180), f"{key} invalid angle: {spec['angle']}"
+        assert "clamp_shape" in spec, f"{key} missing clamp_shape"
+        assert spec["clamp_shape"] in CLAMP_SPECS, (
+            f"{key} clamp_shape '{spec['clamp_shape']}' not in CLAMP_SPECS"
+        )
+        assert "dimensions" in spec, f"{key} missing dimensions"
+        dims = spec["dimensions"]
+        for dim_key in ("base_size", "base_thickness", "glass_gap",
+                        "cutout_depth", "cutout_radius", "chamfer_size"):
+            assert dim_key in dims, f"{key} dimensions missing {dim_key}"
+        assert "bounding_box" in spec, f"{key} missing bounding_box"
+        assert "product_codes" in spec, f"{key} missing product_codes"
+        assert len(spec["product_codes"]) > 0, f"{key} has empty product_codes"
+        for pc in spec["product_codes"]:
+            assert "code" in pc and "material" in pc and "finish" in pc
+            assert "glass_thickness_range" in pc, (
+                f"{key}/{pc['code']} missing glass_thickness_range"
+            )
+
+
+def test_bevel_clamp_product_codes_unique():
+    all_codes = []
+    for spec in BEVEL_CLAMP_SPECS.values():
+        for pc in spec["product_codes"]:
+            all_codes.append(pc["code"])
+    assert len(all_codes) == len(set(all_codes)), "Duplicate product codes in BEVEL_CLAMP_SPECS"
 
 
 def test_track_profiles_have_required_keys():
@@ -212,7 +263,7 @@ def test_selectClamp_floor_heavy():
 def test_calculateClampPlacement_1():
     positions = calculateClampPlacement(1000, 1)
     assert len(positions) == 1
-    assert positions[0] == 500  # center
+    assert positions[0] == 700  # 1000 - wall_offset_top (300)
 
 
 def test_calculateClampPlacement_2():
@@ -236,7 +287,7 @@ def test_validateClampLoad_ok():
 
 
 def test_validateClampLoad_exceeded():
-    valid, msg = validateClampLoad("L_Clamp", 70, 2)
+    valid, msg = validateClampLoad("L_Clamp", 100, 2)
     assert valid is False
 
 
@@ -327,6 +378,271 @@ def test_clamp_placement_defaults_consistent():
     assert d["wall_offset_bottom"] > 0
     assert d["floor_offset_start"] > 0
     assert d["floor_offset_end"] > 0
+
+
+# -----------------------------------------------------------------------
+# Catalogue handle specs tests
+# -----------------------------------------------------------------------
+
+def test_catalogue_handle_finishes_not_empty():
+    assert len(CATALOGUE_HANDLE_FINISHES) >= 4
+    assert "Bright Polished" in CATALOGUE_HANDLE_FINISHES
+    assert "Matte Black" in CATALOGUE_HANDLE_FINISHES
+
+
+def test_catalogue_handle_specs_structure():
+    required_keys = {"name", "category", "mounting_type", "dimensions", "product_codes"}
+    valid_categories = {"Knob", "Pull", "Towel_Bar", "Flush", "Custom_Kit"}
+    for key, spec in CATALOGUE_HANDLE_SPECS.items():
+        for rk in required_keys:
+            assert rk in spec, f"{key} missing '{rk}'"
+        assert spec["category"] in valid_categories, (
+            f"{key} has invalid category '{spec['category']}'"
+        )
+        assert len(spec["product_codes"]) > 0, f"{key} has no product codes"
+
+
+def test_catalogue_handle_product_codes_unique():
+    seen = {}
+    for key, spec in CATALOGUE_HANDLE_SPECS.items():
+        for pc in spec["product_codes"]:
+            code = pc["code"]
+            assert code not in seen, (
+                f"Duplicate product code '{code}' in '{key}' and '{seen[code]}'"
+            )
+            seen[code] = key
+
+
+def test_catalogue_handle_product_codes_have_material_finish():
+    for key, spec in CATALOGUE_HANDLE_SPECS.items():
+        for pc in spec["product_codes"]:
+            assert "material" in pc, f"{key}/{pc['code']} missing 'material'"
+            assert "finish" in pc, f"{key}/{pc['code']} missing 'finish'"
+
+
+def test_catalogue_handle_towel_rail_lengths():
+    towel_keys = [
+        k for k, s in CATALOGUE_HANDLE_SPECS.items()
+        if s["category"] == "Towel_Bar" and "rail_lengths" in s
+    ]
+    assert len(towel_keys) >= 4, "Expected at least 4 towel rail entries with rail_lengths"
+    for key in towel_keys:
+        lengths = CATALOGUE_HANDLE_SPECS[key]["rail_lengths"]
+        assert len(lengths) >= 2, f"{key} should have multiple rail lengths"
+        for pc in CATALOGUE_HANDLE_SPECS[key]["product_codes"]:
+            assert "rail_length" in pc, f"{key}/{pc['code']} missing 'rail_length'"
+            assert pc["rail_length"] in lengths, (
+                f"{key}/{pc['code']} rail_length {pc['rail_length']} not in {lengths}"
+            )
+
+
+def test_getHandleModelsForCategory_knob():
+    knobs = getHandleModelsForCategory("Knob")
+    assert len(knobs) == 3
+    assert "mushroom_knob_b2b" in knobs
+    assert "groove_knob_b2b" in knobs
+    assert "square_knob_b2b" in knobs
+
+
+def test_getHandleModelsForCategory_towel_bar():
+    towels = getHandleModelsForCategory("Towel_Bar")
+    assert len(towels) == 5
+    assert "towel_rail_round_finnial" in towels
+
+
+def test_getHandleModelsForCategory_empty():
+    result = getHandleModelsForCategory("NonexistentCategory")
+    assert result == []
+
+
+def test_lookupHandleProductCode_known():
+    key, pc = lookupHandleProductCode("DK-201")
+    assert key == "mushroom_knob_b2b"
+    assert pc["material"] == "Brass"
+    assert pc["finish"] == "Bright Chrome"
+
+
+def test_lookupHandleProductCode_towel_rail():
+    key, pc = lookupHandleProductCode("BH-040")
+    assert key == "towel_rail_round_finnial"
+    assert pc["rail_length"] == 400
+
+
+def test_lookupHandleProductCode_unknown():
+    key, pc = lookupHandleProductCode("NONEXISTENT-999")
+    assert key is None
+    assert pc is None
+
+
+# -----------------------------------------------------------------------
+# Slider system specs tests
+# -----------------------------------------------------------------------
+
+def test_slider_system_specs_structure():
+    required_keys = {
+        "name", "system_type", "max_door_width", "max_weight_kg",
+        "door_glass_thickness", "fixed_glass_thickness",
+        "dimensions", "components", "product_codes",
+    }
+    valid_types = {"tube", "track"}
+    for key, spec in SLIDER_SYSTEM_SPECS.items():
+        for rk in required_keys:
+            assert rk in spec, f"{key} missing '{rk}'"
+        assert spec["system_type"] in valid_types, (
+            f"{key} has invalid system_type '{spec['system_type']}'"
+        )
+        assert len(spec["product_codes"]) > 0, f"{key} has no product codes"
+        assert len(spec["components"]) > 0, f"{key} has no components"
+
+
+def test_slider_system_specs_three_systems():
+    assert "duplo" in SLIDER_SYSTEM_SPECS
+    assert "edge_slider" in SLIDER_SYSTEM_SPECS
+    assert "city_slider" in SLIDER_SYSTEM_SPECS
+    assert len(SLIDER_SYSTEM_SPECS) == 3
+
+
+def test_slider_system_duplo_is_tube():
+    assert SLIDER_SYSTEM_SPECS["duplo"]["system_type"] == "tube"
+
+
+def test_slider_system_edge_city_are_track():
+    assert SLIDER_SYSTEM_SPECS["edge_slider"]["system_type"] == "track"
+    assert SLIDER_SYSTEM_SPECS["city_slider"]["system_type"] == "track"
+
+
+def test_slider_system_product_codes_unique():
+    seen = {}
+    for key, spec in SLIDER_SYSTEM_SPECS.items():
+        for pc in spec["product_codes"]:
+            code = pc["code"]
+            assert code not in seen, (
+                f"Duplicate product code '{code}' in '{key}' and '{seen[code]}'"
+            )
+            seen[code] = key
+
+
+def test_slider_system_product_codes_have_material_finish():
+    for key, spec in SLIDER_SYSTEM_SPECS.items():
+        for pc in spec["product_codes"]:
+            assert "material" in pc, f"{key}/{pc['code']} missing 'material'"
+            assert "finish" in pc, f"{key}/{pc['code']} missing 'finish'"
+
+
+def test_slider_system_components_have_code():
+    for key, spec in SLIDER_SYSTEM_SPECS.items():
+        for role, comp in spec["components"].items():
+            assert "code" in comp, f"{key}/{role} missing 'code'"
+            assert "qty_per_system" in comp, f"{key}/{role} missing 'qty_per_system'"
+
+
+def test_slider_system_all_have_floor_guide():
+    for key, spec in SLIDER_SYSTEM_SPECS.items():
+        assert "floor_guide" in spec["components"], (
+            f"{key} missing floor_guide component"
+        )
+        assert spec["components"]["floor_guide"]["code"] == "SL-0099P"
+
+
+def test_slider_system_city_has_roller_variants():
+    city = SLIDER_SYSTEM_SPECS["city_slider"]
+    assert "roller_variants" in city
+    assert "clip_in" in city["roller_variants"]
+    assert "heavy_duty" in city["roller_variants"]
+
+
+def test_slider_system_city_corner_capable():
+    city = SLIDER_SYSTEM_SPECS["city_slider"]
+    assert city.get("corner_slider_capable") is True
+
+
+def test_slider_finishes():
+    assert len(SLIDER_FINISHES) >= 3
+    assert "Bright Polished" in SLIDER_FINISHES
+    assert "Matte Black" in SLIDER_FINISHES
+
+
+def test_floor_guide_specs():
+    assert FLOOR_GUIDE_SPECS["code"] == "SL-0099P"
+    assert FLOOR_GUIDE_SPECS["width"] == 30
+    assert FLOOR_GUIDE_SPECS["height"] == 23
+    assert FLOOR_GUIDE_SPECS["length"] == 50
+    assert FLOOR_GUIDE_SPECS["depth"] == 19
+
+
+def test_validateSliderSystem_ok():
+    valid, msg = validateSliderSystem("edge_slider", 800, 40, 8)
+    assert valid is True
+
+
+def test_validateSliderSystem_width_exceeded():
+    valid, msg = validateSliderSystem("duplo", 900, 20, 6)
+    assert valid is False
+    assert "width" in msg.lower()
+
+
+def test_validateSliderSystem_weight_exceeded():
+    valid, msg = validateSliderSystem("duplo", 700, 30, 6)
+    assert valid is False
+    assert "weight" in msg.lower()
+
+
+def test_validateSliderSystem_glass_unsupported():
+    valid, msg = validateSliderSystem("duplo", 700, 20, 10)
+    assert valid is False
+    assert "thickness" in msg.lower()
+
+
+def test_validateSliderSystem_unknown_system():
+    valid, msg = validateSliderSystem("nonexistent", 800, 30, 8)
+    assert valid is False
+
+
+def test_validateSliderSystem_city_wide_range():
+    # City supports 6, 8, 10mm glass
+    valid, msg = validateSliderSystem("city_slider", 800, 40, 10)
+    assert valid is True
+    valid, msg = validateSliderSystem("city_slider", 800, 40, 6)
+    assert valid is True
+
+
+def test_getSliderSystemsByType_all():
+    result = getSliderSystemsByType()
+    assert len(result) == 3
+    assert "duplo" in result
+    assert "edge_slider" in result
+    assert "city_slider" in result
+
+
+def test_getSliderSystemsByType_tube():
+    result = getSliderSystemsByType("tube")
+    assert result == ["duplo"]
+
+
+def test_getSliderSystemsByType_track():
+    result = getSliderSystemsByType("track")
+    assert len(result) == 2
+    assert "edge_slider" in result
+    assert "city_slider" in result
+
+
+def test_lookupSliderProductCode_known():
+    key, pc = lookupSliderProductCode("RST-2000B")
+    assert key == "edge_slider"
+    assert pc["material"] == "S/S 304"
+    assert pc["finish"] == "Bright Polished"
+
+
+def test_lookupSliderProductCode_city():
+    key, pc = lookupSliderProductCode("CSLT-2000MB")
+    assert key == "city_slider"
+    assert pc["finish"] == "Matte Black"
+
+
+def test_lookupSliderProductCode_unknown():
+    key, pc = lookupSliderProductCode("NONEXISTENT-999")
+    assert key is None
+    assert pc is None
 
 
 # -----------------------------------------------------------------------

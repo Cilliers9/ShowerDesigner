@@ -26,8 +26,7 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
 # Shape builder helpers
 # ---------------------------------------------------------------------------
 
-def _buildUClamp(dims):
-
+def _buildGlassClamp(dims):
     bs = dims["base_size"]                    # 45 mm (overall W and H)
     bt = dims["base_thickness"]               # 4.5 mm
     gg = dims["glass_gap"]                    # 10 mm
@@ -64,6 +63,24 @@ def _buildUClamp(dims):
         App.Vector(-bs/2, gg, -cd)
     )
     clamp = front_slot.fuse(back_plate)
+    return clamp
+
+def _buildUClamp(dims):
+
+    bs = dims["base_size"]                    # 45 mm (overall W and H)
+    bt = dims["base_thickness"]               # 4.5 mm
+    gg = dims["glass_gap"]                    # 10 mm
+    cd = dims["cutout_depth"]                 # 20 mm
+    cr = dims["cutout_radius"]                # 10 mm
+    cs = dims["chamfer_size"]                 # 3mm
+
+    glass_clamp = _buildGlassClamp(dims)
+    #Make Slot
+    slot_base = Part.makeBox(
+        cr * 2, gg, cd,
+        App.Vector(-gg, 0, -cd)
+    )
+    clamp = glass_clamp.fuse(slot_base)
     shape = clamp.removeSplitter()
     return shape
 

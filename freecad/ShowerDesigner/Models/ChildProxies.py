@@ -24,6 +24,8 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     BOTTOM_GUIDE_SPECS,
     CHANNEL_SPECS,
     MONZA_BIFOLD_HINGE_SPECS,
+    SLIDER_SYSTEM_SPECS,
+    FLOOR_GUIDE_SPECS,
 )
 
 
@@ -494,6 +496,143 @@ class MonzaFoldHingeChild:
         glass_t = obj.GlassThickness.Value or 8
         from freecad.ShowerDesigner.Models.Hinge import createMonzaFoldHingeShape
         obj.Shape = createMonzaFoldHingeShape(glass_t)
+
+    def onChanged(self, obj, prop):
+        pass
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+# ======================================================================
+# Slider Track (catalogue slider systems)
+# ======================================================================
+
+class SliderTrackChild:
+    """Proxy for a catalogue slider system track/tube child."""
+
+    def __init__(self, obj):
+        obj.Proxy = self
+        obj.addProperty(
+            "App::PropertyEnumeration", "SliderSystem", "Slider",
+            "Slider system type"
+        )
+        obj.SliderSystem = list(SLIDER_SYSTEM_SPECS.keys())
+        obj.SliderSystem = "edge_slider"
+        obj.addProperty(
+            "App::PropertyLength", "TrackLength", "Slider",
+            "Cut-to-size track length"
+        ).TrackLength = 1900
+
+    def execute(self, obj):
+        system_key = obj.SliderSystem
+        spec = SLIDER_SYSTEM_SPECS.get(system_key)
+        if spec is None:
+            return
+        length = obj.TrackLength.Value
+        if length <= 0:
+            return
+
+        dims = spec["dimensions"]
+
+        if spec["system_type"] == "tube":
+            # Duplo: twin parallel tubes
+            radius = dims["tube_diameter"] / 2
+            spacing = dims["tube_spacing_ctc"]
+            tube1 = Part.makeCylinder(
+                radius, length,
+                App.Vector(0, 0, 0), App.Vector(1, 0, 0)
+            )
+            tube2 = Part.makeCylinder(
+                radius, length,
+                App.Vector(0, 0, spacing), App.Vector(1, 0, 0)
+            )
+            obj.Shape = tube1.fuse(tube2)
+        else:
+            # Edge / City: rectangular track profile
+            track_w = dims["track_width"]
+            track_h = dims["track_height"]
+            obj.Shape = Part.makeBox(length, track_w, track_h)
+
+    def onChanged(self, obj, prop):
+        pass
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+# ======================================================================
+# Slider Roller (catalogue slider systems)
+# ======================================================================
+
+class SliderRollerChild:
+    """Proxy for a catalogue slider system roller child."""
+
+    def __init__(self, obj):
+        obj.Proxy = self
+        obj.addProperty(
+            "App::PropertyEnumeration", "SliderSystem", "Slider",
+            "Slider system type"
+        )
+        obj.SliderSystem = list(SLIDER_SYSTEM_SPECS.keys())
+        obj.SliderSystem = "edge_slider"
+
+    def execute(self, obj):
+        system_key = obj.SliderSystem
+        spec = SLIDER_SYSTEM_SPECS.get(system_key)
+        if spec is None:
+            return
+
+        dims = spec["dimensions"]
+
+        if system_key == "duplo":
+            radius = dims["roller_wheel_diameter"] / 2
+            height = dims["roller_wheel_width"]
+        elif system_key == "edge_slider":
+            radius = dims["roller_wheel_diameter"] / 2
+            height = 10
+        else:
+            # City slider — use approximate roller dimensions
+            radius = 15
+            height = 10
+
+        obj.Shape = Part.makeCylinder(
+            radius, height,
+            App.Vector(0, 0, 0), App.Vector(0, 0, 1)
+        )
+
+    def onChanged(self, obj, prop):
+        pass
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+# ======================================================================
+# Slider Floor Guide (catalogue slider systems — SL-0099P)
+# ======================================================================
+
+class SliderFloorGuideChild:
+    """Proxy for a slider floor guide child (SL-0099P)."""
+
+    def __init__(self, obj):
+        obj.Proxy = self
+
+    def execute(self, obj):
+        obj.Shape = Part.makeBox(
+            FLOOR_GUIDE_SPECS["length"],
+            FLOOR_GUIDE_SPECS["width"],
+            FLOOR_GUIDE_SPECS["height"],
+        )
 
     def onChanged(self, obj, prop):
         pass

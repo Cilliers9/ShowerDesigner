@@ -15,12 +15,17 @@ from freecad.ShowerDesigner.Models.ChildProxies import (
     TrackChild,
     GuideChild,
     RollerChild,
+    SliderTrackChild,
+    SliderRollerChild,
+    SliderFloorGuideChild,
 )
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     TRACK_PROFILES,
     ROLLER_SPECS,
     BOTTOM_GUIDE_SPECS,
     HARDWARE_FINISHES,
+    SLIDER_SYSTEM_SPECS,
+    FLOOR_GUIDE_SPECS,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
@@ -100,6 +105,12 @@ class SlidingDoorAssembly(AssemblyController):
         )
         vs.TrackType = ["Edge", "City", "Ezy", "Soft-Close"]
         vs.TrackType = "Edge"
+        vs.addProperty(
+            "App::PropertyEnumeration", "SliderSystem", "Door Configuration",
+            "Catalogue slider system (or Legacy for generic track)"
+        )
+        vs.SliderSystem = ["Legacy"] + list(SLIDER_SYSTEM_SPECS.keys())
+        vs.SliderSystem = "Legacy"
         vs.addProperty(
             "App::PropertyEnumeration", "SlideDirection", "Door Configuration",
             "Direction the door slides when opening"
@@ -182,6 +193,11 @@ class SlidingDoorAssembly(AssemblyController):
             "Clear opening when fully open"
         )
         vs.setEditorMode("OpeningWidth", 1)
+        vs.addProperty(
+            "App::PropertyString", "SystemValidation", "Calculated",
+            "Slider system validation status"
+        )
+        vs.setEditorMode("SystemValidation", 1)
 
     # ------------------------------------------------------------------
     # execute
@@ -207,27 +223,19 @@ class SlidingDoorAssembly(AssemblyController):
         show_hw = vs.ShowHardware
         finish = vs.HardwareFinish
 
-        # --- Top track ---
-        if show_hw:
-            self._updateTopTrack(part_obj, vs)
-        else:
-            if self._hasChild(part_obj, "TopTrack"):
-                self._removeChild(part_obj, "TopTrack")
+        # Determine slider mode (backward compat: old files lack SliderSystem)
+        slider_system = "Legacy"
+        if hasattr(vs, "SliderSystem"):
+            slider_system = vs.SliderSystem
 
-        # --- Bottom guide ---
-        if show_hw:
-            self._updateBottomGuide(part_obj, vs)
+        if slider_system != "Legacy":
+            self._updateCatalogueHardware(
+                part_obj, vs, slider_system, panel_count, show_hw
+            )
         else:
-            if self._hasChild(part_obj, "BottomGuide"):
-                self._removeChild(part_obj, "BottomGuide")
+            self._updateLegacyHardware(part_obj, vs, panel_count, show_hw)
 
-        # --- Rollers ---
-        if show_hw:
-            self._updateRollers(part_obj, vs, panel_count)
-        else:
-            self._syncChildCount(part_obj, "Roller", 0, RollerChild)
-
-        # --- Handle ---
+        # --- Handle (common to both modes) ---
         if show_hw and vs.HandleType != "None":
             self._updateHandle(part_obj, vs)
         else:
@@ -279,7 +287,193 @@ class SlidingDoorAssembly(AssemblyController):
                 self._removeChild(part_obj, "Panel2")
 
     # ------------------------------------------------------------------
-    # Track management
+    # Mode dispatch
+    # ------------------------------------------------------------------
+
+    def _updateLegacyHardware(self, part_obj, vs, panel_count, show_hw):
+        """Manage legacy track hardware children."""
+        # Clean up catalogue children if switching from catalogue mode
+        for name in ["SliderTrack", "SliderFloorGuide"]:
+            if self._hasChild(part_obj, name):
+                self._removeChild(part_obj, name)
+        self._syncChildCount(part_obj, "SliderRoller", 0, SliderRollerChild)
+
+        if show_hw:
+            self._updateTopTrack(part_obj, vs)
+        else:
+            if self._hasChild(part_obj, "TopTrack"):
+                self._removeChild(part_obj, "TopTrack")
+
+        if show_hw:
+            self._updateBottomGuide(part_obj, vs)
+        else:
+            if self._hasChild(part_obj, "BottomGuide"):
+                self._removeChild(part_obj, "BottomGuide")
+
+        if show_hw:
+            self._updateRollers(part_obj, vs, panel_count)
+        else:
+            self._syncChildCount(part_obj, "Roller", 0, RollerChild)
+
+        if hasattr(vs, "SystemValidation"):
+            vs.SystemValidation = ""
+
+    def _updateCatalogueHardware(self, part_obj, vs, system_key, panel_count,
+                                 show_hw):
+        """Manage catalogue slider hardware children."""
+        # Clean up legacy children if switching from legacy mode
+        if self._hasChild(part_obj, "TopTrack"):
+            self._removeChild(part_obj, "TopTrack")
+        if self._hasChild(part_obj, "BottomGuide"):
+            self._removeChild(part_obj, "BottomGuide")
+        self._syncChildCount(part_obj, "Roller", 0, RollerChild)
+
+        if show_hw:
+            self._updateSliderTrack(part_obj, vs, system_key)
+            self._updateSliderFloorGuide(part_obj, vs, system_key)
+            self._updateSliderRollers(part_obj, vs, system_key, panel_count)
+        else:
+            if self._hasChild(part_obj, "SliderTrack"):
+                self._removeChild(part_obj, "SliderTrack")
+            if self._hasChild(part_obj, "SliderFloorGuide"):
+                self._removeChild(part_obj, "SliderFloorGuide")
+            self._syncChildCount(part_obj, "SliderRoller", 0, SliderRollerChild)
+
+        self._validateSliderSystem(vs, system_key)
+
+    # ------------------------------------------------------------------
+    # Catalogue slider hardware
+    # ------------------------------------------------------------------
+
+    def _updateSliderTrack(self, part_obj, vs, system_key):
+        if not self._hasChild(part_obj, "SliderTrack"):
+            self._addChild(
+                part_obj, "SliderTrack", SliderTrackChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+            )
+
+        child = self._getChild(part_obj, "SliderTrack")
+        if child is None:
+            return
+
+        track_length = _calculateTrackLength(vs)
+        child.SliderSystem = system_key
+        child.TrackLength = track_length
+
+        spec = SLIDER_SYSTEM_SPECS[system_key]
+        dims = spec["dimensions"]
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+
+        if spec["system_type"] == "tube":
+            # Duplo: tubes above the door
+            z_offset = height + 5
+            y_offset = thickness / 2 - dims["tube_diameter"] / 2
+        else:
+            # Edge / City: rectangular track above the door
+            track_w = dims["track_width"]
+            z_offset = height + 5
+            y_offset = thickness / 2 - track_w / 2
+
+        if vs.SlideDirection == "Right":
+            x_offset = -50
+        else:
+            x_offset = -track_length / 2
+
+        child.Placement = App.Placement(
+            App.Vector(x_offset, y_offset, z_offset), App.Rotation()
+        )
+
+    def _updateSliderFloorGuide(self, part_obj, vs, system_key):
+        if not self._hasChild(part_obj, "SliderFloorGuide"):
+            self._addChild(
+                part_obj, "SliderFloorGuide", SliderFloorGuideChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+            )
+
+        child = self._getChild(part_obj, "SliderFloorGuide")
+        if child is None:
+            return
+
+        thickness = vs.Thickness.Value
+        guide_w = FLOOR_GUIDE_SPECS["width"]
+        guide_h = FLOOR_GUIDE_SPECS["height"]
+
+        x_pos = vs.Width.Value / 2 - FLOOR_GUIDE_SPECS["length"] / 2
+        y_offset = thickness / 2 - guide_w / 2
+        z_offset = -guide_h
+
+        child.Placement = App.Placement(
+            App.Vector(x_pos, y_offset, z_offset), App.Rotation()
+        )
+
+    def _updateSliderRollers(self, part_obj, vs, system_key, panel_count):
+        roller_count = panel_count * 2
+        self._syncChildCount(
+            part_obj, "SliderRoller", roller_count, SliderRollerChild,
+            lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+        )
+
+        spec = SLIDER_SYSTEM_SPECS[system_key]
+        dims = spec["dimensions"]
+        width = vs.Width.Value
+        height = vs.Height.Value
+        thickness = vs.Thickness.Value
+
+        idx = 1
+        for panel_idx in range(panel_count):
+            if panel_idx == 0:
+                if system_key == "duplo":
+                    hole_handle = dims["door_wheel_hole_from_handle_side"]
+                    hole_fixed = dims["door_wheel_hole_from_fixed_side"]
+                    x_positions = [hole_fixed, width - hole_handle]
+                elif system_key == "edge_slider":
+                    from_side = dims["door_wheel_antilift_from_side"]
+                    x_positions = [from_side, width - from_side]
+                else:  # city_slider
+                    from_side = dims["door_runner_hole_from_sides"]
+                    x_positions = [from_side, width - from_side]
+                y_offset = thickness / 2
+            else:
+                overlap = vs.OverlapWidth.Value
+                base_x = width - overlap
+                x_positions = [base_x + 20, base_x + width - 20]
+                y_offset = thickness / 2 + thickness + 5
+
+            z_pos = height + 5 + 15
+
+            for x_pos in x_positions:
+                child = self._getChild(part_obj, f"SliderRoller{idx}")
+                if child:
+                    child.SliderSystem = system_key
+                    child.Placement = App.Placement(
+                        App.Vector(x_pos, y_offset, z_pos), App.Rotation()
+                    )
+                idx += 1
+
+    def _validateSliderSystem(self, vs, system_key):
+        """Validate slider system limits and update SystemValidation property."""
+        from freecad.ShowerDesigner.Data.HardwareSpecs import validateSliderSystem
+        from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
+
+        width = vs.Width.Value
+        thickness = vs.Thickness.Value
+
+        area = (width / 1000.0) * (vs.Height.Value / 1000.0)
+        thickness_key = f"{int(thickness)}mm"
+        if thickness_key in GLASS_SPECS:
+            weight = area * GLASS_SPECS[thickness_key]["weight_kg_m2"]
+        else:
+            weight = area * 2.5 * thickness
+
+        valid, msg = validateSliderSystem(system_key, width, weight, thickness)
+        if hasattr(vs, "SystemValidation"):
+            vs.SystemValidation = msg
+        if not valid:
+            App.Console.PrintWarning(f"Slider system warning: {msg}\n")
+
+    # ------------------------------------------------------------------
+    # Legacy track management
     # ------------------------------------------------------------------
 
     def _updateTopTrack(self, part_obj, vs):

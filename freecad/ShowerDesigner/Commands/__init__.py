@@ -256,6 +256,7 @@ class SupportBarCommand:
         return True
 
 
+
 # Register component commands
 Gui.addCommand('ShowerDesigner_GlassPanel', GlassPanelCommand())
 Gui.addCommand('ShowerDesigner_FixedPanel', FixedPanelCommand())

@@ -19,9 +19,6 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HANDLE_SPECS,
     CLAMP_SPECS,
     SUPPORT_BAR_SPECS,
-    TRACK_PROFILES,
-    ROLLER_SPECS,
-    BOTTOM_GUIDE_SPECS,
     CHANNEL_SPECS,
     MONZA_BIFOLD_HINGE_SPECS,
     SLIDER_SYSTEM_SPECS,
@@ -269,108 +266,6 @@ class ChannelChild:
 
 
 # ======================================================================
-# Track (sliding door top track)
-# ======================================================================
-
-class TrackChild:
-    """Proxy for a sliding door top track child."""
-
-    def __init__(self, obj):
-        obj.Proxy = self
-        obj.addProperty(
-            "App::PropertyEnumeration", "TrackType", "Track", "Track profile type"
-        )
-        obj.TrackType = list(TRACK_PROFILES.keys())
-        obj.TrackType = "Edge"
-        obj.addProperty(
-            "App::PropertyLength", "TrackLength", "Track", "Total track length"
-        ).TrackLength = 1900
-
-    def execute(self, obj):
-        spec = TRACK_PROFILES.get(obj.TrackType)
-        if spec is None:
-            return
-        length = obj.TrackLength.Value
-        if length <= 0:
-            return
-        obj.Shape = Part.makeBox(length, spec["width"], spec["height"])
-
-    def onChanged(self, obj, prop):
-        pass
-
-    def __getstate__(self):
-        return None
-
-    def __setstate__(self, state):
-        return None
-
-
-# ======================================================================
-# Guide (sliding door bottom guide)
-# ======================================================================
-
-class GuideChild:
-    """Proxy for a sliding door bottom guide child."""
-
-    def __init__(self, obj):
-        obj.Proxy = self
-        obj.addProperty(
-            "App::PropertyLength", "GuideLength", "Guide", "Total guide length"
-        ).GuideLength = 1900
-
-    def execute(self, obj):
-        length = obj.GuideLength.Value
-        if length <= 0:
-            return
-        obj.Shape = Part.makeBox(
-            length, BOTTOM_GUIDE_SPECS["width"], BOTTOM_GUIDE_SPECS["height"]
-        )
-
-    def onChanged(self, obj, prop):
-        pass
-
-    def __getstate__(self):
-        return None
-
-    def __setstate__(self, state):
-        return None
-
-
-# ======================================================================
-# Roller (sliding door roller)
-# ======================================================================
-
-class RollerChild:
-    """Proxy for a sliding door roller child."""
-
-    def __init__(self, obj):
-        obj.Proxy = self
-        obj.addProperty(
-            "App::PropertyEnumeration", "RollerType", "Roller", "Roller type"
-        )
-        obj.RollerType = list(ROLLER_SPECS.keys())
-        obj.RollerType = "Standard"
-
-    def execute(self, obj):
-        spec = ROLLER_SPECS.get(obj.RollerType)
-        if spec is None:
-            return
-        obj.Shape = Part.makeCylinder(
-            spec["radius"], spec["height"],
-            App.Vector(0, 0, 0), App.Vector(0, 0, 1)
-        )
-
-    def onChanged(self, obj, prop):
-        pass
-
-    def __getstate__(self):
-        return None
-
-    def __setstate__(self, state):
-        return None
-
-
-# ======================================================================
 # Swing Arc (hinged door clearance visualization)
 # ======================================================================
 
@@ -526,6 +421,10 @@ class SliderTrackChild:
             "App::PropertyLength", "TrackLength", "Slider",
             "Cut-to-size track length"
         ).TrackLength = 1900
+        obj.addProperty(
+            "App::PropertyLength", "TubeSupportX", "Slider",
+            "X position of tube support bracket (0 = none)"
+        ).TubeSupportX = 0
 
     def execute(self, obj):
         system_key = obj.SliderSystem
@@ -538,24 +437,104 @@ class SliderTrackChild:
 
         dims = spec["dimensions"]
 
-        if spec["system_type"] == "tube":
+        if system_key == "duplo":
             # Duplo: twin parallel tubes
-            radius = dims["tube_diameter"] / 2
+            tube_r = dims["tube_diameter"] / 2
             spacing = dims["tube_spacing_ctc"]
+
             tube1 = Part.makeCylinder(
-                radius, length,
+                tube_r, length,
                 App.Vector(0, 0, 0), App.Vector(1, 0, 0)
             )
             tube2 = Part.makeCylinder(
-                radius, length,
+                tube_r, length,
                 App.Vector(0, 0, spacing), App.Vector(1, 0, 0)
             )
-            obj.Shape = tube1.fuse(tube2)
+            shape = tube1.fuse(tube2)
+
+            # Wall flanges (4x): sleeves over tube ends
+            flange_r = 12.5  # 25mm outer diameter
+            flange_len = 25
+            for z in [0, spacing]:
+                # Flange at start (extends backward from X=0)
+                f = Part.makeCylinder(
+                    flange_r, flange_len,
+                    App.Vector(-flange_len, 0, z), App.Vector(1, 0, 0)
+                )
+                shape = shape.fuse(f)
+                # Flange at end
+                f = Part.makeCylinder(
+                    flange_r, flange_len,
+                    App.Vector(length, 0, z), App.Vector(1, 0, 0)
+                )
+                shape = shape.fuse(f)
+
+            # Tube support bracket at fixed panel junction
+            support_x = 0
+            if hasattr(obj, "TubeSupportX"):
+                support_x = obj.TubeSupportX.Value
+            if support_x > 0:
+                plate_w = 30
+                plate_d = 30
+                tube_d = dims["tube_diameter"]
+                plate_h = spacing + tube_d
+                plate_z = -tube_d / 2
+                plate = Part.makeBox(
+                    plate_w, plate_d, plate_h,
+                    App.Vector(support_x - plate_w / 2, -plate_d / 2, plate_z)
+                )
+                # Downward tab below lower tube
+                tab_h = 30
+                tab = Part.makeBox(
+                    plate_w, plate_d, tab_h,
+                    App.Vector(
+                        support_x - plate_w / 2, -plate_d / 2,
+                        plate_z - tab_h
+                    )
+                )
+                shape = shape.fuse(plate).fuse(tab)
+            obj.Shape = shape
+        elif system_key == "city_slider":
+            # City slider: U-channel profile from technical drawing
+            track_w = dims["track_width"]   # 55mm
+            track_h = dims["track_height"]  # 50mm
+            rail_h = 26   # upper rail section height (where wheels ride)
+            wall_h = track_h - rail_h  # 24mm lower glass channel walls
+            wall_t = 5    # wall thickness
+
+            # Upper rail body: full width solid block at top
+            upper = Part.makeBox(
+                length, track_w, rail_h,
+                App.Vector(0, 0, wall_h)
+            )
+            # Two side walls extending downward forming glass channel
+            left_wall = Part.makeBox(length, wall_t, wall_h)
+            right_wall = Part.makeBox(
+                length, wall_t, wall_h,
+                App.Vector(0, track_w - wall_t, 0)
+            )
+            shape = upper.fuse(left_wall).fuse(right_wall)
+            obj.Shape = shape
         else:
-            # Edge / City: rectangular track profile
+            # Edge slider: simple rectangular track profile
             track_w = dims["track_width"]
             track_h = dims["track_height"]
-            obj.Shape = Part.makeBox(length, track_w, track_h)
+            shape = Part.makeBox(length, track_w, track_h)
+
+            # Wall flanges (2x): rectangular plates at each track end
+            flange_proj = dims.get("wall_flange_projection", 30)
+            # Flange at start (extends backward from X=0)
+            f1 = Part.makeBox(
+                flange_proj, track_w+5, track_h+5,
+                App.Vector(-flange_proj, -2.5, -2.5)
+            )
+            # Flange at end (extends forward from X=length)
+            f2 = Part.makeBox(
+                flange_proj, track_w+5, track_h+5,
+                App.Vector(length, -2.5, -2.5)
+            )
+            shape = shape.fuse(f1).fuse(f2)
+            obj.Shape = shape
 
     def onChanged(self, obj, prop):
         pass
@@ -593,18 +572,67 @@ class SliderRollerChild:
 
         if system_key == "duplo":
             radius = dims["roller_wheel_diameter"] / 2
-            height = dims["roller_wheel_width"]
+            wheel_w = dims["roller_wheel_width"]
+            # Duplo roller: wheel axis along Y, centered on origin
+            obj.Shape = Part.makeCylinder(
+                radius, wheel_w,
+                App.Vector(0, -wheel_w / 2, 0), App.Vector(0, 1, 0)
+            )
+            return
         elif system_key == "edge_slider":
             radius = dims["roller_wheel_diameter"] / 2
-            height = 10
+            wheel_w = 10
+            obj.Shape = Part.makeCylinder(
+                radius, wheel_w,
+                App.Vector(0, -wheel_w / 2, 0), App.Vector(0, 1, 0)
+            )
+            return
         else:
-            # City slider — use approximate roller dimensions
-            radius = 15
-            height = 10
+            # City slider — use spec-based roller dimensions
+            radius = dims.get("roller_wheel_diameter", 24) / 2
+            wheel_w = 10
+            obj.Shape = Part.makeCylinder(
+                radius, wheel_w,
+                App.Vector(0, -wheel_w / 2, 0), App.Vector(0, 1, 0)
+            )
+            return
 
         obj.Shape = Part.makeCylinder(
             radius, height,
             App.Vector(0, 0, 0), App.Vector(0, 0, 1)
+        )
+
+    def onChanged(self, obj, prop):
+        pass
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+# ======================================================================
+# Anti-Lift Pin (edge slider system)
+# ======================================================================
+
+class AntiLiftPinChild:
+    """Proxy for an edge slider anti-lift pin child."""
+
+    def __init__(self, obj):
+        obj.Proxy = self
+
+    def execute(self, obj):
+        spec = SLIDER_SYSTEM_SPECS.get("edge_slider")
+        if spec is None:
+            return
+        dims = spec["dimensions"]
+        radius = dims["door_antilift_hole_diameter"] / 2
+        pin_h = 15
+        # Pin axis along Y, centered on origin
+        obj.Shape = Part.makeCylinder(
+            radius, pin_h,
+            App.Vector(0, -pin_h / 2, 0), App.Vector(0, 1, 0)
         )
 
     def onChanged(self, obj, prop):

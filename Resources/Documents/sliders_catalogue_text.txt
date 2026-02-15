@@ -1,0 +1,5551 @@
+--- PAGE 1 ---
+y.
+    
+
+--- PAGE 2 ---
+BEVEL 135° WALL TO GLASS HINGE
+Code
+Material
+SDH-701-135
+Brass
+ 
+50
+16
+63
+58
+37
+41
+10
+90°
+90°
+WALL
+BEVEL 90° WALL TO GLASS HINGE - FULL PLATE
+Code
+Material
+Finish
+Weight
+SDH-201-90
+S/S 304
+Bright Polished
+35 kg
+SDH-291-90
+S/S 304
+Matte Black    
+    35 kg
+SDH-501-90
+S/S 304
+Bright Polished
+45 kg
+6-12mm
+SDH-301-90**
+Brass
+Bright Chrome   
+    45 kg
+6-12mm
+SDH-581-90
+S/S 304
+Antique Brass   
+    45 kg
+6-12mm
+SDH-591-90
+S/S 304
+Matte Black   
+    45 kg
+6-12mm
+SDH-701-90
+Brass
+Bright Chrome   
+    45 kg
+6-12mm
+90°
+90°
+WALL
+16
+63
+58
+37
+41
+50
+90
+55
+58
+17
+9
+18
+WALL
+OUTSIDE
+INSIDE
+PIVOT
+POINT
+90
+65
+58
+55
+90
+65
+58
+55
+50
+90°
+90°
+10
+WALL
+BEVEL 90° WALL TO GLASS HINGE - HALF PLATE
+Code
+Material
+Finish
+Weight
+SDH-201-90HP
+S/S 304
+Bright Polished
+35 kg
+SDH-281-90HP
+S/S 304
+Antique Brass   
+      35 kg
+SDH-291-90HP
+S/S 304
+Matte Black   
+      35 kg
+SDH-581-90HP
+S/S 304
+Antique Brass   
+      45 kg
+6-12mm
+SDH-591-90HP
+S/S 304
+Matte Black   
+      45 kg
+6-12mm
+SDH-701-90HP
+Brass
+Bright Chrome   
+      45 kg
+6-12mm
+SDH-711-90HP
+Brass
+Satin Chrome   
+      45 kg
+6-12mm
+SDH-501-90HP
+S/S 304
+Bright Polished
+45 kg
+6-12mm
+SDH-301-90HP**
+Brass
+Bright Chrome   
+      45 kg
+6-12mm
+Calculated for 8mm glass.
+SHOWER HINGES
+BEVEL HINGES
+Glass Thickness
+6-10mm
+6-10mm
+Glass Thickness
+6-10mm
+6-10mm
+6-10mm
+** Adjustable Series.
+4
+SHOWERS & TOILET ENCLOSURES
+Finish
+Weight
+Glass Thickness
+Bright Chrome              45 kg
+6-12mm
+16
+63
+58
+37
+41
+
+--- PAGE 3 ---
+90°
+90°
+DOOR
+FIXED
+43
+90
+90
+55
+41
+34
+7
+4
+7
+11
+19
+OUTSIDE
+INSIDE
+PIVOT
+POINT
+BEVEL 135° GLASS TO GLASS HINGE (UNEQUAL CUT OUT)
+Finish
+Material
+Bright Polished
+S/S 304
+6-12mm
+45 kg
+Matte Black  
+S/S 304
+6-12mm
+45 kg
+10
+90°
+0°
+9
+FIXED
+DOOR
+60
+90
+55
+78
+58
+16
+63
+58
+37
+41
+37
+41
+BEVEL 90° GLASS TO GLASS HINGE
+Glass Thickness
+Weight
+Material
+6-10mm
+35 kg
+S/S 304
+6-10mm
+35 kg
+S/S 304
+90°
+90°
+DOOR
+FIXED
+57
+90
+55
+58
+16
+63
+58
+37
+41
+37
+41
+7
+4
+7
+11
+19
+OUTSIDE
+INSIDE
+PIVOT
+POINT
+BEVEL 135° GLASS TO GLASS HINGE (EQUAL CUT OUT)
+Code
+Material
+Finish
+Weight
+Glass Thickness
+45 kg
+Bright Polished
+S/S 304
+SDH-502-135E
+6-12mm
+45 kg
+Matte Black
+S/S 305
+45 kg
+Antique Brass  
+S/S 305
+SDH-582-135E
+Calculated for 8mm glass.
+Calculated for 8mm glass.
+Calculated for 8mm glass.
+SHOWER HINGES
+  
+SDH-592-135E
+FIXED
+FIXED
+6-12mm
+6-12mm
+6-12mm
+45 kg
+Bright Chrome  
+Brass
+SDH-702-90
+6-12mm
+45 kg
+Matte Black  
+S/S 304
+SDH-592-90
+6-12mm
+45 kg
+Antique Brass  
+S/S 304
+SDH-582-90
+6-12mm
+45 kg
+Bright Polished
+S/S 304
+SDH-502-90
+6-10mm
+35 kg
+Matte Black  
+S/S 304
+SDH-292-90
+6-12mm
+45 kg
+Brass
+Finish
+Bright Polished
+Antique Brass  
+Code
+SDH-202-90
+SDH-282-90
+SDH-712-90
+Satin Chrome  
+SDH-712-135
+SDH-702-135
+Brass
+Brass
+Bright Chrome  
+Satin Chrome  
+45 kg
+45 kg
+6-12mm
+6-12mm
+Matte Black  
+S/S 304
+SDH-592-135
+SDH-502-135
+S/S 304
+Bright Polished
+Weight
+35 kg
+Glass Thickness
+6-10mm
+6-10mm
+35 kg
+Code
+SDH-202-135
+SDH-292-135
+  
+SHOWER HINGES
+5
+16
+63
+58
+37
+27
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 4 ---
+DOOR
+TOPLIGHT
+6
+360
+116
+90
+58
+5
+5
+5
+5
+21
+63
+58
+41
+37
+37
+41
+16
+BEVEL 360° GLASS TO WALL PIVOT HINGE
+Glass Thickness
+Weight
+Finish
+Material
+Code
+6-12mm
+Bright Chrome 
+45 kg
+Brass
+SDH-704-360
+6-12mm
+45 kg
+Satin Chrome  
+Brass
+SDH-714-360
+6-12mm
+45 kg
+Matte Black  
+Brass
+SDH-794-360
+4
+90°
+90°
+FIXED
+DOOR
+16
+63
+58
+37
+41
+37
+41
+115
+90
+55
+55
+58
+21
+BEVEL 180° GLASS TO GLASS HINGE
+Weight
+Finish
+Material
+35 kg
+Bright Polished
+S/S 304
+35 kg
+Antique Brass  
+S/S 304
+35 kg
+Matte Black  
+S/S 304
+45 kg
+Bright Chrome  
+Brass
+45 kg
+Bright Polished
+S/S 304
+45 kg
+Antique Brass  
+S/S 304
+45 kg
+Matte Black  
+S/S 304
+45 kg
+Bright Chrome  
+Brass
+45 kg
+Satin Chrome  
+Brass
+16
+63
+58
+37
+41
+15
+FLOOR
+360
+90
+58
+9
+55
+70
+20
+BEVEL 360° GLASS TO GLASS PIVOT HINGE
+Glass Thickness
+Weight
+Finish
+Material
+Code
+6-12mm
+45 kg
+Bright Chrome  
+Brass
+SDH-708-360
+SHOWER HINGES
+Glass Thickness
+6-10mm
+6-10mm
+6-10mm
+6-12mm
+6-12mm
+6-12mm
+6-12mm
+6-12mm
+6-12mm
+** Adjustable Series.
+Code
+SDH-202-180 
+SDH-282-180 
+SDH-292-180 
+SDH-302-180**
+SDH-502-180 
+SDH-582-180 
+SDH-592-180 
+SDH-702-180 
+SDH-712-180*
+6
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 5 ---
+60
+50
+10
+90°
+90°
+FIXED
+DOOR
+DOOR
+16
+63
+58
+37
+41
+37
+58
+16
+37
+142
+106
+90
+14
+55
+BEVEL GLASS TO GLASS TEE HINGE 90°
+Code
+Material
+Finish
+Weight
+Glass Thickness
+H190T
+Brass
+Matte Black   
+          45 kg
+6-12mm
+H100T
+Brass
+Bright Chrome   
+          45 kg
+6-12mm
+H110T
+Brass
+Satin Chrome  
+ 
+45 kg
+6-12mm
+Calculated for 8mm glass.
+SHOWER HINGES
+  
+7
+SHOWERS & TOILET ENCLOSURES
+SHOWER HINGES
+
+--- PAGE 6 ---
+90°
+90°
+WALL
+16
+63
+58
+37
+41
+90
+50
+55
+58
+17
+9
+19
+WALL
+OUTSIDE
+INSIDE
+PIVOT
+POINT
+DOME 135° WALL TO GLASS HINGE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+SDH-801-135
+Brass
+Bright Chrome   
+     45 kg
+6-12mm
+90
+65
+55
+58
+50
+90°
+90°
+10
+WALL
+16
+63
+58
+37
+41
+DOME 90° WALL TO GLASS HINGE - HALF PLATE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+SDH-801-90HP
+Brass
+Bright Chrome   
+     45 kg
+6-12mm
+SDH-811-90HP
+Brass
+Satin Chrome   
+     45 kg
+6-12mm
+55
+65
+58
+90
+50
+16
+63
+58
+37
+41
+WALL
+10
+90°
+90°
+DOME 90° WALL TO GLASS HINGE - FULL PLATE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+SDH-801-90
+Brass
+Bright Chrome   
+    45 kg
+6-12mm
+Calculated for 8mm glass.
+SHOWER HINGES
+DOME HINGES
+8
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 7 ---
+90°
+90°
+DOOR
+FIXED
+55
+90
+55
+58
+63
+58
+37
+41
+27
+34
+7
+4
+7
+11
+19
+OUTSIDE
+INSIDE
+PIVOT
+POINT
+DOME 135° GLASS TO GLASS HINGE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+SDH-802-135
+Brass
+Bright Chrome   
+     45 kg
+6-12mm
+SDH-812-135
+Brass
+Satin Chrome  
+     45 kg
+6-12mm
+10
+90°
+90°
+FIXED
+DOOR
+16
+63
+58
+37
+41
+37
+41
+60
+43
+80
+58
+90
+55
+DOME 90° GLASS TO GLASS HINGE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+SDH-802-90
+Brass
+Bright Chrome   
+    45 kg
+6-12mm
+SDH-812-90
+Brass
+Satin Chrome   
+    45 kg
+6-12mm
+16
+63
+37
+41
+58
+15
+FLOOR
+360
+90
+58
+9
+55
+70
+20
+DOME 360° GLASS TO WALL PIVOT HINGE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+SDH-801-360
+Brass
+Bright Chrome   
+     45 kg
+6-12mm
+SDH-811-360
+Brass
+Satin Chrome   
+     45 kg
+6-12mm
+Calculated for 8mm glass.
+Calculated for 8mm glass.
+SHOWER HINGES
+  
+SHOWER HINGES
+9
+16
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 8 ---
+4
+0°
+9
+90°
+FIXED
+DOOR
+16
+63
+58
+37
+41
+37
+41
+115
+90
+55
+55
+58
+20
+ 106 
+ 
+45 
+ 53 
+ 
+45 
+ 28 
+ 4 
+ 180° 
+ 24 
+ 25 
+ 
+12 
+ 25 
+ 65 
+ 
+45 
+ 53 
+ 
+45 
+ 29 
+ 8 
+ 90° 
+WALL
+ 34 
+ 24 
+ 
+12 
+SHOWER HINGES
+BATHSCREEN HINGES
+10
+DOME 180° GLASS TO GLASS HINGE
+Glass Thickness
+Weight
+Finish
+Material
+Code
+6-12mm
+45 kg
+Bright Chrome  
+Brass
+SDH-802-180
+6-12mm
+45 kg
+Satin Chrome  
+Brass
+SDH-812-180
+DIOSA 180° GLASS TO GLASS HINGE
+Glass Thickness
+Weight
+Finish
+Material
+Code
+6-8mm
+25 kg
+Bright Chrome  
+Brass
+OXB-745
+DIOSA 90° WALL TO GLASS HINGE
+Glass Thickness
+Weight
+Finish
+Material
+Code
+6-8mm
+25 kg
+Bright Chrome  
+Brass
+OXB-746
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 9 ---
+90°
+90°
+DOOR
+FIXED
+38
+45
+49
+80
+FLAT 135° GLASS TO GLASS HINGE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+GDH-604
+S/S 304
+Bright Polished
+25 kg
+6-10mm
+6
+90°
+90°
+FIXED
+DOOR
+82
+38
+38
+80
+45
+15
+17
+21
+28
+45
+47
+21
+45
+17
+17
+21
+28
+45
+47
+21
+45
+17
+FLAT 180° GLASS TO GLASS HINGE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+GDH-603
+S/S 304
+Bright Polished
+25 kg
+6-10mm
+10
+90°
+90°
+WALL
+17
+47
+21
+28
+45
+80
+48
+38
+45
+42
+FLAT 90° WALL TO GLASS HINGE - FULL PLATE
+Code
+Material
+Finish
+Weight
+Glass Thickness
+GDH-602
+S/S 304
+Bright Polished
+25 kg
+6-10mm
+8
+5
+3
+6
+5
+OUTSIDE
+INSIDE
+PIVOT
+POINT
+Calculated for 6mm glass.
+SHOWER HINGES
+FLAT HINGES
+  
+SHOWER HINGES
+11
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 10 ---
+MONZA 180° GLASS TO GLASS SELF RISING HINGES
+Glass Thickness
+Weight
+ 
+Finish
+    Material
+Code
+6-12mm
+45 kg
+ 
+Bright Chrome  
+    Brass
+STM-GGH-180L
+6-12mm
+45 kg
+ 
+Bright Chrome  
+    Brass
+STM-GGH-180R
+6-12mm
+45 kg
+ 
+Matte Black  
+    Brass
+MGGH-180LMB
+6-12mm
+45 kg
+ 
+Matte Black  
+    Brass
+MGGH-180RMB
+10
+WALL
+35
+45
+25
+35
+14
+45
+60
+80
+8
+45°
+180°
+6
+35
+35
+28
+45
+98
+80
+30
+14
+45
+30
+49°
+180
+8
+RIGHT WALL (OPENING OUTWARDS)
+LEFT WALL (OPENING OUTWARDS)
+STM-GGH-180R     STM-WGH-90L
+STM-WGH-90R     STM-GGH-180L
+STM-GGH-180L     STM-WGH-90R
+STM-WGH-90L     STM-GGH-180R
+RIGHT WALL (OPENING INWARDS)
+LEFT WALL (OPENING INWARDS)
+MONZA 90° WALL TO GLASS SELF RISING HINGES
+Glass Thickness
+Weight
+ 
+Finish
+      Material
+Code
+6-12mm
+45 kg
+ 
+Bright Chrome  
+     Brass
+STM-WGH-90L
+6-12mm
+45 kg
+ 
+Bright Chrome  
+     Brass
+STM-WGH-90R
+6-12mm
+45 kg
+ 
+Matte Black  
+     Brass
+MWGH-90LMB
+6-12mm
+45 kg
+ 
+Matte Black  
+     Brass
+MWGH-90RMB
+SHOWER HINGES
+BI-FOLD HINGES
+12
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 11 ---
+  
+
+--- PAGE 12 ---
+20
+18
+5
+WALL
+20
+R9
+45
+45
+45
+5
+WALL
+20
+18
+20
+R9
+45
+45
+45
+20
+R9
+5
+WALL
+20
+18
+45
+101
+45
+BEVEL 90° (U-CLAMP) WALL TO GLASS SINGLE FIX CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Polished
+S/S 304
+GC-401
+6-12mm
+Matte Black  
+S/S 304
+GC-491
+6-12mm
+Antique Brass  
+S/S 304
+GC-481
+BEVEL 90° (L-CLAMP) WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Polished
+S/S 304
+GC-402
+6-12mm
+Matte Black  
+S/S 304
+GC-492
+6-12mm
+Antique Brass  
+S/S 304
+GC-482
+BEVEL 180° WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Polished
+S/S 304
+GC-403
+6-12mm
+Antique Brass  
+S/S 304
+GC-483
+6-12mm
+Matte Black  
+S/S 304
+GC-493
+24
+32
+18
+45
+45
+45
+BEVEL 90° GLASS TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Polished
+S/S 304
+GC-404
+6-12mm
+Matte Black  
+S/S 304
+GC-494
+6-12mm
+Antique Brass  
+S/S 304
+GC-484
+Calculated for 8mm glass.
+SHOWER CLAMPS
+BEVEL CLAMPS
+14
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 13 ---
+BEVEL 90° GLASS TO GLASS TEE CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-407
+S/S 304
+Bright Polished
+6-12mm
+GC-487
+S/S 304
+Antique Brass 
+6-12mm
+GC-497
+S/S 304
+Matte Black 
+6-12mm
+24
+24
+18
+90
+45
+62
+18
+24
+24
+45
+92
+45
+BEVEL 135° GLASS TO GLASS CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-405
+S/S 304
+Bright Polished
+6-12mm
+GC-495
+S/S 304
+Matte Black 
+6-12mm
+GC-485
+S/S 304
+Antique Brass 
+6-12mm
+BEVEL 180° GLASS TO GLASS CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-406
+S/S 304
+Bright Polished
+6-12mm
+GC-496
+S/S 304
+Matte Black 
+6-12mm
+GC-486
+S/S 304
+Antique Brass 
+6-12mm
+56
+24
+22
+DIVIDING PANEL
+INLINE PANEL
+18
+56
+INLINE PANEL    
+CUT-OUT
+DIVIDING PANEL 
+CUT-OUT
+22
+18
+45
+45
+101
+Calculated for 8mm glass.
+SHOWER CLAMPS
+5
+WALL
+20
+20
+50
+50
+50
+20
+R10
+BEVEL 90° (U-CLAMP) WALL TO GLASS SINGLE FIX CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-701
+Brass
+Bright Chrome 
+6-12mm
+GC-711
+Brass
+Satin Chrome 
+6-12mm
+  
+SHOWER CAMPS
+15
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 14 ---
+5
+WALL
+20
+20
+20
+R10
+50
+50
+50
+5
+WALL
+20
+20
+50
+20
+R10
+101
+50
+BEVEL 90° (L-CLAMP) WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Chrome  
+Brass
+GC-702
+6-12mm
+Satin Chrome  
+Brass
+GC-712
+BEVEL 180° WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Chrome  
+Brass
+GC-703
+6-12mm
+Satin Chrome  
+Brass
+GC-713
+24
+32
+20
+50
+50
+50
+BEVEL 90° GLASS TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Chrome  
+Brass
+GC-704
+6-12mm
+Satin Chrome  
+Brass
+GC-714
+Calculated for
+8mm glass.
+SHOWER CLAMPS
+16
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 15 ---
+SHOWER CLAMPS
+BEVEL 135° GLASS TO GLASS CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-705
+Brass
+Bright Chrome           6-12mm
+GC-715 
+Brass
+Satin Chrome   
+        6-12mm
+20
+25
+25
+52
+103
+50
+24
+24
+20
+50
+50
+101
+BEVEL 180° GLASS TO GLASS CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-706
+Brass
+Bright Chrome           6-12mm
+GC-716 
+Brass
+Satin Chrome   
+        6-12mm
+  
+SHOWER CLAMPS
+17
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 16 ---
+FLAT 90° (L-CLAMP) WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-10mm
+Bright Polished
+S/S 304
+GC-502
+6 -10mm
+Antique Brass  
+S/S 304
+GC-582
+6 -10mm
+Matte Black  
+S/S 304
+GC-592
+20
+18
+5
+WALL
+45
+45
+45
+20
+R9
+Glass Thickness
+Finish
+Material
+Code
+6-10mm
+Bright Polished
+S/S 304
+GC-501
+6 -10mm
+Antique Brass  
+S/S 304
+GC-581
+6 -10mm
+Matte Black  
+S/S 304
+GC-591
+SHOWER CLAMPS
+20
+18
+5
+WALL
+20
+R9
+45
+45
+45
+FLAT 90° (U-CLAMP) WALL TO GLASS SINGLE FIX CLAMP
+18
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 17 ---
+FLAT 180° WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-10mm
+Bright Polished
+S/S 304
+GC-503
+6-10mm
+Antique Brass  
+S/S 304
+GC-583
+6-10mm
+Matte Black  
+S/S 304
+GC-593
+FLAT 90° GLASS TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-10mm
+Bright Polished
+S/S 304
+GC-504
+6-10mm
+Antique Brass  
+S/S 304
+GC-584
+6-10mm
+Matte Black  
+S/S 304
+GC-594
+32
+24
+45
+45
+45
+18
+Calculated for
+.
+8mm glass
+18
+20
+20
+87
+45
+49
+Glass Thickness
+Finish
+Material
+Code
+6-10mm
+Bright Polished
+S/S 304
+GC-505
+6- 0mm
+Antique Brass  
+S/S 304
+GC-585
+Matte Black  
+S/S 304
+GC-595
+1
+1
+FLAT 180° GLASS TO GLASS CLAMP
+Finish
+Material
+Code
+Glass Thickness
+Bright Polished
+S/S 304
+GC-506
+6-10mm
+S/S 304
+GC-586
+6
+Antique Brass  
+-10mm
+S/S 304
+GC-596
+6
+Matte Black  
+-10mm
+18
+20
+20
+45
+90
+45
+SHOWER CLAMPS
+5
+WALL
+20
+18
+20
+R9
+45
+90
+45
+FLAT 135° GLASS TO GLASS CLAMP
+6-10mm
+      
+SHOWER CLAMPS
+19
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 18 ---
+5
+WALL
+20
+20
+20
+R10
+50
+50
+50
+DOME 90° (L-CLAMP) WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Chrome  
+Brass
+GC-802
+6-12mm
+Satin Chrome  
+Brass
+GC-812
+5
+WALL
+20
+20
+20
+R10
+50
+101
+50
+DOME 180° WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Chrome  
+Brass
+GC-803
+6-12mm
+Satin Chrome  
+Brass
+GC-813
+20
+20
+5
+WALL
+50
+50
+50
+20
+R10
+DOME 90° (U-CLAMP) WALL TO GLASS SINGLE FIX CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-12mm
+Bright Chrome  
+Brass
+GC-801
+6-12mm
+Satin Chrome  
+Brass
+GC-811
+SHOWER CLAMPS
+DOME CLAMPS
+20
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 19 ---
+24
+24
+20
+50
+101
+50
+DOME 180° GLASS TO GLASS CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-806
+Brass
+Bright Chrome            6-12mm
+GC-816
+Brass
+Satin Chrome   
+         6-12mm
+20
+25
+25
+54
+103
+50
+DOME 90° GLASS TO GLASS CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-804
+Brass
+Bright Chrome            6-12mm
+GC-814
+Brass
+Satin Chrome   
+         6-12mm
+DOME 135° GLASS TO GLASS CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-805
+Brass
+Bright Chrome            6-12mm
+GC-815
+Brass
+Satin Chrome   
+         6-12mm
+20
+32
+24
+50
+50
+50
+Calculated for
+8mm glass.
+SHOWER CLAMPS
+24
+62
+26
+DIVIDING PANEL
+INLINE PANEL
+20
+24
+DIVIDING PANEL
+CUT-OUT
+INLINE PANEL
+CUT-OUT
+62
+20
+50
+107
+50
+DOME 90° GLASS TO GLASS TEE CLAMP
+Code
+Material
+Finish
+Glass Thickness
+GC-807
+Brass
+Bright Chrome            6-12mm
+GC-817
+Brass
+Satin Chrome   
+         6-12mm
+Calculated for 8mm glass.
+  
+SHOWER CLAMPS
+21
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 20 ---
+DIOSA 90° (L-CLAMP) WALL TO GLASS CLAMP
+Glass Thickness
+Finish
+Material
+Code
+6-8mm
+Bright Chrome  
+Brass
+OXB-747
+ 5 
+ 40 
+ 
+40 
+ 49 
+ 42 
+ 17 
+ 
+12 
+SHOWER CLAMPS
+BATHSCREEN CLAMPS
+22
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 21 ---
+    
+
+--- PAGE 22 ---
+30
+30
+20
+22
+35
+22
+28
+30
+27
+BACK TO BACK MUSHROOM KNOB
+Finish
+Material
+Hole Size
+Code
+Bright Chrome  
+Brass
+14Ø
+DK-201
+Bright Chrome  
+Aluminium
+14Ø
+BACK TO BACK SMALL GROOVE KNOB
+Finish
+Material
+Hole Size
+Code
+Bright Chrome  
+Aluminium
+14Ø
+DK-204A
+Bright Polished
+S/S 304
+14Ø
+DK-504
+BACK TO BACK SQUARE KNOB
+Finish
+Material
+Hole Size
+Code
+Bright Chrome  
+Aluminium
+14Ø
+DK-202A
+Matte Black  
+Aluminium
+14Ø
+DK-292A
+Matte Black  
+Aluminium
+14Ø
+DK-291A
+Bright Polished
+14Ø
+DK-501
+Matte Black  
+Brass
+14Ø
+DK-291
+Antique Brass  
+Aluminium
+14Ø
+DK-281A
+S/S 304
+HANDLES - KNOBS - TOWEL RAILS
+DOOR KNOBS
+TOWEL RAIL WITH FINNIALS
+CTC of Holes
+Hole Size
+Code
+Finish
+Material
+Tube Size
+14Ø
+300mm
+BH-030
+Bright Polished
+S/S 304
+19Ø
+14Ø
+400mm
+BH-040
+Bright Polished
+S/S 304
+19Ø
+14Ø
+600mm
+BH-060
+Bright Polished
+S/S 304
+19Ø
+14Ø
+300mm
+BH-930
+S/S 304
+19Ø
+14Ø
+400mm
+BH-840
+S/S 304
+19Ø
+14Ø
+400mm
+BH-940
+S/S 304
+19Ø
+14Ø
+600mm
+BH-960
+S/S 304
+19Ø
+61
+300/400/600
+42
+TOWEL RAIL WITH BACK KNOB
+14Ø
+DK-511
+S/S 304
+Brushed
+Brushed
+Aluminium
+14Ø
+DK-201A
+DK-211
+Antique Brass  
+Matte Black 
+Matte Black 
+Matte Black 
+24
+Matte Black  
+Aluminium
+14Ø
+DK-291A
+Bright Polished
+14Ø
+DK-501
+Matte Black  
+Brass
+14Ø
+DK-291
+Antique Brass  
+Aluminium
+14Ø
+DK-281A
+S/S 304
+14Ø
+DK-511
+S/S 304
+Brushed
+DK-201     14Ø           Brass             Bright Chrome
+DK-201A    14Ø           Aluminium     Bright Chrome
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 23 ---
+SQUARE TOWEL RAIL WITH FINNIALS
+Code
+CTC of Holes
+Hole Size
+Tube Size
+Material
+SH-0300
+300mm
+14Ø
+19mm
+S/S 304
+SH-0400
+400mm
+14Ø
+19mm
+S/S 304
+SH-0600
+600mm
+14Ø
+19mm
+S/S 304
+SH-9400
+400mm
+14Ø
+19mm
+S/S 304
+SH-9600
+600mm
+14Ø
+19mm
+S/S 304
+TOWEL RAIL WITH BACK KNOB
+Code
+CTC of Holes
+Hole Size
+Tube Size
+Material
+Finish
+DK-201-H300
+300mm
+14Ø
+19Ø
+S/S 304
+Bright Polished
+DK-201-H400
+400mm
+14Ø
+19Ø
+S/S 304
+Bright Polished
+DK-211-H400
+400mm
+14Ø
+19Ø
+S/S 304
+DK-201-H600
+600mm
+14Ø
+19Ø
+S/S 304
+DK-291-H300
+300mm
+14Ø
+19Ø
+S/S 304
+DK-281-H400
+400mm
+14Ø
+S/S 304
+DK-291-H400
+400mm
+14Ø
+19Ø
+S/S 304
+DK-291-H600
+600mm
+14Ø
+19Ø
+S/S 304
+300/400/600
+61
+42
+300/400/600
+61
+42
+19Ø
+HANDLES - KNOBS - TOWEL RAILS
+TOWEL RAIL WITH BACK KNOB
+SQUARE TOWEL RAIL WITH BACK KNOB
+Code
+CTC of Holes
+Hole Size
+Tube Size
+Material
+Finish
+DK-202-H300
+300mm
+14Ø
+19mm
+S/S 304
+Bright Polished
+DK-202-H400
+400mm
+14Ø
+19mm
+S/S 304
+DK-202-H600
+600mm
+14Ø
+19mm
+S/S 304
+DK-292-H400
+400mm
+14Ø
+19mm
+S/S 304
+DK-292-H600
+600mm
+14Ø
+19mm
+S/S 304
+300/400/600
+42
+61
+Finish
+Bright Polished
+Bright Polished
+Bright Polished
+Matte Black 
+Matte Black 
+Bright Polished
+Brushed
+Antique Brass  
+Matte Black 
+Matte Black 
+Matte Black 
+Bright Polished
+Bright Polished
+Matte Black 
+Matte Black 
+  
+25
+SHOWERS & TOILET ENCLOSURES
+HANDLES, KNOBS & TOWEL RAILS
+
+--- PAGE 24 ---
+200
+61
+42
+400
+61
+42
+200
+61
+42
+SQUARE PULL HANDLES
+Material
+Tube Size
+Hole Size
+CTC of Holes
+Code
+S/S 304
+19mm
+14Ø
+200mm
+SH-010
+S/S 304
+19mm
+14Ø
+200mm
+SH-910
+TOWEL RAIL WITH PULL HANDLE
+Material
+Tube Size
+Hole Size
+CTC of Holes
+Code
+S/S 304
+19Ø
+14Ø
+200mm/400mm
+BH-001
+S/S 304
+19Ø
+14Ø
+200mm/400mm
+BH-901
+200
+61
+42
+PULL HANDLES
+Finish
+Material
+Tube Size
+Hole Size
+CTC of Holes
+Code
+Bright Polished
+S/S 304
+19Ø
+14Ø
+200mm
+BH-010
+Matte Black  
+S/S 304
+19Ø
+14Ø
+200mm
+BH-910
+Antique Brass  
+S/S 304
+19Ø
+14Ø
+200mm
+BH-810
+HANDLES - KNOBS - TOWEL RAILS
+PULL HANDLES
+BOW AND TOWEL RAILS
+Finish
+Bright Polished
+Matte Black 
+Finish
+Bright Polished
+Matte Black 
+26
+SH-010       200mm                14Ø                19mm 
+        S/SS 304      Bright Polished
+SH-810       200mm 
+     14Ø              19mm 
+        S/S 304 
+Antique Brass
+SH-910       200mm 
+     14Ø              19mm 
+        S/S 304        Matte Black
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 25 ---
+HANDLES - KNOBS - TOWEL RAILS
+FLUSH HANDLE WITH PLATE
+Finish
+Material
+Hole Size
+Code
+Bright Polished
+S/S 304
+57Ø
+FH-055P
+FLUSH HANDLE WITH NO PLATE
+Code
+Hole Size
+Material
+Finish
+S/S 304
+Brushed
+57Ø
+FH-155MB
+57Ø
+S/S 304
+Bright Polished
+FH-155P
+5
+65
+54
+6
+65
+48
+FH-055MB
+FH-055N
+FLUSH HANDLES
+57Ø
+S/S 304
+Matte Black 
+57Ø
+S/S 304
+Matte Black 
+  
+27
+SHOWERS & TOILET ENCLOSURES
+HANDLES, KNOBS & TOWEL RAILS
+
+--- PAGE 26 ---
+CUSTOM TOWEL RAIL AND HANDLE KIT
+Finish
+Material
+Tube Size
+Hole Size
+CTC of Holes
+Code
+Bright Polished
+S/S 304
+19Ø
+12Ø
+Custom
+BTK-ET
+48
+VARIABLE
+25
+37
+60
+VARIABLE
+CUSTOM GLASS TOWEL RAIL KIT
+Finish
+Material
+Tube Size
+Hole Size
+CTC of Holes
+Code
+Bright Polished
+S/S 304
+19Ø
+12Ø
+Custom
+STA-TRK-ET
+VARIABLE
+60
+47
+HANDLES - KNOBS - TOWEL RAILS
+CUSTOM TOWEL RAIL KITS
+CUSTOM GLASS TOWEL RAIL KIT WITH BACK KNOB
+Finish
+Material
+Tube Size
+Hole Size
+CTC of Holes
+Code
+Bright Polished
+S/S 304
+19Ø
+12Ø
+Custom
+STA-TRKK-ET
+CUSTOM DOUBLE TOWEL RAIL KIT WALL MOUNT
+Finish
+Material
+Tube Size
+Hole Size
+CTC of Holes
+Code
+Bright Polished
+S/S 304
+19Ø
+12Ø
+Custom
+SS-DTR-KIT
+CUSTOM PULL HANDLE KIT
+Finish
+Material
+Tube Size
+Hole Size
+CTC of Holes
+Code
+Bright Polished
+S/S 304
+19Ø
+12Ø
+Custom
+STA-PH-KIT
+60
+47
+VARIABLE
+VARIABLE
+140
+50
+76
+35
+48
+VARIABLE
+28
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 27 ---
+  
+
+--- PAGE 28 ---
+12.7mm INSERT CHANNEL
+Code
+Length
+ 
+      Bright Polished  
+      Aluminium
+1000mm
+I-CHL-8-10B
+ 
+      Matte Bronze  
+      Aluminium
+1000mm
+I-CHL-8-10A
+ 
+      Natural  
+      Aluminium
+1000mm
+I-CHL-8-10N
+ 
+      Matte Black  
+      Aluminium
+1000mm
+I-CHL-8-10MB
+ 
+      Bright Polished  
+      Aluminium
+1500mm
+I-CHL-8-15B
+ 
+      Natural  
+      Aluminium
+1500mm
+I-CHL-8-15N
+ 
+      Matte Bronze  
+      Aluminium
+1500mm
+I-CHL-8-15A
+ 
+      Matte Black  
+      Aluminium
+1500mm
+I-CHL-8-15MB
+ 
+      Bright Polished  
+      Aluminium
+2000mm
+I-CHL-8-20B
+ 
+      Matte Bronze  
+      Aluminium
+2000mm
+I-CHL-8-20A
+ 
+      Natural  
+      Aluminium
+2000mm
+I-CHL-8-20N
+ 
+      Matte Black  
+      Aluminium
+2000mm
+I-CHL-8-20MB
+ 
+      Bright Polished  
+      Aluminium
+3000mm
+I-CHL-8-30B
+ 
+      Natural  
+      Aluminium
+3000mm
+I-CHL-8-30N
+ 
+      Matte Bronze  
+      Aluminium
+3000mm
+I-CHL-8-30A
+ 
+      Matte Black  
+      Aluminium
+3000mm
+I-CHL-8-30MB
+  9.9  
+  13.8  
+  15  
+  12.3  
+  6  
+FIXED PANEL
+CHANNELS
+ALUMINIUM ANGLES
+Finish
+Material
+Length
+Description
+Code
+Bright Polished  
+Aluminium
+2000mm
+12mm Equal Angle
+AIA12-2000B
+Bright Polished  
+Aluminium
+12mm Equal Angle
+3000mm
+AIA12-3000B
+Bright Polished  
+Aluminium
+2000mm
+15mm Equal Angle
+AIA15-2000B
+Bright Polished  
+Aluminium
+15mm Equal Angle
+3000mm
+AIA15-3000B
+Bright Polished  
+Aluminium
+2000mm
+25mm Equal Angle
+AIA25-2000B
+Bright Polished  
+Aluminium
+25mm Equal Angle
+3000mm
+AIA25-3000B
+ 12/15/25 
+ 1.5 
+ 12/15/25 
+ALUMINIUM ANGLES
+  
+METAL PROFILES
+    
+30
+      
+Material
+  
+Finish  
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 29 ---
+15.88mm U-CHANNEL
+Code
+Length
+Material
+Finish
+U-CHL-10-10B
+1000mm
+Aluminium
+Bright Polished  
+U-CHL-10-10A
+1000mm
+Aluminium
+Matte Bronze  
+U-CHL-10-10N
+1000mm
+Aluminium
+Natural  
+U-CHL-10-10MB
+1000mm
+Aluminium
+Matte Black  
+U-CHL-10-15B
+1500mm
+Aluminium
+Bright Polished  
+U-CHL-10-15A
+1500mm
+Aluminium
+Matte Bronze  
+U-CHL-10-15N
+1500mm
+Aluminium
+Natural  
+U-CHL-10-15MB
+1500mm
+Aluminium
+Matte Black  
+U-CHL-10-20B
+2000mm
+Aluminium
+Bright Polished  
+U-CHL-10-20A
+2000mm
+Aluminium
+Matte Bronze  
+U-CHL-10-20N
+2000mm
+Aluminium
+Natural  
+U-CHL-10-30A
+3000mm
+Aluminium
+Matte Bronze  
+U-CHL-10-20MB
+2000mm
+Aluminium
+Matte Black  
+U-CHL-10-30B
+3000mm
+Aluminium
+Bright Polished  
+U-CHL-10-30N
+3000mm
+Aluminium
+Natural  
+U-CHL-10-30MB
+3000mm
+Aluminium
+Matte Black  
+ 16 
+ 16 
+ 13 
+ 6 
+FIXED PANEL
+METAL PROFILES
+8mm COMPENSATION CHANNEL
+Code
+Length
+Material
+Finish
+C-CHL-8-10N
+1000mm
+Aluminium
+Natural  
+C-CHL-8-10B
+1000mm
+Aluminium
+Bright Polished  
+C-CHL-8-10MB
+1000mm
+Aluminium
+Matte Black  
+C-CHL-8-15B
+1500mm
+Aluminium
+Bright Polished  
+C-CHL-8-15MB
+1500mm
+Aluminium
+Matte Black  
+C-CHL-8-15N
+1500mm
+Aluminium
+Natural  
+C-CHL-8-20B
+2000mm
+Aluminium
+Bright Polished  
+C-CHL-8-20N
+2000mm
+Aluminium
+Natural  
+C-CHL-8-30B
+3000mm
+Aluminium
+Bright Polished  
+C-CHL-8-20MB
+2000mm
+Aluminium
+Matte Black  
+C-CHL-8-30N
+3000mm
+Aluminium
+Natural  
+C-CHL-8-30MB
+3000mm
+Aluminium
+Matte Black  
+ 13 
+ 10 
+ 27 
+10 
+5 
+  
+PRODUCT CATALOGUE 2024
+31  
+METAL  PROFILES
+31
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 30 ---
+Finish
+Material
+Length
+Code
+Bright Polished  
+Aluminium
+1500mm
+TCB-1500B
+Natural  
+Aluminium
+1500mm
+TCB-1500N
+Matte Black  
+Aluminium
+1500mm
+TCB-1500MB
+Bright Polished  
+Aluminium
+2000mm
+TCB-2000B
+Natural  
+Aluminium
+2000mm
+TCB-2000N
+Matte Black  
+Aluminium
+2000mm
+TCB-2000MB
+Bright Polished  
+Aluminium
+3000mm
+TCB-3000B
+Natural  
+Aluminium
+3000mm
+TCB-3000N
+Matte Black  
+Aluminium
+3000mm
+TCB-3000MB
+Natural  
+Aluminium
+6000mm
+TCB-6000N
+Matte Black  
+Aluminium
+6000mm
+TCB-6000MB
+TECO BEAD
+TECO FRAME
+Finish
+Material
+Length
+Code
+Bright Polished 
+Aluminium
+1500mm
+TCF-1500B
+Natural  
+Aluminium
+1500mm
+TCF-1500N
+Matte Black  
+Aluminium
+1500mm
+TCF-1500MB
+Bright Polished  
+Aluminium
+2000mm
+TCF-2000B
+Natural  
+Aluminium
+2000mm
+TCF-2000N
+Matte Black  
+Aluminium
+2000mm
+TCF-2000MB
+Bright Polished  
+Aluminium
+3000mm
+TCF-3000B
+Natural  
+Aluminium
+3000mm
+TCF-3000N
+Matte Black  
+Aluminium
+3000mm
+TCF-3000MB
+Natural  
+Aluminium
+6000mm
+TCF-6000N
+Matte Black  
+Aluminium
+6000mm
+TCF-6000MB
+METAL PROFILES
+21 
+TECO BEAD 
+TECO FRAME 
+32 
+17 
+TIGHT SIZE 
+GLASS HEIGHT=
+TIGHT SIZE - 34 
+13 
+32
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 31 ---
+HALF MOON CILL PLATE
+Code
+Length
+Material
+Finish
+HMP-1000
+1000mm
+Aluminium
+Bright Polished  
+HMP-1000N
+1000mm
+Aluminium
+Natural  
+HMP-1500
+1500mm
+Aluminium
+Bright Polished  
+HMP-1500N
+1500mm
+Aluminium
+Natural  
+HMP-2000
+2000mm
+Aluminium
+Bright Polished  
+HMP-2000N
+2000mm
+Aluminium
+Natural  
+HMP-3000
+3000mm
+Aluminium
+Bright Polished  
+HMP-3000N
+3000mm
+Aluminium
+Natural  
+ACRYLIC HALF MOON CILL PLATE
+Code
+Length
+Material
+Finish
+HMC-1000C
+1000mm
+Acrylic
+Clear
+ 14 
+ 19 
+ 10 
+ 6 
+INSIDE OF 
+SHOWER
+OUTSIDE OF 
+SHOWER
+INSIDE OF 
+18 
+5 
+SHOWER
+DOOR PANEL
+OUTSIDE OF 
+SHOWER
+DOOR PANEL
+CILL PLATES
+METAL PROFILES
+  
+PRODUCT CATALOGUE 2024
+33  
+METAL  PROFILES
+33
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 32 ---
+STANDARD CILL PLATE
+Finish
+Material
+Length
+Code
+Bright Polished  
+Aluminium
+1000mm
+MCP-1001B
+Natural  
+Aluminium
+1000mm
+MCP-1001N
+Matte Black  
+Aluminium
+1000mm
+MCP-1001MB
+Bright Polished  
+Aluminium
+1500mm
+MCP-1501B
+Natural  
+Aluminium
+1500mm
+MCP-1501N
+Matte Black  
+Aluminium
+1500mm
+MCP-1501MB
+Bright Polished  
+Aluminium
+2000mm
+MCP-2001B
+Natural  
+Aluminium
+2000mm
+MCP-2001N
+Matte Black  
+Aluminium
+2000mm
+MCP-2001MB
+Bright Polished  
+Aluminium
+3000mm
+MCP-3001B
+Natural  
+Aluminium
+3000mm
+MCP-3001N
+Matte Black  
+Aluminium
+3000mm
+MCP-3001MB
+Matte Bronze  
+Aluminium
+1000mm
+MCP-1001A
+Matte Bronze  
+Aluminium
+1500mm
+MCP-1501A
+Matte Bronze  
+Aluminium
+2000mm
+MCP-2001A
+Matte Bronze  
+Aluminium
+3000mm
+MCP-3001A
+ 20 
+ 8 
+ 3 
+ 18 
+INSIDE OF 
+SHOWER
+OUTSIDE OF 
+SHOWER
+INSIDE OF 
+SHOWER
+10
+19
+12.7
+SLIDING DOOR PANEL
+OUTSIDE OF 
+SHOWER
+DOOR PANEL
+SLIDER WATER STOPPER
+Finish
+Material
+Length
+Code
+Natural  
+Aluminium
+750mm
+SLW-0750N
+Matte Black  
+Aluminium
+750mm
+SLW-0750MB
+Aluminium
+1000mm
+SLW-1000B
+Aluminium
+1000mm
+SLW-1000MB
+Bright Polished  
+Aluminium
+1500mm
+SLW-1500B
+Natural  
+Aluminium
+1500mm
+SLW-1500N
+Bright Polished  
+Aluminium
+2000mm
+SLW-2000B
+Natural  
+Aluminium
+2000mm
+SLW-2000N
+Matte Black  
+Aluminium
+2000mm
+SLW-2000MB
+Natural  
+Aluminium
+3000mm
+SLW-3000N
+Matte Black  
+Aluminium
+3000mm
+SLW-3000MB
+Bright Polished  
+Aluminium
+750mm
+SLW-0750B
+Aluminium
+1000mm
+SLW-1000N
+Matte Black  
+Aluminium
+1500mm
+SLW-1500MB
+Bright Polished  
+Aluminium
+3000mm
+SLW-3000B
+METAL PROFILES
+Bright Polished  
+Natural  
+Matte Black  
+34
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 33 ---
+FLAT BARS
+Code
+Description
+Length
+Material
+Finish
+FLB12-2000B
+12mm Flat Bar
+2000mm
+Aluminium
+Bright Polished  
+FLB12-3000B
+12mm Flat Bar
+3000mm
+Aluminium
+Bright Polished  
+FLB15-2000B
+15mm Flat Bar
+2000mm
+Aluminium
+Bright Polished  
+FLB15-3000B
+15mm Flat Bar
+3000mm
+Aluminium
+Bright Polished
+FLB19-2000B
+19mm Flat Bar
+2000mm
+Aluminium
+Bright Polished 
+FLB19-3000B
+19mm Flat Bar
+3000mm
+Aluminium
+Bright Polished  
+FLB25-2000B
+25mm Flat Bar
+2000mm
+Aluminium
+Bright Polished  
+FLB25-3000B
+25mm Flat Bar
+3000mm
+Aluminium
+Bright Polished  
+12/15/19/25 
+ 3.18 
+FLAT BARS
+BULL NOSE HEADER RAIL
+Code
+Length
+Material
+Finish
+BHDR-1000B
+1000mm
+Aluminium
+Bright Polished  
+BHDR-1000N
+1000mm
+Aluminium
+Natural  
+BHDR-1000MB
+1000mm
+Aluminium
+Matte Black  
+BHDR-1500B
+1500mm
+Aluminium
+Bright Polished  
+BHDR-1500N
+1500mm
+Aluminium
+Natural  
+BHDR-1500MB
+1500mm
+Aluminium
+Matte Black  
+BHDR-2000B
+2000mm
+Aluminium
+Bright Polished  
+BHDR-2000N
+2000mm
+Aluminium
+Natural  
+BHDR-2000MB
+2000mm
+Aluminium
+Matte Black  
+BHDR-2500B
+2500mm
+Aluminium
+Bright Polished  
+BHDR-2500N
+2500mm
+Aluminium
+Natural  
+BHDR-2500MB
+2500mm
+Aluminium
+Matte Black  
+BHDR-3000B
+3000mm
+Aluminium
+Bright Polished  
+BHDR-3000N
+3000mm
+Aluminium
+Natural  
+BHDR-KIT
+BHDR-KIT-EXB
+ 33 
+ 20 
+ 3.6 
+ 13.50 
+ 25.9 
+ 13.4 
+ 36 
+PIVOT DOOR
+HINGED DOOR
+FIXED PANEL
+HEADER RAILS
+METAL PROFILES
+Matte Black  
+3000mm
+Aluminium
+BHDR-3000MB
+  
+PRODUCT CATALOGUE 2024
+35  
+METAL  PROFILES
+35
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 34 ---
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- PAGE 35 ---
+SOFT LIP SEALS
+ SOFTLIP 
+LENGTH
+5
+WALL
+ SOFTLIP 
+LENGTH
+5
+WALL
+10
+WALL
+ SOFTLIP 
+LENGTH
+CENTRE LIP SEAL
+Glass Thickness
+Length
+Soft Lip Length
+Material
+Code
+6-8mm
+2500mm
+12mm
+PVC
+TSS-001-8
+8-10mm
+2500mm
+12mm
+PVC
+TSS-001-10
+10-12mm
+3000mm
+12mm
+PVC
+TUV-001-12
+180° SOFT LIP SEAL
+                s
+s
+e
+n
+k
+cih
+T s
+s
+al
+G
+htg
+n
+e
+L 
+htg
+n
+e
+L piL tfo
+S
+lair
+eta
+M
+e
+d
+o
+C
+6-8mm
+2500mm
+16mm
+PVC
+TSS-003-8
+8-10mm
+2500mm
+16mm
+PVC
+TSS-003-10
+10-12mm
+3000mm
+20mm
+PVC
+TUV-003-12
+180° LONG LIP SEAL
+Length
+htg
+n
+e
+L piL tfo
+S
+e
+d
+o
+C
+Material
+2500mm
+TSS-003-8-22
+22mm
+PVC
+2500mm
+BSS-003-8-22
+22mm
+PVC
+Colour
+Clear
+Clear
+Clear
+Colour
+Clear
+2500mm
+16mm
+r
+a
+el
+C
+C
+V
+P
+TSS-003-6
+Clear
+Clear
+6-8mm
+2500mm
+16mm
+PVC
+BSS-003-8
+8-10mm
+2500mm
+16mm
+PVC
+BSS-003-10
+Black
+Black
+10-12mm
+3000mm
+20mm
+Black
+BUV-003-12
+8mm
+2500mm
+16mm
+PSS-003-8
+10mm
+3000mm
+16mm
+PUV-003-10
+Clear
+Clear
+Colour
+Clear
+Black
+2500mm
+TSS-003-10-22
+22mm
+PVC
+2500mm
+BSS-003-10-22
+22mm
+PVC
+Clear
+Black
+SEALS
+4-6mm
+PVC
+PC 
+PC
+Glass Thickness
+6-8mm
+6-8mm
+8-10mm
+8-10mm
+  
+PRODUCT CATALOGUE 2024
+35  
+SHOWER SEALS
+37
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 36 ---
+ SOFTLIP 
+LENGTH
+ SLIDING 
+DOOR
+ SOFTLIP 
+LENGTH
+ 135° 
+ 5 
+7
+WALL
+ BUBBLE 
+LENGTH
+90° SOFT LIP SEAL
+Length
+Soft Lip Length
+Material
+         
+e
+d
+o
+C
+135° SOFT LIP SEAL
+Glass Thickness
+Length
+Soft Lip Length
+Material
+     
+e
+d
+o
+C
+6-8mm
+2500mm
+16mm
+TSS-005-8
+PVC
+8-10mm
+2500mm
+16mm
+TSS-005-10
+PVC
+BUBBLE SEAL
+                s
+s
+e
+n
+k
+cih
+T s
+s
+al
+G
+htg
+n
+e
+L 
+htg
+n
+e
+L elb
+b
+u
+B
+lair
+eta
+M
+e
+d
+o
+C
+Colour
+2500mm
+8mm
+r
+a
+el
+C
+C
+V
+P
+6
+-
+4
+0
+0
+-
+S
+S
+T
+2500mm
+8mm
+r
+a
+el
+C
+C
+V
+P
+8
+-
+4
+0
+0
+-
+S
+S
+T
+6-8mm
+2500mm
+12mm
+PVC
+r
+a
+el
+C
+2
+1
+-
+8
+-
+4
+0
+0
+-
+S
+S
+T
+6-8mm
+2500mm
+24mm
+PVC
+r
+a
+el
+C
+4
+2
+-
+8
+-
+4
+0
+0
+-
+S
+S
+T
+6-8mm
+2500mm
+24mm
+PVC
+k
+c
+al
+B
+4
+2
+-
+8
+-
+4
+0
+0
+-
+S
+S
+B
+8-10mm
+2500mm
+8mm
+PVC
+r
+a
+el
+C
+0
+1
+-
+4
+0
+0
+-
+S
+S
+T
+6-8mm
+2500mm
+8mm
+PVC
+k
+c
+al
+B
+8
+-
+4
+0
+0
+-
+S
+S
+B
+8-10mm
+2500mm
+8mm
+PVC
+k
+c
+al
+B
+0
+1
+-
+4
+0
+0
+-
+S
+S
+B
+Colour
+Clear
+Clear
+Colour
+6-8mm
+2500mm
+8mm
+PVC
+r
+a
+el
+C
+8
+-
+7
+0
+0
+-
+S
+S
+T
+Clear
+8mm
+PVC
+TSS-007-6
+8-10mm
+2500mm
+8mm
+PVC
+TSS-007-10
+3000mm
+8mm
+PVC
+TUV-007-12
+Clear
+10-12mm
+Clear
+ 
+SEALS
+8-10mm
+2500mm
+8mm
+PVC
+k
+c
+al
+B
+0
+1
+-
+7
+0
+0
+-
+S
+S
+B
+6-8mm
+2500mm
+8mm
+PVC
+k
+c
+al
+B
+8
+-
+7
+0
+0
+-
+S
+S
+B
+Glass Thickness
+4-6mm
+6-8mm
+2500mm
+4-6mm
+38
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 37 ---
+ SOFTLIP 
+HEIGHT
+FLOOR
+18
+OUTSIDE
+SHOWER
+INSIDE
+SHOWER
+ DRIP  
+SEAL 
+LENGTH
+18
+OUTSIDE
+SHOWER
+INSIDE
+SHOWER
+FLOOR
+WIPE SEAL WITH BUBBLE
+Code
+Material
+Soft Lip Length
+Bubble Lip Length
+ Length
+Glass Thickness                
+m
+m
+8
+-
+6
+m
+m
+0
+0
+5
+2
+m
+m
+8
+m
+m
+1
+1
+C
+V
+P
+8
+-
+9
+0
+0
+-
+S
+S
+T
+DRIP & WIPE SEAL
+Code
+Material
+Soft Lip Length
+Hard Lip Length
+ Length
+Glass Thickness                
+m
+m
+8
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+P
+8
+-
+1
+B
+9
+0
+0
+-
+S
+S
+P
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+P
+0
+1
+-
+1
+B
+9
+0
+0
+-
+S
+S
+P
+Colour
+Clear
+Colour
+m
+m
+8
+-
+6
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+V
+P
+8
+-
+1
+B
+9
+0
+0
+-
+S
+S
+B
+m
+m
+0
+1
+-
+8
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+V
+P
+0
+1
+-
+1
+B
+9
+0
+0
+-
+S
+S
+B
+Black
+Black
+Clear
+m
+m
+0
+1
+r
+a
+el
+C
+SEALS
+m
+m
+6
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+V
+P
+6
+-
+1
+B
+9
+0
+0
+-
+S
+S
+T
+m
+m
+0
+1
+-
+8
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+V
+P
+0
+1
+-
+1
+B
+9
+0
+0
+-
+S
+S
+T
+m
+m
+2
+1
+-
+0
+1
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+V
+P
+2
+1
+-
+1
+B
+9
+0
+0
+-
+S
+S
+T
+Clear
+m
+m
+8
+-
+6
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+V
+P
+8
+-
+1
+B
+9
+0
+0
+-
+S
+S
+T
+Clear
+Clear
+Clear
+m
+m
+2
+1
+-
+0
+1
+m
+m
+0
+0
+5
+2
+m
+m
+0
+1
+m
+m
+8
+C
+V
+P
+2
+1
+-
+1
+B
+9
+0
+0
+-
+S
+S
+B
+Black
+  
+PRODUCT CATALOGUE 2024
+39  
+METAL  PROFILES
+39
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 38 ---
+HARD LIP SEALS
+ HARDLIP 
+LENGTH
+SOFTLIP 
+LENGTH
+5
+ HARDLIP 
+LENGTH
+ SOFTLIP 
+LENGTH
+ 135° 
+ 5 
+5
+ HARDLIP 
+LENGTH
+ SOFTLIP 
+LENGTH
+180° HARD LIP SEAL
+Glass Thickness
+Length
+Hard Lip Length
+Soft Lip Length
+Material
+Code
+8mm
+2500mm
+10mm
+5mm
+PC
+PSS-003A-8
+10mm
+3000mm
+10mm
+5mm
+PC
+PUV-003A-10
+135° HARD LIP SEAL
+Glass Thickness
+Length
+Hard Lip Length
+Soft Lip Length
+Material
+Code
+6-8mm
+2500mm
+10mm
+5mm
+PVC
+TSS-005A-8
+8-10mm
+2500mm
+10mm
+5mm
+PVC
+TSS-005A-10
+90° EXTENDED HARD LIP SEAL
+Glass Thickness
+Material
+Code
+6-8mm
+PVC
+TSS-011A-8
+PVC
+TSS-011A-10
+Colour
+6-8mm
+2500mm
+10mm
+5mm
+PVC
+BSS-003A-8
+8-10mm
+2500mm
+10mm
+5mm
+PVC
+BSS-003A-10
+Black
+Black
+Clear
+Clear
+Colour
+Clear
+Clear
+Colour
+Clear
+8-10mm
+Clear
+SEALS
+10-12mm
+3000mm
+Clear
+10mm
+5mm
+PVC
+TUV-003A-12
+6-8mm
+2500mm
+10mm
+5mm
+PVC
+TSS-003A-8
+8-10mm
+2500mm
+10mm
+5mm
+PVC
+TSS-003A-10
+Clear
+Clear
+Soft Lip Length
+8mm      
+8mm
+Hard Lip Length
+10mm   
+10mm
+Length
+2500mm
+2500mm
+40
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 39 ---
+ HARDLIP 
+LENGTH
+ SOFTLIP 
+LENGTH
+5
+ HARDLIP 
+LENGTH
+ SOFTLIP 
+LENGTH
+90° HARD LIP SEAL
+Glass Thickness
+Length
+Hard Lip Length
+Soft Lip Length
+Material
+Code
+6-8mm
+2500mm
+10mm
+10mm
+PVC
+TSS-011C-8
+8-10mm
+2500mm
+10mm
+10mm
+PVC
+TSS-011C-10
+90° HARD/SOFT LIP SEAL
+Glass Thickness
+Length
+Hard Lip Length
+Soft Lip Length
+Material
+Code
+3000mm
+10mm
+14mm
+PVC
+TUV-04A-12
+Colour
+Clear
+Clear
+DOUBLE HARD LIP SEAL (H)
+Code
+Glass Thickness
+Length
+Hard Lip Length
+Material
+8mm
+3000mm
+8mm
+PC
+TUV-010-8
+12mm
+3000mm
+8mm
+PC
+TUV-010-12
+10mm
+3000mm
+8mm
+PC
+TUV-010-10
+Colour
+10-12mm
+Clear
+SEALS
+ HARDLIP 
+LENGTH
+4-6
+19
+BSS-004A-8
+PVC
+10mm
+10mm
+Black
+2500mm
+6-8mm
+  
+PRODUCT CATALOGUE 2024
+41  
+PRODUCT CATALOGUE 2024
+79  
+METAL  PROFILES
+41
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 40 ---
+MAGNET SEALS
+4
+2
+10
+18
+10
+18
+      INSIDE
+MEASURMENT
+      OUTSIDE
+MEASURMENT
+24
+90°/180° MAGNETIC SEAL
+Code
+Material
+Lip Length
+Colour
+ Length
+Glass Thickness        
+8mm
+2500mm
+White
+12mm
+PC
+PSS-008A-8
+10mm
+3000mm
+White
+12mm
+PC
+PUV-008A-10
+180° FLAT MAGNETIC SEAL
+Code
+Material
+Lip Length
+Colour
+ Length
+Glass Thickness        
+6-8mm
+2500mm
+White
+12mm
+PVC
+TSS-008B-8
+6-8mm
+2500mm
+Brown
+12mm
+PVC
+SM180-08B
+8-10mm
+2500mm
+White
+12mm
+PVC
+TSS-008B-10
+2500mm
+8-10mm
+Brown
+12mm
+PVC
+SM180-10B
+Calculated for 8mm glass.
+6-8mm
+TSS-008A-8
+PVC
+12mm
+White
+2500mm
+2500mm
+6-8mm
+Brown
+12mm
+PVC
+SM090-08B
+2500mm
+6-8mm
+Black
+12mm
+PVC
+BSS-008A-8
+8-10mm
+2500mm
+Black
+12mm
+PVC
+BSS-008A-10
+10-12mm
+3000mm
+Black
+12mm
+PVC
+BUV-008A-12
+8-10mm
+2500mm
+White
+12mm
+PVC
+TSS-008A-10
+8-10mm
+2500mm
+Brown
+12mm
+PVC
+SM090-10B
+10-12mm
+3000mm
+Brown
+12mm
+PVC
+SM090-12B
+10-12mm
+TUV-008A-12
+PVC
+12mm
+White
+3000mm
+SEALS
+42
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 41 ---
+INFILL SEALS
+8
+12
+18
+    INSIDE
+MEASUREMENT
+BASED ON 8mm
+        GLASS
+    OUTSIDE
+MEASURMENT
+ 3 
+135° MAGNETIC SEAL
+Code
+Material
+Lip Length
+Colour
+ Length
+Glass Thickness        
+TSS-008C-8
+PVC
+12mm
+White
+2500mm
+6-8mm
+SM135-08B
+PVC
+12mm
+Brown
+2500mm
+6-8mm
+TSS-008C-10
+PVC
+12mm
+White
+2500mm
+8-10mm
+SM135-10B
+PVC
+12mm
+Brown
+2500mm
+8-10mm
+180° GLASS TO GLASS INFILL SEAL
+                s
+s
+e
+n
+k
+cih
+T s
+s
+al
+G
+htg
+n
+e
+L 
+lair
+eta
+M
+e
+d
+o
+C
+m
+m
+0
+1
+m
+m
+0
+0
+0
+3
+C
+P
+0
+1
+-
+0
+8
+1
+-
+S
+I
+m
+m
+2
+1
+m
+m
+0
+0
+0
+3
+C
+P
+2
+1
+-
+0
+8
+1
+-
+S
+I
+Colour                
+Clear
+m
+m
+6
+m
+m
+0
+0
+0
+3
+C
+P
+6
+-
+0
+8
+1
+-
+S
+I
+Clear
+Clear
+SEALS
+  
+PRODUCT CATALOGUE 2024
+43  
+PRODUCT CATALOGUE 2024
+79  
+METAL  PROFILES
+43
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 42 ---
+  
+
+--- PAGE 43 ---
+ 35 
+ 48 
+ 19.6 
+ 28 
+ 
+54 
+  
+90°-270°
+ 28 
+ 19.6 
+ 29 
+ 48 
+ 
+28 
+  
+90°-270°
+ 25 
+ 19.6 
+ 43.5 
+ 43.5 
+  
+90°-270°
+ 
+25 
+ 19.6 
+ 
+35 
+ 35 
+ 53 
+ 12 
+ 
+25 
+ 19.5 
+ROTATES
+360°
+19mm ADJUSTABLE WALL MOUNT SUPPORT BAR BRACKET
+Code
+Material
+Finish
+GSH-301
+Brass
+Bright Chrome  
+GSH-311
+Brass
+Satin Chrome  
+19mm ADJUSTABLE GLASS MOUNT SUPPORT BAR BRACKET
+Code
+Material
+Finish
+GSH-401
+Brass
+Bright Chrome  
+GSH-411
+Brass
+Hole Size
+14Ø
+14Ø
+Satin Chrome  
+90° ADJUSTABLE 19mm SUPPORT BAR FLANGE
+Code
+Material
+Finish
+KA-003*19
+Brass
+Bright Chrome  
+19mm WALL FLANGE
+Code
+Material
+Finish
+KA-101*19
+Brass
+Bright Chrome  
+KA-111*19
+Brass
+Satin Chrome  
+KA-181*19
+Brass
+Antique Brass  
+KA-191*19
+Brass
+Matte Black  
+19mm GLASS MOUNT SUPPORT BAR STABILISER (straight through)
+ 
+Code
+Material
+Finish
+KA-102*19
+Brass
+Bright Chrome  
+KA-112*19
+Brass
+Satin Chrome  
+KA-182*19
+Brass
+Antique Brass  
+KA-192*19
+Brass
+Matte Black  
+ROUND STABILISERS
+  
+PRODUCT CATALOGUE 2024
+71  
+PRODUCT CATALOGUE 2024
+79  
+STABILISERS
+45
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 44 ---
+ 53 
+ 
+25 
+ 
+19.5 
+ 12 
+60 
+12 
+ROTATES
+360o 
+ROTATES
+360°
+ 70.00 
+ 65.00 
+ 19.6 
+ 25 
+ 50 
+ 
+25 
+ 19.6 
+ 45° 
+ 20 
+ 
+30 
+ 
+20.4 
+ 
+24 
+19mm GLASS MOUNT SUPPORT BAR STABILISER 
+Finish
+Material
+Code
+Bright Chrome  
+Brass
+KA-103*19
+Satin Chrome  
+Brass
+KA-113*19
+Brass
+KA-193*19
+Antique Brass  
+Brass
+KA-183*19
+19mm TEE-COUPLER STABILISER 
+Finish
+Material
+Code
+Bright Chrome  
+Brass
+KA-108*19
+Satin Chrome  
+Brass
+KA-118*19
+Antique Brass  
+Brass
+KA-188*19
+Brass
+KA-198*19
+19mm WALL MOUNT 45° SUPPORT BAR STABILISER 
+Finish
+Material
+Code
+Bright Chrome  
+Brass
+KA-107*19
+Antique Brass  
+Brass
+KA-187*19
+Brass
+KA-197*19
+19mm ADJUSTABLE 90° GLASS MOUNT STABILISER 
+Finish
+Material
+Code
+Bright Chrome  
+Brass
+KA-106*19
+19mm THROUGH GLASS FLANGE 
+Material
+Finish
+Code
+Hole Size
+S/S 304
+Bright Polished
+DP-GFT
+14Ø
+S/S 304
+Matte Black  
+DP-GFT-MB
+14Ø
+19mm 90° FIXED STABILISER CONNECTOR
+ 
+Finish
+Material
+Code
+Bright Chrome  
+Brass
+KA-109*19
+19.5 
+25 
+57 
+19.5 
+25 
+60 
+60 
+19.5 
+Matte Black  
+Matte Black  
+Matte Black  
+46
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 45 ---
+  
+19  
+  
+17  
+19mm SUPPORT BAR  
+Code
+Length
+Material
+Finish
+SB19-1000A 
+1000mm
+S/S 304
+Antique Brass  
+SB19-1500A
+1500mm
+S/S 304
+Antique Brass  
+SB19-3000A
+3000mm
+S/S 304
+Antique Brass  
+SB19-2000A
+2000mm
+S/S 304
+Antique Brass  
+SB19-1000B
+1000mm
+S/S 304
+Bright Polished
+SB19-1000N
+1000mm
+S/S 304
+Brushed
+SBA19-1000MB
+1000mm
+Aluminium
+Matte Black  
+SB19-1500B
+1500mm
+S/S 304
+Bright Polished
+SB19-1500N
+1500mm
+S/S 304
+Brushed
+SBA19-1500MB
+1500mm
+Aluminium
+Matte Black  
+SB19-2000B
+2000mm
+S/S 304
+Bright Polished
+SB19-2000N
+2000mm
+S/S 304
+Brushed
+SBA19-2000MB
+2000mm
+Aluminium
+Matte Black  
+SB19-3000B
+3000mm
+S/S 304
+Bright Polished
+SB19-3000N
+3000mm
+S/S 304
+Brushed
+SBA19-3000MB
+3000mm
+Aluminium
+Matte Black  
+19mm SQUARE WALL FLANGE
+Code
+Material
+Finish
+KA-201*19
+S/S 304
+Bright Polished
+KA-291*19
+S/S 304
+Matte Black  
+19mm SQUARE GLASS MOUNT SUPPORT BAR STABILISER
+(STRAIGHT THROUGH)
+Code
+Material
+Finish
+KA-202*19
+S/S 304
+Bright Polished
+KA-292*19
+S/S 304
+Matte Black  
+SQUARE STABILISERS
+28  
+26  
+19.6  
+28  
+12  
+51  
+19.6  
+ROTATES
+360o  
+  
+PRODUCT CATALOGUE 2024
+71  
+PRODUCT CATALOGUE 2024
+79  
+STABILISERS
+47
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 46 ---
+19mm SQUARE GLASS MOUNT SUPPORT BAR STABILISER
+Finish
+Material
+Code
+Bright Polished
+S/S 304
+KA-203*19
+Matte Black  
+S/S 304
+KA-293*19
+19mm SQUARE WALL MOUNT 45° SUPPORT BAR STABILISER
+Finish
+Material
+Code
+Bright Polished
+S/S 304
+KA-207*19
+Matte Black  
+S/S 304
+KA-297*19
+19mm SQUARE TEE-COUPLER STABILISER
+Finish
+Material
+Code
+Bright Polished
+S/S 304
+KA-208*19
+Matte Black  
+S/S 304
+KA-298*19
+19mm SQUARE BAR
+Finish
+Material
+Code
+Bright Polished
+S/S 304
+ST19-1000B
+Aluminium
+STA19-1000MB
+Length
+1000mm
+Matte Black  
+1000mm
+Bright Polished
+S/S 304
+ST19-1500B
+S/S 304
+KA-298*19
+1500mm
+Matte Black  
+S/S 304
+Matte Black  
+Aluminium
+STA19-1500MB
+S/S 304
+ST19-2000B
+1500mm
+Bright Polished
+2000mm
+Matte Black  
+Aluminium
+STA19-2000MB
+S/S 304
+ST19-3000B
+2000mm
+Matte Black  
+Aluminium
+STA19-3000MB
+3000mm
+Bright Polished
+3000mm
+  
+28  
+50  
+19.6  
+12
+44
+74
+19
+19
+16
+16
+19.6
+26
+62
+19.6
+26
+ROTATES
+360o
+  
+48
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 47 ---
+ 
+    
+
+--- PAGE 48 ---
+GSH-201/GSH-211/GSH-291
+SH-J103
+STA-SC-WM
+SH-J83
+SH-J82
+GSH-203W/GSH-213/GSH-283W/GSH-293W
+ 26 
+ 25 
+C
+C
+ 10 
+ 34 
+ 
+25 
+B
+B
+ 10.5 
+ 37 
+ 
+38 
+A
+A
+ 11 
+ 
+30 
+ 48 
+ R25 
+TAP M6
+ 37.4 
+ 8 
+ 4 
+ 32 
+ 13 
+ 17 
+ 28 
+ 10 
+B
+B
+ 29 
+ 20 
+ 14 
+ 60 
+ 12 
+ 15 
+B
+B
+ 29 
+ 20 
+ 14 
+WALL TO GLASS SHELF CLAMP 
+  
+ 
+GSH-293W1 
+SH-J103
+SH-J82
+SH-J83
+STA-SC-WM
+SH-J103-MB
+SH-J82-MB 
+SH-J83-MB
+ 
+ 
+ 
+ 
+Code 
+GSH-201
+GSH-211
+GSH-281 
+GSH-291 
+GSH-203W1
+GSH-213W1
+GSH-283W1
+Material
+Brass 
+Brass
+Brass 
+Brass 
+Brass
+Brass
+Brass 
+Brass
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+Glass Thickness
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm 
+6-10mm 
+6-10 mm
+1. Can be sold as a set.
+Finish
+Bright Chrome  
+Satin Chrome   
+Antique Brass  
+Matte Black  
+Bright Chrome  
+Satin Chrome   
+Antique Brass  
+Matte Black 
+      
+Bright Polished
+Bright Polished
+Bright Polished
+Bright Polished
+Matte Black  
+Matte Black  
+Matte Black  
+50
+ISH-J103-MB
+ISH-J82-MB
+ISH-J85-MB
+SHOWERS & TOILET ENCLOSURES
+Lorem ipsum
+
+--- PAGE 49 ---
+GSH-201/GSH-212/GSH-292
+GSH-203G/GSH-213/GSH-283G/GSH-293G
+STA-SC-GM
+ 44 
+ 
+25 
+ 26 
+ 8 
+D
+D
+ 10 
+ 34 
+ 5 
+B
+B
+ 10.5 
+ 
+25 
+ 
+5
+ 
+ 
+7
+3
+ 
+ 
+38 
+A
+A
+ 11 
+ 
+30 
+GLASS TO GLASS SHELF CLAMP 
+1. Can be sold as a set.
+  
+ 
+Code
+GSH-202 
+GSH-212 
+GSH-282
+GSH-292 
+GSH-203G1 
+GSH-213G 1
+GSH-283G 1
+GSH-293G1
+STA-SC-GM
+Material
+Brass 
+Brass 
+Brass
+Brass 
+Brass 
+Brass
+Brass 
+Brass
+S/S 304
+Glass Thickness
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+6-10mm
+Hole Size
+16Ø 
+16Ø 
+16Ø
+16Ø 
+16Ø 
+16Ø
+16Ø 
+16Ø
+16Ø
+Finish
+Bright Chrome  
+Satin Chrome  
+Antique Brass  
+Matte Black  
+Bright Chrome  
+Satin Chrome  
+Antique Brass  
+Matte Black 
+Bright Polished
+  
+PRODUCT CATALOGUE 2024
+51  
+PRODUCT CATALOGUE 2024
+79  
+GLASS SHELF CLAMPS
+51
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 50 ---
+50
+50
+A
+B
+D
+C
+16
+GLASS SHELVES 
+D
+C
+B
+A
+Code
+GSG-2030-SN 
+No Hole
+No Hole
+300mm
+200mm
+195mm
+195mm
+250mm
+250mm
+GSG-2525-SH
+No Hole
+No Hole
+250mm
+250mm
+GSG-2525-SN
+245mm
+245mm
+300mm
+300mm
+GSG-3030-SH
+No Hole
+No Hole
+300mm
+300mm
+GSG-3030-SN
+Glass Thickness
+8mm TSG
+8mm TSG
+8mm TSG
+8mm TSG
+8mm TSG
+      
+52
+50
+A
+B
+D
+C
+16
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 51 ---
+    
+
+--- PAGE 52 ---
+ 90 
+ 5 
+54
+54
+ 63 
+ R9 
+ 58 
+ 27 
+ R9 
+ 27 
+7
+20
+STANDARD THUMB TURN LOCKS WITH INDICATOR (WORKS FOR SLIDING DOORS)
+Finish
+Material
+Description
+Code
+Bright Chrome  
+Brass
+Indicator Lock with Hook
+GL-801
+Bright Chrome  
+Brass
+Indicator Lock with Hook and Keep Set
+GL-802
+Glass Thickness
+8-12mm
+8-12mm
+ 90 
+ 16 
+ 54 
+ 63 
+ R9 
+ 58 
+ 27 
+ 5 
+ 20 
+ 7 
+2
+0
+8
+-
+L
+G
+1
+0
+8
+-
+L
+G
+PRODUCT CATALOGUE 2024
+54  
+79
+54
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 53 ---
+STANDARD THUMB TURN LOCKS (WORKS FOR SLIDING DOORS)
+h
+siniF
+lair
+eta
+M
+n
+oitpirc
+s
+e
+D
+e
+d
+o
+C
+ 
+e
+m
+o
+r
+h
+C
+ t
+h
+g
+ir
+B
+s
+s
+a
+r
+B
+k
+o
+o
+H
+ 
+h
+ti
+w
+ k
+c
+o
+L
+3
+0
+8
+-
+L
+G
+GL-804
+Glass to Glass Lock with Hook and Keep Set
+Brass
+Glass Thickness
+8-12mm
+8-12mm
+Bright Chrome  
+ 90 
+ 16 
+ 54 
+ 63 
+ R9 
+ 58 
+ 27 
+ 5 
+ 20 
+ 7 
+GL-803
+GL-804
+ 63 
+ R9 
+ 58 
+ 27 
+ R9 
+ 27 
+ 90 
+ 5 
+ 54 
+ 54 
+ 20 
+ 7 
+  
+PRODUCT CATALOGUE 2024
+51  
+PRODUCT CATALOGUE 2024
+79  
+BATHROOM  LOCKS
+55
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 54 ---
+SLIP ON THUMB TURN LOCKS
+Finish
+Material
+Description
+Code
+Bright Chrome  
+Brass
+Wall to Glass Square slip on lock
+GL-011
+Bright Chrome  
+Brass
+Glass to Glass Square slip on lock with keep
+GL-012
+Glass Thickness
+10-12mm
+10-12mm
+ 55 
+ 40 
+ 19 
+ 5 
+ 32 
+ 3 
+ 8 
+WALL
+GL-011
+GL-012
+ 32 
+ 3 
+ 11 
+ 55 
+ 55 
+ 40 
+ 5 
+  
+PRODUCT CATALOGUE 2024
+56    
+56
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 55 ---
+
+--- PAGE 56 ---
+DSC-501/DSC-511 
+WALL TO GLASS SHELF CLAMP 
+Description
+Code
+SRHG-000P/SRHW-000P
+SRDG-000P/SRDW-000P
+OXB-792P/OXB-792MB
+SH2020P/SH2020S
+SH2530P/SH2530S
+SHOG-000P/SHOW-000P
+DSC-501/DSC-511
+DSH-501/DSH-511
+SS2020P/SS2020S
+SS2530P/SS2020S
+Glass/Wall Mounted Single Robe Hook
+Glass/Wall Mounted Double Robe Hook
+Glass Mounted Single Robe Hook
+20 Diameter by 20mm Long Stand Off Hollow
+25 Diameter by 30mm Long Stand Off Hollow
+Glass/Wall Mounted Toilet Roll Holder
+Cylinder Floor Mount Door Stopper
+Half Moon Floor Mount Door Stopper
+20 Diameter by 20mm Long Stand Off Solid
+25 Diameter by 30mm Long Stand Off Solid
+SRHG-000P/SRHW-000P
+SRDG-000P/SRDW-000P
+SHOG-000P/SHOW-000P
+DSH-501/DSH-511
+OXB-792P/OXB-792MB
+SS2020P/SS2020S
+SS2530P/SS2530S
+14Ø
+14Ø
+14Ø
+14Ø
+14Ø
+14Ø
+14Ø
+14Ø
+Hole Size
+  14Ø    
+14Ø
+Material
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+S/S 304
+Finish
+Bright  Polished
+Bright   Polished
+Bright Polished or Matte Black  
+Bright Polished or Brushed
+Bright Polished or Brushed
+Bright  Polished
+Bright Polished or Brushed
+Bright Polished or Brushed
+Bright Polished or Brushed
+Bright Polished or Brushed
+58
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 57 ---
+STANDARD CONFIGURATION COMPONENTRY
+LIMITATIONS
+¥
+2x SB19-2000B
+Tube
+¥
+4x DP-FLW
+Wall Flange
+¥
+2x DP-FPL
+Wall Plate
+¥
+2x DP-RWH
+Roller Wheel
+¥
+1x DP-TSGP
+Tube Support
+¥
+1x SL-0099P
+Floor Guide
+Excluding seals, handles and water stops.
+Door: 6mm glass
+¥
+Glass Thickness:
+Fixed: 6mm - 8mm glass
+¥
+Max Door width:  
+750mm
+¥
+Max Door Weight:  
+27kg
+¥
+Material:
+S/S 304
+¥
+Finish:
+Bright Polished
+DP-RWH
+SL-0099P
+DP-FLP
+DP-TSGP
+DP-FLW
+  
+PRODUCT CATALOGUE 2024
+59  
+PRODUCT CATALOGUE 2024
+79  
+SLIDING SHOWERS
+59
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 58 ---
+FIXED PANEL
+DOOR PANEL
+ 88 
+ 
+4
+2
+ 
+ 
+6
+4
+ 
+ 13 
+ 5 
+ 10 
+DUPLO - TECHNICAL DETAILS
+GLASS CUT OUT DETAIL
+SHOP DRAWING
+HANDLE SIDE 
+60
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 59 ---
+STANDARD CONFIGURATION SPECS
+¥
+1x RST-2000B 
+Slider Track
+¥
+2x EDS-RWH 
+Roller Wheel
+¥
+2x EDS-ALP 
+Anti-Lift Pin
+¥
+2x EDS-DS 
+Door Stop
+¥
+2x EDS-WFL 
+Wall Flange
+¥
+2x EDS-GCC 
+Glass Connector Clamp
+¥
+1x SL-0099P
+Floor Guide
+Excluding seals, handles and water stops.
+¥
+Glass Thickness:
+¥
+Max Door width:
+¥
+Max Door Weight:
+¥
+Material:
+¥
+Finish:
+¥
+Adjustment:
+A simplistic and sleek cut system that delivers minimalistic design aesthetics, displaying its functional parts in a beautiful 
+manner. This slider s rectangular tube allows for sturdy assemblies while limiting the aesthetic impact of too much hardware. 
+LIMITATIONS
+EDS-GCC
+EDS-RWH
+SL-0099P
+RST-2000B
+EDS-ALP
+EDS-DS
+EDS-WFL
+Door: 6mm - 8mm glass
+Fixed: 8mm - 10mm glass
+850mm
+45kg
+S/S 304
+Bright Polished and Matte Black
+Wheels and Anti-Lifts
+are adjustable in height.
+  
+PRODUCT CATALOGUE 2024
+61  
+PRODUCT CATALOGUE 2024
+79  
+SLIDING SHOWERS
+61
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 60 ---
+ 35 
+ 
+0
+6
+ 
+ 
+0
+5
+ 
+ 83 
+ 10 
+ 5 
+ 26 
+DOOR PANEL
+FIXED PANEL
+EDGE SLIDER - TECHNICAL DETAILS
+SHOP DRAWING
+GLASS CUT OUT DETAIL
+CTC
+62
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 61 ---
+STANDARD CONFIGURATION SPECS
+¥
+1x CSLT-2000B
+Slider Track
+¥
+1x CSLF-2000B
+Slider Fixed Adapter
+¥
+2x CSL-RWH/CSL-RWH-HD 
+Roller Wheel Clip In/Heavy Duty
+¥
+2x CSL-DBC
+Door Stopper
+¥
+1x SL-0099P
+Floor Guide
+Excluding seals, handles and water stops.
+An extremely versatile system able to provide a simple solution to several situations. This slider can be side mounted to a 
+as well as for the extra tight bath room as a corner slider.
+  
+PRODUCT CATALOGUE 2024
+63  
+PRODUCT CATALOGUE 2024
+79  
+SLIDING SHOWERS
+63
+SHOWERS & TOILET ENCLOSURES
+
+--- PAGE 62 ---
+ 50 
+ =HEIGHT-26- 
+FIXING DEDUCTION
+FIXED PANEL
+14 
+100
+100
+ =HEIGHT-54/56-10 
+ 24/26 
+ MAX = 900 
+DOOR PANEL
+SHOP DRAWING
+GLASS CUT OUT DETAIL
+MOUNTING OPTIONS
+CITY SLIDER - TECHNICAL DETAILS
+LIMITATIONS
+¥
+Glass Thickness: 
+Door: 6mm - 10mm glass
+Fixed: 6mm - 8mm glass
+¥
+Max Door width:  
+850mm
+¥
+Max Door Weight:  
+45kg
+¥
+Material:
+S/S 304 and Aluminium
+¥
+Finish:
+Bright Polished, Matte Black and Natural
+64
+SHOWERS & TOILET ENCLOSURES
+

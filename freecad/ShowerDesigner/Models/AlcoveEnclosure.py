@@ -3,7 +3,7 @@
 
 """
 Alcove shower enclosure assembly — App::Part containing a single door
-spanning the alcove opening. The alcove walls provide side containment,
+spanning the alcove opening.  The alcove walls provide side containment,
 so only one panel/door is needed.
 """
 

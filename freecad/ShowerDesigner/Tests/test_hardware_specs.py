@@ -25,6 +25,9 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     SUPPORT_BAR_SPECS,
     SUPPORT_BAR_RULES,
     SEAL_SPECS,
+    SEAL_COLOURS,
+    SEAL_MATERIALS,
+    CATALOGUE_SEAL_SPECS,
     CLAMP_SPECS,
     CLAMP_PLACEMENT_DEFAULTS,
     CHANNEL_SPECS,
@@ -40,6 +43,10 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     requiresSupportBar,
     validateHandlePlacement,
     selectSeal,
+    getSealsByCategory,
+    getSealsByAngle,
+    getSealsByLocation,
+    lookupSealProductCode,
     CATALOGUE_HANDLE_FINISHES,
     CATALOGUE_HANDLE_SPECS,
     getHandleModelsForCategory,
@@ -48,7 +55,6 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     SLIDER_FINISHES,
     FLOOR_GUIDE_SPECS,
     validateSliderSystem,
-    getSliderSystemsByType,
     lookupSliderProductCode,
     BEVEL_CLAMP_SPECS,
 )
@@ -159,6 +165,143 @@ def test_seal_specs():
     for key, spec in SEAL_SPECS.items():
         assert "thickness" in spec
         assert "location" in spec
+
+
+def test_seal_colours_and_materials():
+    assert len(SEAL_COLOURS) >= 4
+    assert "Clear" in SEAL_COLOURS
+    assert "Black" in SEAL_COLOURS
+    assert len(SEAL_MATERIALS) == 2
+    assert "PVC" in SEAL_MATERIALS
+    assert "PC" in SEAL_MATERIALS
+
+
+def test_catalogue_seal_specs_structure():
+    required_keys = {"name", "category", "angle", "location", "dimensions",
+                     "material", "product_codes"}
+    valid_categories = {"soft_lip", "bubble", "bottom", "hard_lip", "magnetic",
+                        "infill"}
+    valid_locations = {"side", "bottom", "door"}
+    valid_angles = {0, 90, 135, 180}
+    for key, spec in CATALOGUE_SEAL_SPECS.items():
+        for rk in required_keys:
+            assert rk in spec, f"{key} missing '{rk}'"
+        assert spec["category"] in valid_categories, (
+            f"{key} has invalid category '{spec['category']}'"
+        )
+        assert spec["location"] in valid_locations, (
+            f"{key} has invalid location '{spec['location']}'"
+        )
+        assert spec["angle"] in valid_angles, (
+            f"{key} has invalid angle {spec['angle']}"
+        )
+        assert spec["material"] in SEAL_MATERIALS, (
+            f"{key} has invalid material '{spec['material']}'"
+        )
+        assert len(spec["product_codes"]) > 0, f"{key} has no product codes"
+        for pc in spec["product_codes"]:
+            assert "code" in pc, f"{key} product_code missing 'code'"
+            assert "glass_thickness" in pc, f"{key}/{pc['code']} missing 'glass_thickness'"
+            assert "colour" in pc, f"{key}/{pc['code']} missing 'colour'"
+            assert "length" in pc, f"{key}/{pc['code']} missing 'length'"
+            assert pc["length"] in (2500, 3000), (
+                f"{key}/{pc['code']} invalid length {pc['length']}"
+            )
+
+
+def test_catalogue_seal_specs_count():
+    assert len(CATALOGUE_SEAL_SPECS) == 18
+
+
+def test_catalogue_seal_product_codes_unique():
+    seen = {}
+    for key, spec in CATALOGUE_SEAL_SPECS.items():
+        for pc in spec["product_codes"]:
+            code = pc["code"]
+            assert code not in seen, (
+                f"Duplicate product code '{code}' in '{key}' and '{seen[code]}'"
+            )
+            seen[code] = key
+
+
+def test_catalogue_seal_categories_populated():
+    for cat in ("soft_lip", "bubble", "bottom", "hard_lip", "magnetic", "infill"):
+        result = getSealsByCategory(cat)
+        assert len(result) >= 1, f"No seals in category '{cat}'"
+
+
+def test_getSealsByCategory_soft_lip():
+    result = getSealsByCategory("soft_lip")
+    assert len(result) == 5
+    assert "centre_lip" in result
+    assert "180_soft_lip" in result
+    assert "135_soft_lip" in result
+
+
+def test_getSealsByCategory_magnetic():
+    result = getSealsByCategory("magnetic")
+    assert len(result) == 3
+    assert "90_180_magnetic" in result
+    assert "180_flat_magnetic" in result
+    assert "135_magnetic" in result
+
+
+def test_getSealsByCategory_empty():
+    result = getSealsByCategory("nonexistent")
+    assert result == []
+
+
+def test_getSealsByAngle_90():
+    result = getSealsByAngle(90)
+    assert "90_soft_lip" in result
+    assert "90_hard_lip" in result
+    assert "90_180_magnetic" in result
+
+
+def test_getSealsByAngle_180():
+    result = getSealsByAngle(180)
+    assert "180_soft_lip" in result
+    assert "180_hard_lip" in result
+    assert "double_hard_lip_h" in result
+    assert "180_g2g_infill" in result
+
+
+def test_getSealsByLocation_bottom():
+    result = getSealsByLocation("bottom")
+    assert len(result) == 2
+    assert "wipe_seal_bubble" in result
+    assert "drip_wipe_seal" in result
+
+
+def test_getSealsByLocation_door():
+    result = getSealsByLocation("door")
+    assert len(result) == 3
+    assert "90_180_magnetic" in result
+
+
+def test_lookupSealProductCode_known():
+    key, pc = lookupSealProductCode("TSS-003-8")
+    assert key == "180_soft_lip"
+    assert pc["glass_thickness"] == "6-8"
+    assert pc["colour"] == "Clear"
+
+
+def test_lookupSealProductCode_magnetic():
+    key, pc = lookupSealProductCode("PSS-008A-8")
+    assert key == "90_180_magnetic"
+    assert pc["material"] == "PC"
+
+
+def test_lookupSealProductCode_infill():
+    key, pc = lookupSealProductCode("IS-180-10")
+    assert key == "180_g2g_infill"
+    assert pc["glass_thickness"] == "10"
+
+
+def test_lookupSealProductCode_unknown():
+    key, pc = lookupSealProductCode("NONEXISTENT-999")
+    assert key is None
+    assert pc is None
 
 
 def test_channel_specs():
@@ -480,17 +623,13 @@ def test_lookupHandleProductCode_unknown():
 
 def test_slider_system_specs_structure():
     required_keys = {
-        "name", "system_type", "max_door_width", "max_weight_kg",
+        "name", "max_door_width", "max_weight_kg",
         "door_glass_thickness", "fixed_glass_thickness",
         "dimensions", "components", "product_codes",
     }
-    valid_types = {"tube", "track"}
     for key, spec in SLIDER_SYSTEM_SPECS.items():
         for rk in required_keys:
             assert rk in spec, f"{key} missing '{rk}'"
-        assert spec["system_type"] in valid_types, (
-            f"{key} has invalid system_type '{spec['system_type']}'"
-        )
         assert len(spec["product_codes"]) > 0, f"{key} has no product codes"
         assert len(spec["components"]) > 0, f"{key} has no components"
 
@@ -502,13 +641,17 @@ def test_slider_system_specs_three_systems():
     assert len(SLIDER_SYSTEM_SPECS) == 3
 
 
-def test_slider_system_duplo_is_tube():
-    assert SLIDER_SYSTEM_SPECS["duplo"]["system_type"] == "tube"
+def test_slider_system_duplo_has_tube_dims():
+    dims = SLIDER_SYSTEM_SPECS["duplo"]["dimensions"]
+    assert "tube_diameter" in dims
+    assert "tube_spacing_ctc" in dims
 
 
-def test_slider_system_edge_city_are_track():
-    assert SLIDER_SYSTEM_SPECS["edge_slider"]["system_type"] == "track"
-    assert SLIDER_SYSTEM_SPECS["city_slider"]["system_type"] == "track"
+def test_slider_system_edge_city_have_track_dims():
+    for key in ("edge_slider", "city_slider"):
+        dims = SLIDER_SYSTEM_SPECS[key]["dimensions"]
+        assert "track_width" in dims, f"{key} missing track_width"
+        assert "track_height" in dims, f"{key} missing track_height"
 
 
 def test_slider_system_product_codes_unique():
@@ -605,25 +748,6 @@ def test_validateSliderSystem_city_wide_range():
     valid, msg = validateSliderSystem("city_slider", 800, 40, 6)
     assert valid is True
 
-
-def test_getSliderSystemsByType_all():
-    result = getSliderSystemsByType()
-    assert len(result) == 3
-    assert "duplo" in result
-    assert "edge_slider" in result
-    assert "city_slider" in result
-
-
-def test_getSliderSystemsByType_tube():
-    result = getSliderSystemsByType("tube")
-    assert result == ["duplo"]
-
-
-def test_getSliderSystemsByType_track():
-    result = getSliderSystemsByType("track")
-    assert len(result) == 2
-    assert "edge_slider" in result
-    assert "city_slider" in result
 
 
 def test_lookupSliderProductCode_known():

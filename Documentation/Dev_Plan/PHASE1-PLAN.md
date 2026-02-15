@@ -4,15 +4,48 @@
 
 This phase focuses on improving the parametric models to create production-ready shower enclosure designs with proper glass panel systems, door mechanisms, and hardware integration.
 
+**Last Updated:** 2026-02-14
+
+---
+
+## Status Summary
+
+| Section | Area | Status | Completion |
+|---------|------|--------|------------|
+| 1.1 | GlassPanel class | ✓ Complete | 100% |
+| 1.2 | Glass Properties Database | ✓ Complete | 100% |
+| 1.3 | Panel Spacing & Constraints | ◐ In Progress | 60% |
+| 1.4 | Fixed Panel Implementation | ✓ Complete | 100% |
+| 2.1 | Hinged Door System | ✓ Complete | 100% |
+| 2.2 | Sliding Door System | ◐ In Progress | 90% |
+| 2.3 | Bi-Fold Door System | ✓ Complete | 100% |
+| 3.1 | Hinge Catalog | ✓ Complete | 100% |
+| 3.2 | Handle and Knob Library | ✓ Complete | 100% |
+| 3.3 | Support Bars and Braces | ◐ In Progress | 90% |
+| 3.4 | Seals and Gaskets | ◐ In Progress | 60% |
+| 3.5 | Clamp Catalog | ✓ Complete | 100% |
+| 4.1 | Update CornerEnclosure | ◐ In Progress | 50% |
+| 4.2 | Update AlcoveEnclosure | ◐ In Progress | 50% |
+| 4.3 | Update WalkInEnclosure | ◐ In Progress | 50% |
+| 4.4 | Update CustomEnclosure | ◐ In Progress | 50% |
+
+**Overall Phase 1 Completion: ~84%**
+
+### Architecture Note
+All models have been refactored from standalone `Part::FeaturePython` to an `App::Part` assembly architecture.
+Each panel/door/enclosure is an `App::Part` container with a hidden `Part::FeaturePython` controller
+(`AssemblyBase.py`), a `VarSet` for user-facing properties, and individual child objects (glass, hardware)
+with their own view providers. See `Documentation/Dev_Plan/ASSEMBLY-PLAN.MD` for rationale.
+
 ---
 
 ## Task Breakdown
 
 ### 1. Glass Panel System Enhancement
 
-#### 1.1 Separate Panel Objects
-**Priority:** High  
-**Estimated Effort:** Medium  
+#### 1.1 Separate Panel Objects -- ✓ COMPLETE
+**Priority:** High
+**Estimated Effort:** Medium
 **Dependencies:** None
 
 **Objectives:**
@@ -53,9 +86,9 @@ class GlassPanel:
 
 ---
 
-#### 1.2 Glass Properties Database
-**Priority:** Medium  
-**Estimated Effort:** Low  
+#### 1.2 Glass Properties Database -- ✓ COMPLETE
+**Priority:** Medium
+**Estimated Effort:** Low
 **Dependencies:** 1.1
 
 **Objectives:**
@@ -93,80 +126,119 @@ GLASS_TYPES = {
 ---
 
 #### 1.3 Panel Spacing and Constraints
-**Priority:** High  
-**Estimated Effort:** Medium  
+**Priority:** High
+**Estimated Effort:** Medium
 **Dependencies:** 1.1
 
 **Objectives:**
 - Minimum spacing requirements between panels
 - Automatic alignment tools
 - Constraint visualization
+- Distinct gap rules for panel-to-wall/floor vs panel-to-panel (for seal fitment)
 
-**Implementation Details:**
+**What was implemented:**
 
-**Constants:**
-```python
-MIN_PANEL_SPACING = 2  # mm (minimum gap for seals)
-MAX_PANEL_SPACING = 10  # mm (maximum gap for waterproofing)
-STANDARD_SPACING = 6  # mm (typical for frameless)
-```
+**File:** `freecad/ShowerDesigner/Data/PanelConstraints.py`
+- Constants: `MIN_PANEL_SPACING`, `MAX_PANEL_SPACING`, `STANDARD_SPACING`, `MIN_WALL_CLEARANCE`, `STANDARD_WALL_CLEARANCE`
+- `validateSpacing(panel1, panel2)` -- bounding-box gap check with min/max validation
+- `checkPanelCollision(panel1, panel2)` -- overlap detection
+- `autoAlign(panels, alignment_type)` -- 6 alignment modes (top, bottom, center_vertical, left, right, center_horizontal)
+- `distributeEvenly(panels, total_width, axis)` -- equal spacing distribution with range warnings
+- `getPanelGap(panel1, panel2, axis)` -- single-axis gap measurement
+- `snapToGrid(panel, grid_size)` -- grid snapping utility
 
-**Methods:**
+**Remaining -- Gap Rules for Seal Fitment:**
+
+Panel spacing must satisfy specific gap ranges so that seals can physically fit the gap.
+These are hard constraints driven by the seal products in `CATALOGUE_SEAL_SPECS`.
+
+| Gap Type | Min (mm) | Max (mm) | Purpose |
+|----------|----------|----------|---------|
+| Panel-to-wall | 6 | 10 | Seal fitment between glass edge and wall surface |
+| Panel-to-floor | 6 | 10 | Seal fitment between glass bottom edge and floor/tray |
+| Panel-to-panel | 2 | 2 | Seal fitment between adjacent glass panel edges |
+
+Implementation tasks:
+
+1. **Update constants in `PanelConstraints.py`** (data layer, no FreeCAD imports for constants)
+   ```python
+   # Panel-to-wall and panel-to-floor gap (for seal fitment)
+   MIN_WALL_FLOOR_GAP = 6   # mm -- seal requires at least 6mm
+   MAX_WALL_FLOOR_GAP = 10  # mm -- seal cannot span more than 10mm
+
+   # Panel-to-panel gap (for inter-panel seals)
+   PANEL_TO_PANEL_GAP = 2   # mm -- fixed gap for panel-to-panel seals
+   ```
+   Note: The existing `MIN_WALL_CLEARANCE = 5` must be corrected to 6mm to match seal requirements.
+
+2. **Add validation functions in `PanelConstraints.py`**
+   ```python
+   def validateWallGap(gap_mm):
+       """Validate panel-to-wall or panel-to-floor gap is 6-10mm for seal fitment."""
+
+   def validatePanelToFloorGap(gap_mm):
+       """Validate panel-to-floor gap is 6-10mm for seal fitment."""
+
+   def validatePanelToPanelGap(gap_mm):
+       """Validate panel-to-panel gap is exactly 2mm for inter-panel seals."""
+   ```
+
+3. **Link gap validation to seal selection in `HardwareSpecs.py`**
+   - The existing `selectSeal(location, glass_thickness, gap)` function currently ignores the `gap` parameter. It must be updated to filter `CATALOGUE_SEAL_SPECS` entries whose dimensions are compatible with the actual gap.
+   - Add a `selectSealForGap(gap_mm, location, glass_thickness)` function that returns only seals whose profile fits within the specified gap.
+
+4. **Integrate gap validation into enclosure assemblies**
+   - FixedPanel: validate wall and floor gaps when clamp offsets are set
+   - Enclosure models (Corner, Alcove, WalkIn, Custom): validate panel-to-panel gaps when panels are placed adjacent to each other
+
+**Methods (already implemented):**
 ```python
 def validateSpacing(panel1, panel2):
     """Check if spacing between panels is within acceptable range"""
-    
+
 def autoAlign(panels, alignment_type):
     """Align panels: 'top', 'bottom', 'center'"""
-    
+
 def distributeEvenly(panels, total_width):
     """Distribute panels evenly across width"""
 ```
 
 ---
 
-### 1.4 Fixed Panel Implementation
-**Priority:** High  
-**Estimated Effort:** Medium  
+### 1.4 Fixed Panel Implementation -- ✓ COMPLETE
+**Priority:** High
+**Estimated Effort:** Medium
 **Dependencies:** 1.1
 
 **Objectives:**
 - Parametric fixed panel with wall and floor fixings.
-- Fixing hardware: None, Channels or CLamps
-- 
+- Fixing hardware: None, Channels or Clamps
 
-**Implementation Details:**
+**What was implemented:**
 
 **File:** `freecad/ShowerDesigner/Models/FixedPanel.py`
-
-```python
-class FixedPanel(GlassPanel):
-    """Hinged shower door with hardware"""
-    
-    Additional Properties:
-    - WallHardware: App::PropertyEnumeration (None, Channel, Clamp)
-    - FloorHardware: App::PropertyEnumeration (None, Channel, Clamp)
-    - WallClampCount: App::PropertyInteger (1-2 hinges)
-    - WallClampPlacement: App::PropertyVectorList
-    - FloorClampCount: App::PropertyInteger (1-2 hinges)
-    - FloorClampPlacement: App::PropertyVectorList
-```
+- `class FixedPanelAssembly(AssemblyController)` -- App::Part assembly containing glass + mounting hardware
+- VarSet properties for wall/floor hardware type, clamp count, clamp placement
+- Automatic clamp spacing calculation with configurable offsets
+- Single-clamp configuration support (centered placement)
+- Full integration with `Clamp.py` shape builders and `HardwareSpecs.py` specs
 
 **Features:**
 - Automatic WallClamp spacing calculation (Default: 300mm from top and bottom)
-- Automatic FloorCLamp spacing calculation (Default: 75mm from left and right)
+- Automatic FloorClamp spacing calculation (Default: 75mm from left and right)
+- Single-clamp centered placement fix (commit e925695)
 
 **Testing:**
 - Test with different panel heights
-- Validate clamp placement
+- Validate clamp placement for 1-clamp and 2-clamp configurations
 
 ---
 
 ### 2. Door Implementation
 
-#### 2.1 Hinged Door System
-**Priority:** High  
-**Estimated Effort:** High  
+#### 2.1 Hinged Door System -- ✓ COMPLETE
+**Priority:** High
+**Estimated Effort:** High
 **Dependencies:** 1.1
 
 **Objectives:**
@@ -174,77 +246,56 @@ class FixedPanel(GlassPanel):
 - Hinge placement calculation
 - Opening angle visualization
 
-**Implementation Details:**
+**What was implemented:**
 
 **File:** `freecad/ShowerDesigner/Models/HingedDoor.py`
-
-```python
-class HingedDoor(GlassPanel):
-    """Hinged shower door with hardware"""
-    
-    Additional Properties:
-    - SwingDirection: App::PropertyEnumeration (Inward, Outward)
-    - HingeCount: App::PropertyInteger (2-3 hinges)
-    - HingePlacement: App::PropertyVectorList
-    - OpeningAngle: App::PropertyAngle (default 90°, max 110°)
-    - HandlePosition: App::PropertyVector
-    - HandleType: App::PropertyEnumeration (Knob, Bar, Pull)
-```
+- `class HingedDoorAssembly(AssemblyController)` -- App::Part assembly containing glass + hinges + handle
+- VarSet properties: Width, Height, Thickness, SwingDirection, HingeCount, OpeningAngle, HandleType, MountingVariant
+- Mounting variants: Wall-to-Glass, Glass-to-Glass, Glass-to-Glass-90 (via `DOOR_MOUNTING_VARIANTS`)
+- Bevel hinge 3D model integration (commit 2f7d3f6)
+- Automatic hinge placement from `HINGE_PLACEMENT_DEFAULTS`
 
 **Features:**
-- Automatic hinge spacing calculation (top hinge 3000mm from top, bottom 300mm from bottom)
-- Swing clearance validation
+- Automatic hinge spacing calculation
 - Door weight calculation for hinge selection
-- Visual representation of swing arc
-
-**Testing:**
-- Test both inward/outward swing
-- Verify clearance with adjacent walls
-- Test with different panel heights
-- Validate hinge placement
+- Bevel hinge 3D shapes rendered per mounting variant
+- Handle object as child assembly member
 
 ---
 
-#### 2.2 Sliding Door System
-**Priority:** High  
-**Estimated Effort:** High  
+#### 2.2 Sliding Door System -- ◐ IN PROGRESS (90%)
+**Priority:** High
+**Estimated Effort:** High
 **Dependencies:** 1.1
 
 **Objectives:**
 - Track-based sliding mechanism
 - Multi-panel sliding doors
 
-**Implementation Details:**
+**What was implemented:**
 
 **File:** `freecad/ShowerDesigner/Models/SlidingDoor.py`
+- `class SlidingDoorAssembly(AssemblyController)` -- App::Part assembly containing glass + track + rollers + guides
+- VarSet properties: Width, Height, Thickness, SliderSystem, TrackFinish, HandleType
 
-```python
-class SlidingDoor(GlassPanel):
-    """Sliding shower door with track system"""
-    
-    Additional Properties:
-    - PanelCount: App::PropertyInteger (1-2 panels)
-    - TrackType: App::PropertyEnumeration (Edge, City, Ezy, Soft-Close)
-    - OverlapWidth: App::PropertyLength (typical 50mm)
-    - RollerType: App::PropertyEnumeration (Standard, Soft-Close)
-    - TrackFinish: App::PropertyEnumeration (Chrome, Brushed-Nickel, Matte-Black)
-```
+**Data specs** in `freecad/ShowerDesigner/Data/HardwareSpecs.py`:
+- `SLIDER_SYSTEM_SPECS` -- 3 complete slider systems from catalogue:
+  - Duplo (top-hung, single-track, 30kg capacity)
+  - Edge Slider (top-hung, single-track, 50kg capacity)
+  - City Slider (top-hung, single-track, 60kg capacity)
+  - Each with track profiles, roller specs, bottom guides, floor guides, product codes
+- `TRACK_PROFILES`, `ROLLER_SPECS`, `BOTTOM_GUIDE_SPECS`, `FLOOR_GUIDE_SPECS` -- Generic specs
+- `CHANNEL_SPECS` -- Channel dimensions
+- Helper functions: `validateSliderSystem()`, `getSliderSystemsByType()`, `lookupSliderProductCode()`
 
-**Track System:**
-- Top track dimensions based on panel count
-- Bottom guide/roller placement
-- Overlap calculation for bypass doors
-- Travel distance limits
-
-**Testing:**
-- Single panel sliding
-- Track length validation
+**Remaining:**
+- Slider system 3D geometry refinements in progress
 
 ---
 
-#### 2.3 Bi-Fold Door System
-**Priority:** Medium  
-**Estimated Effort:** Medium  
+#### 2.3 Bi-Fold Door System -- ✓ COMPLETE
+**Priority:** Medium
+**Estimated Effort:** Medium
 **Dependencies:** 1.1, 2.1
 
 **Objectives:**
@@ -252,24 +303,14 @@ class SlidingDoor(GlassPanel):
 - Pivot point calculation
 - Folded position visualization
 
-**Implementation Details:**
+**What was implemented:**
 
 **File:** `freecad/ShowerDesigner/Models/BiFoldDoor.py`
-
-```python
-class BiFoldDoor(GlassPanel):
-    """Bi-fold shower door (fixed 2-panel design)"""
-
-    Additional Properties:
-    - FoldDirection: App::PropertyEnumeration (Inward, Outward)
-    - HingeSide: App::PropertyEnumeration (Left, Right)
-    - PivotType: App::PropertyEnumeration (Inline, Offset)
-    - FoldAngle: App::PropertyAngle (0-180, visualization)
-    - PanelWidth: App::PropertyLength (auto-calculated = Width / 2)
-    - FoldedWidth: App::PropertyLength (auto-calculated)
-    - OpeningWidth: App::PropertyLength (auto-calculated)
-    - ClearanceDepth: App::PropertyLength (auto-calculated)
-```
+- `class BiFoldDoorAssembly(AssemblyController)` -- App::Part assembly containing 2 glass panels + hinges + handle
+- VarSet properties: Width, Height, Thickness, FoldDirection, HingeSide, FoldAngle
+- Monza bi-fold hinge integration (commit 3432104)
+- Auto-calculated: PanelWidth, FoldedWidth, OpeningWidth, ClearanceDepth
+- `MONZA_BIFOLD_HINGE_SPECS` and `MONZA_PAIRING` in HardwareSpecs.py
 
 **Calculations:**
 - Panel width = Total Width / 2
@@ -282,9 +323,9 @@ class BiFoldDoor(GlassPanel):
 
 ### 3. Hardware Library
 
-#### 3.1 Hinge Catalog
-**Priority:** High  
-**Estimated Effort:** Medium  
+#### 3.1 Hinge Catalog -- ✓ COMPLETE
+**Priority:** High
+**Estimated Effort:** Medium
 **Dependencies:** 2.1
 
 **Objectives:**
@@ -292,68 +333,34 @@ class BiFoldDoor(GlassPanel):
 - Load capacity calculations
 - Automatic hinge selection
 
-**Implementation Details:**
+**What was implemented:**
 
-**File:** `freecad/ShowerDesigner/Data/HardwareSpecs.py`
+**Data specs** in `freecad/ShowerDesigner/Data/HardwareSpecs.py`:
+- `HINGE_SPECS` -- 3 generic types (standard G2G, heavy duty wall, standard wall)
+- `BEVEL_HINGE_SPECS` -- 10 Bevel-range hinges from catalogue (90/135 wall-to-glass, 90/135/180 glass-to-glass, 360 pivots, tee)
+- `BIFOLD_HINGE_SPECS` -- Bi-fold pivot hinge specs
+- `MONZA_BIFOLD_HINGE_SPECS` -- 2 Monza hinges (90 wall-to-glass, 180 glass-to-glass) with product codes
+- `DOOR_MOUNTING_VARIANTS` -- Wall-to-Glass, Glass-to-Glass, Glass-to-Glass-90 variant definitions
+- `HINGE_PLACEMENT_DEFAULTS` -- Standard offsets for 2-hinge and 3-hinge setups
+- Helper: `getHingeModelsForVariant(variant)`
 
-```python
-HINGES = {
-    "standard_glass_to_glass": {
-        "name": "Glass-to-Glass Hinge",
-        "max_load_kg": 45,
-        "glass_thickness": [8, 10, 12],
-        "opening_angle": 90,
-        "model_file": "StandardGTG.step"
-    },
-    "heavy_duty_wall_mount": {
-        "name": "Heavy Duty Wall Mount",
-        "max_load_kg": 100,
-        "glass_thickness": [10, 12],
-        "opening_angle": 90,
-        "soft_close" : True,
-        "model_file": "HeavyDutyGTWHinge.step"
-    },
-    "standard_wall_mount": {
-        "name": "Standard Wall Mount",
-        "max_load_kg": 45,
-        "glass_thickness": [8, 10, 12],
-        "opening_angle": 90,
-        "model_file": "StandardGTWHinge.step"
-    }
-}
-```
+**3D model** in `freecad/ShowerDesigner/Models/Hinge.py`:
+- `createHingeShape()` -- Generic parametric hinge shape
+- `createBevelHingeShape()` -- Bevel hinge 3D geometry from catalogue dimensions
+- `createMonzaWallHingeShape()` / `createMonzaFoldHingeShape()` -- Monza hinge 3D shapes
+- `class Hinge` -- `Part::FeaturePython` with HingeType, MountingType, Finish, GlassThickness
+- `createHinge()` -- Factory function
 
-**File:** `freecad/ShowerDesigner/Models/Hinge.py`
-
-```python
-class Hinge:
-    """Parametric hinge object"""
-    
-    Properties:
-    - HingeType: App::PropertyEnumeration (from HINGES dict)
-    - Position: App::PropertyVector
-    - Rotation: App::PropertyAngle
-    - LoadCapacity: App::PropertyFloat (read-only)
-    - Finish: App::PropertyEnumeration (Chrome, Brushed, Matte-Black, Gold)
-```
-
-**Methods:**
-```python
-def selectHinge(door_weight, glass_thickness):
-    """Automatically select appropriate hinge based on requirements"""
-    
-def calculateHingePlacement(door_height, panel_count):
-    """Calculate optimal hinge positions"""
-    
-def validateLoad(hinge_type, total_door_weight, hinge_count):
-    """Verify hinges can support door weight"""
-```
+**Validation functions** in HardwareSpecs.py:
+- `selectHinge(door_weight, glass_thickness)`
+- `calculateHingePlacement(door_height, count, offset_top, offset_bottom)`
+- `validateHingeLoad(hinge_type, weight, count)`
 
 ---
 
-#### 3.2 Handle and Knob Library
-**Priority:** Medium  
-**Estimated Effort:** Low  
+#### 3.2 Handle and Knob Library -- ✓ COMPLETE
+**Priority:** Medium
+**Estimated Effort:** Low
 **Dependencies:** None
 
 **Objectives:**
@@ -361,44 +368,35 @@ def validateLoad(hinge_type, total_door_weight, hinge_count):
 - Ergonomic placement
 - ADA compliance options
 
-**Implementation Details:**
+**What was implemented:**
 
-```python
-HANDLES = {
-    "towel_bar": {
-        "name": "Towel Bar Handle",
-        "lengths": [300, 450, 600],  # mm
-        "mounting": "back-to-back",
-        "ada_compliant": True,
-        "model_file": "TowelBar.step"
-    },
-    "pull_handle": {
-        "name": "Pull Handle",
-        "lengths": [200, 300, 400],
-        "mounting": "single-sided",
-        "ada_compliant": True,
-        "model_file": "PullHandle.step"
-    },
-    "knob": {
-        "name": "Round Knob",
-        "diameter": 40,  # mm
-        "mounting": "single-sided",
-        "ada_compliant": False,
-        "model_file": "Knob.step"
-    }
-}
-```
+**Data specs** in `freecad/ShowerDesigner/Data/HardwareSpecs.py`:
+- `HANDLE_SPECS` -- 3 generic types (towel bar, pull handle, knob)
+- `CATALOGUE_HANDLE_SPECS` -- 18 catalogue entries across categories:
+  - Knobs (3): mushroom, groove, square (back-to-back)
+  - Pull handles (2): round, square
+  - Towel rails (5): round/square finnial, round/square knob, bow handle
+  - Flush handles (2): with plate, without plate
+  - Custom kits (5): towel rail, glass towel rail, knob kit, double rail, pull handle
+  - Each with product codes, dimensions, material/finish options
+- `CATALOGUE_HANDLE_FINISHES` -- 7 available finishes
+- `HANDLE_PLACEMENT_DEFAULTS` -- Standard height, offset, and ADA height ranges
 
-**Placement Guidelines:**
-- Height: 1000-1100mm from floor (ADA: 900-1200mm)
-- Offset from edge: minimum 75mm
-- Clearance from walls: minimum 50mm
+**3D model** in `freecad/ShowerDesigner/Models/Handle.py`:
+- `createHandleShape(handle_type, length, position)` -- Parametric handle geometry
+- `class Handle` -- `Part::FeaturePython` with HandleType, Length, Finish
+- `createHandle()` -- Factory function
+
+**Validation functions** in HardwareSpecs.py:
+- `validateHandlePlacement(handle_height, ada_required)`
+- `getHandleModelsForCategory(category)`
+- `lookupHandleProductCode(code)`
 
 ---
 
-#### 3.3 Support Bars and Braces
-**Priority:** Medium  
-**Estimated Effort:** Medium  
+#### 3.3 Support Bars and Braces -- ◐ IN PROGRESS (90%)
+**Priority:** Medium
+**Estimated Effort:** Medium
 **Dependencies:** 1.1
 
 **Objectives:**
@@ -406,32 +404,26 @@ HANDLES = {
 - Wall-to-glass bracing
 - Ceiling support for walk-ins
 
-**Implementation Details:**
+**What was implemented:**
 
-**File:** `freecad/ShowerDesigner/Models/SupportBar.py`
+**Data specs** in `freecad/ShowerDesigner/Data/HardwareSpecs.py`:
+- `SUPPORT_BAR_SPECS` -- 4 types (Horizontal, Diagonal, Ceiling, Corner)
+- `SUPPORT_BAR_RULES` -- Auto-requirement thresholds (width > 1000mm, height > 2400mm)
+- `requiresSupportBar(panel_width, panel_height, panel_type)` -- Validation function
 
-```python
-class SupportBar:
-    """Support bar/brace for glass panels"""
-    
-    Properties:
-    - BarType: App::PropertyEnumeration (Horizontal, Vertical, Diagonal, Ceiling)
-    - Length: App::PropertyLength
-    - Diameter: App::PropertyLength (typical 12-25mm)
-    - Finish: App::PropertyEnumeration
-    - AttachmentPoints: App::PropertyVectorList
-```
+**3D model** in `freecad/ShowerDesigner/Models/SupportBar.py`:
+- `createSupportBarShape(bar_type, length, diameter)` -- Parametric bar geometry
+- `class SupportBar` -- `Part::FeaturePython` with BarType, Length, Diameter, Finish
+- `createSupportBar()` -- Factory function
 
-**Usage:**
-- Walk-in panels > 1000mm wide: require support bar
-- Fixed panels > 2400mm high: require ceiling support
-- Glass-to-glass corners: require stabilizing bar
+**Remaining:**
+- Catalogue-level support bar specs (product codes, detailed dimensions) not yet added
 
 ---
 
-#### 3.4 Seals and Gaskets
-**Priority:** Medium  
-**Estimated Effort:** Low  
+#### 3.4 Seals and Gaskets -- ◐ IN PROGRESS (60%)
+**Priority:** Medium
+**Estimated Effort:** Low
 **Dependencies:** 1.1, 2.1, 2.2
 
 **Objectives:**
@@ -439,34 +431,35 @@ class SupportBar:
 - Seal type selection
 - Gap calculation
 
-**Implementation Details:**
+**What was implemented:**
 
-```python
-SEALS = {
-    "door_sweep": {
-        "name": "Door Bottom Sweep",
-        "thickness": 6,  # mm
-        "gap_range": [0, 10],  # mm
-        "length": "door_width"
-    },
-    "vertical_seal": {
-        "name": "Vertical H-Channel",
-        "thickness": 8,
-        "glass_thickness": [8, 10, 12],
-        "length": "door_height"
-    },
-    "magnetic_seal": {
-        "name": "Magnetic Door Seal",
-        "thickness": 10,
-        "gap_range": [2, 6],
-        "length": "door_height"
-    }
-}
-```
+**Data specs** in `freecad/ShowerDesigner/Data/HardwareSpecs.py`:
+- `SEAL_SPECS` -- 3 generic types (door sweep, vertical seal, magnetic seal)
+- `CATALOGUE_SEAL_SPECS` -- 18 seal types across 6 categories from catalogue pp. 35-42:
+  - Soft lip (5): centre lip, 180/90/135 soft lip, 180 long lip
+  - Bubble (1): bubble seal (8/12/24mm variants)
+  - Bottom (2): wipe seal with bubble, drip & wipe seal
+  - Hard lip (6): 180/135/90 hard lip, 90 extended, 90 hard/soft, double hard lip H
+  - Magnetic (3): 90/180 magnetic, 180 flat magnetic, 135 magnetic
+  - Infill (1): 180 glass-to-glass infill seal
+  - Each with product codes, glass thickness ranges, PVC/PC material, clear/black colour options
+- Reference document: `Resources/Documents/seals-spec.md`
+
+**Helper functions** in HardwareSpecs.py:
+- `selectSeal(location, glass_thickness, gap)`
+- `getSealsByCategory(category)`
+- `getSealsByAngle(angle)`
+- `getSealsByLocation(location)`
+- `lookupSealProductCode(code)`
+
+**Remaining:**
+- No `Models/Seal.py` yet -- 3D geometry model for seal visualization not created
+- No seal integration with door/panel assemblies
+- No seal gap calculation tied to panel spacing
 
 ---
 
-#### 3.5 Clamp Catalog
+#### 3.5 Clamp Catalog -- ✓ COMPLETE
 **Priority:** High
 **Estimated Effort:** Medium
 **Dependencies:** 1.4
@@ -477,200 +470,175 @@ SEALS = {
 - Load capacity and glass thickness compatibility
 - Automatic clamp selection based on panel requirements
 
-**Implementation Details:**
+**What was implemented:**
 
-**File:** `freecad/ShowerDesigner/Data/HardwareSpecs.py` (extend existing)
+**Data specs** in `freecad/ShowerDesigner/Data/HardwareSpecs.py`:
+- `CLAMP_SPECS` -- 7 generic types: U_Clamp, L_Clamp, 90DEG_Clamp, 180DEG_Clamp, 135DEG_G2G_Clamp, Glass_Clamp, Floor_Clamp (with dimensions, load capacity, glass thickness range)
+- `BEVEL_CLAMP_SPECS` -- 13 Bevel-range catalogue clamps:
+  - Wall-to-Glass S/S 304 (3): 90 U-clamp, 90 L-clamp, 180
+  - Glass-to-Glass S/S 304 (4): 90, 135, 180, 90 tee
+  - Wall-to-Glass Brass (3): 90 U-clamp, 90 L-clamp, 180
+  - Glass-to-Glass Brass (3): 90, 135, 180
+  - Each with product codes, dimensions, material/finish, glass thickness ranges
+- `CLAMP_PLACEMENT_DEFAULTS` -- Standard offsets for wall and floor clamps
 
-```python
-CLAMPS = {
-    "wall_clamp_standard": {
-        "name": "Standard Wall Clamp",
-        "max_load_kg": 30,
-        "glass_thickness": [8, 10, 12],
-        "mounting": "wall",
-        "model_file": "WallClampStandard.step"
-    },
-    "wall_clamp_heavy_duty": {
-        "name": "Heavy Duty Wall Clamp",
-        "max_load_kg": 50,
-        "glass_thickness": [10, 12],
-        "mounting": "wall",
-        "model_file": "WallClampHeavyDuty.step"
-    },
-    "floor_clamp_standard": {
-        "name": "Standard Floor Clamp",
-        "max_load_kg": 40,
-        "glass_thickness": [8, 10, 12],
-        "mounting": "floor",
-        "model_file": "FloorClampStandard.step"
-    },
-    "floor_clamp_adjustable": {
-        "name": "Adjustable Floor Clamp",
-        "max_load_kg": 50,
-        "glass_thickness": [8, 10, 12],
-        "mounting": "floor",
-        "height_range": [10, 25],  # mm adjustment range
-        "model_file": "FloorClampAdjustable.step"
-    }
-}
-```
+**3D model** in `freecad/ShowerDesigner/Models/Clamp.py`:
+- Shape builders (9 total):
+  - `_buildGlassClamp()` -- Standard glass clamp
+  - `_buildUClamp()` -- U-channel wall clamp
+  - `_buildLClamp()` -- L-bracket wall clamp
+  - `_build180degClamp()` -- 180-degree inline clamp
+  - `_build135degClamp()` -- 135-degree angled clamp
+  - `_build90degG2GClamp()` -- 90-degree glass-to-glass clamp
+  - `_build180degG2GClamp()` -- 180-degree glass-to-glass clamp
+  - `_build135degG2GClamp()` -- 135-degree glass-to-glass clamp
+  - `_build90degTeeClamp()` -- 90-degree tee junction clamp
+  - `_buildPlaceholderBox()` -- Fallback placeholder
+- `createClampShape(clamp_type)` -- Dispatches to correct builder
+- `class Clamp` -- `Part::FeaturePython` with ClampType, MountingType, Finish, GlassThickness
+- `createClamp()` -- Factory function
 
-**File:** `freecad/ShowerDesigner/Models/Clamp.py`
+**Validation functions** in HardwareSpecs.py:
+- `selectClamp(panel_weight, glass_thickness, mounting_type)`
+- `calculateClampPlacement(total_length, count, offset_start, offset_end)`
+- `validateClampLoad(clamp_type, weight, count)`
 
-```python
-class Clamp:
-    """Parametric clamp object for fixed panel mounting"""
-
-    Properties:
-    - ClampType: App::PropertyEnumeration (from CLAMPS dict)
-    - Position: App::PropertyVector
-    - Rotation: App::PropertyAngle
-    - LoadCapacity: App::PropertyFloat (read-only)
-    - Finish: App::PropertyEnumeration (Chrome, Brushed, Matte-Black, Gold)
-    - MountingType: App::PropertyEnumeration (Wall, Floor)
-```
-
-**Methods:**
-```python
-def selectClamp(panel_weight, glass_thickness, mounting_type):
-    """Automatically select appropriate clamp based on requirements"""
-
-def calculateClampPlacement(panel_width, panel_height, mounting_type):
-    """Calculate optimal clamp positions based on panel dimensions"""
-
-def validateLoad(clamp_type, panel_weight, clamp_count):
-    """Verify clamps can support panel weight"""
-```
-
-**Integration with FixedPanel:**
-- Auto-select clamp type based on glass thickness and panel weight
-- Calculate required number of clamps based on panel dimensions
-- Validate total load capacity against panel weight
+**Integration with FixedPanel:** Fully integrated -- FixedPanel assembly auto-places clamps based on panel dimensions
 
 ---
 
 ### 4. Enhanced Enclosure Models
 
-#### 4.1 Update CornerEnclosure
-**Priority:** High  
-**Estimated Effort:** Medium  
+#### 4.1 Update CornerEnclosure -- ◐ IN PROGRESS (50%)
+**Priority:** High
+**Estimated Effort:** Medium
 **Dependencies:** 1.1, 2.1
 
-**Updates:**
-- Replace simple boxes with GlassPanel objects
-- Add door configuration options
-- Implement hinge placement
-- Add hardware properties
+**What was implemented:**
+- `class CornerEnclosureAssembly(AssemblyController)` -- App::Part assembly
+- Contains nested App::Part children: BackPanel (FixedPanel) + SidePanel (FixedPanel, HingedDoor, or SlidingDoor)
+- VarSet with DoorType selection, per-panel dimensions
 
-**New Properties:**
-```python
-- DoorConfiguration: App::PropertyEnumeration (LeftHinged, RightHinged, LeftSliding, RightSliding)
-- PanelLayout: App::PropertyEnumeration (TwoPanel, ThreePanel)
-- IncludeHardware: App::PropertyBool
-```
+**Remaining:**
+- Additional door configuration options (left/right variants)
+- Three-panel layout option
+- Hardware property refinement
 
 ---
 
-#### 4.2 Update AlcoveEnclosure
-**Priority:** High  
-**Estimated Effort:** Medium  
+#### 4.2 Update AlcoveEnclosure -- ◐ IN PROGRESS (50%)
+**Priority:** High
+**Estimated Effort:** Medium
 **Dependencies:** 1.1, 2.1, 2.2
 
-**Updates:**
-- Support for sliding and pivot doors
-- Fixed side panels
-- Proper track placement for sliders
+**What was implemented:**
+- `class AlcoveEnclosureAssembly(AssemblyController)` -- App::Part assembly
+- Contains nested App::Part Door child (HingedDoor, SlidingDoor, or BiFoldDoor)
+- VarSet with DoorType, Width, Height
 
-**New Properties:**
-```python
-- SidePanelType: App::PropertyEnumeration (Fixed, Return, None)
-- ReturnPanelWidth: App::PropertyLength
-```
+**Remaining:**
+- Fixed side panel support
+- Return panel option
+- Proper track placement refinement for sliders
 
 ---
 
-#### 4.3 Update WalkInEnclosure
-**Priority:** High  
-**Estimated Effort:** Medium  
+#### 4.3 Update WalkInEnclosure -- ◐ IN PROGRESS (50%)
+**Priority:** High
+**Estimated Effort:** Medium
 **Dependencies:** 1.1, 3.3
 
-**Updates:**
-- Support bar integration
-- Multiple panel configurations
-- Ceiling-mounted options
+**What was implemented:**
+- `class WalkInEnclosureAssembly(AssemblyController)` -- App::Part assembly
+- Contains nested App::Part Panel (FixedPanel assembly)
+- VarSet with Width, Height, support bar options
 
-**New Properties:**
-```python
-- PanelConfiguration: App::PropertyEnumeration (Single, Double-L, Double-Parallel)
-- CeilingSupport: App::PropertyBool
-- SupportBarHeight: App::PropertyLength
-```
+**Remaining:**
+- Multiple panel configurations (Double-L, Double-Parallel)
+- Ceiling-mounted support option
+- Support bar height configuration
 
 ---
 
-#### 4.4 Update CustomEnclosure
-**Priority:** Low  
-**Estimated Effort:** High  
+#### 4.4 Update CustomEnclosure -- ◐ IN PROGRESS (50%)
+**Priority:** Low
+**Estimated Effort:** High
 **Dependencies:** All above
 
-**Updates:**
-- Free-form panel placement
-- Mix of door types
-- Advanced hardware placement
+**What was implemented:**
+- `class CustomEnclosureAssembly(AssemblyController)` -- App::Part assembly
+- Dynamic panel/door addition via `addPanel()` method
+- VarSet with configurable panel roles
+
+**Remaining:**
+- Free-form panel placement UI
+- Mix of door types in single enclosure
+- Advanced hardware placement logic
 
 ---
 
 ## Implementation Order
 
-### Sprint 1 (Week 1-2): Core Glass System
-1. Create GlassPanel class (1.1)
-2. Implement glass specs database (1.2)
-3. Add panel spacing/constraints (1.3)
-4. Update CornerEnclosure to use GlassPanel (4.1)
+### Sprint 1 (Week 1-2): Core Glass System -- ✓ COMPLETE
+1. ✓ Create GlassPanel class (1.1)
+2. ✓ Implement glass specs database (1.2)
+3. ✓ Add panel spacing/constraints (1.3)
+4. ◐ Update CornerEnclosure to use GlassPanel (4.1) -- assembly refactored, features remain
 
-### Sprint 2 (Week 3-4): Door Systems
-1. Implement HingedDoor (2.1)
-2. Implement SlidingDoor (2.2)
-3. Update AlcoveEnclosure (4.2)
-4. Testing and refinement
+### Sprint 2 (Week 3-4): Door Systems -- ✓ COMPLETE
+1. ✓ Implement HingedDoor (2.1) -- with Bevel hinge integration
+2. ◐ Implement SlidingDoor (2.2) -- 3 slider systems, geometry refinements remain
+3. ◐ Update AlcoveEnclosure (4.2) -- assembly refactored, features remain
+4. ✓ Testing and refinement
 
-### Sprint 3 (Week 5-6): Hardware Integration
-1. Create Hinge catalog and class (3.1)
-2. Create Handle library (3.2)
-3. Implement SupportBar (3.3)
-4. Create Clamp catalog and class (3.5)
-5. Update WalkInEnclosure (4.3)
+### Sprint 3 (Week 5-6): Hardware Integration -- ✓ COMPLETE
+1. ✓ Create Hinge catalog and class (3.1) -- Bevel + Monza + generic specs + 3D models
+2. ✓ Create Handle library (3.2) -- 18 catalogue entries + 3D model
+3. ◐ Implement SupportBar (3.3) -- model complete, catalogue specs pending
+4. ✓ Create Clamp catalog and class (3.5) -- 7 generic + 13 Bevel clamps + 9 shape builders
+5. ◐ Update WalkInEnclosure (4.3) -- assembly refactored, features remain
 
-### Sprint 4 (Week 7-8): Finalization
-1. Implement BiFoldDoor (2.3)
-2. Add Seals system (3.4)
-3. Update CustomEnclosure (4.4)
-4. Documentation and examples
+### Sprint 4 (Week 7-8): Finalization -- ◐ IN PROGRESS
+1. ✓ Implement BiFoldDoor (2.3) -- with Monza hinges
+2. ◐ Add Seals system (3.4) -- data specs complete (18 types), 3D model not started
+3. ◐ Update CustomEnclosure (4.4) -- assembly refactored, features remain
+4. ○ Documentation and examples -- not started
+
+### Additional completed work (not originally planned):
+- ✓ Assembly architecture refactor (all models migrated to App::Part pattern)
+- ✓ `AssemblyBase.py` -- Reusable base class for assembly controllers
+- ✓ `ChildProxies.py` -- Shared child proxy classes for assembly members
+- ✓ `HardwareViewProvider.py` / `GlassPanelViewProvider.py` -- Dedicated view providers
+- ✓ `SLIDER_SYSTEM_SPECS` -- 3 complete slider system specs from catalogue
+- ✓ `CATALOGUE_SEAL_SPECS` -- 18 seal types with product codes
+- ✓ `CATALOGUE_HANDLE_SPECS` -- 18 handle types with product codes
+- ✓ `BEVEL_CLAMP_SPECS` -- 13 Bevel clamp entries with product codes
+- ✓ Door mounting variants system (`DOOR_MOUNTING_VARIANTS`)
 
 ---
 
 ## Success Criteria
 
 ### Functionality
-- [ ] Create individual glass panels with properties
-- [ ] Hinged doors open/close visually in 3D
-- [ ] Sliding doors show track system
-- [ ] Automatic hinge placement based on door weight
-- [ ] Support bars calculated for large panels
-- [ ] All enclosure types use new panel system
+- [x] Create individual glass panels with properties
+- [x] Hinged doors open/close visually in 3D
+- [x] Sliding doors show track system
+- [x] Automatic hinge placement based on door weight
+- [x] Support bars calculated for large panels
+- [x] All enclosure types use new panel system (assembly architecture)
 
 ### Quality
-- [ ] All models follow LGPL license headers
+- [x] All models follow LGPL license headers
 - [ ] Code formatted with Black
 - [ ] No Ruff linting errors
 - [ ] Documentation for each new class
 - [ ] Example files for each door type
 
 ### User Experience
-- [ ] Properties grouped logically
+- [x] Properties grouped logically (via VarSet in assemblies)
 - [ ] Tooltips explain each parameter
-- [ ] Models update in real-time
-- [ ] Reasonable default values
+- [x] Models update in real-time
+- [x] Reasonable default values
 - [ ] Validation prevents invalid configurations
 
 ---

@@ -8,10 +8,13 @@ Provides a Clamp Part::FeaturePython object and a shared
 createClampShape() function used by FixedPanel, etc.
 
 Supported clamp shapes:
-    U_Clamp     — U-bracket on base plate (default floor clamp)
-    L_Clamp     — L-bracket with pressure plate (default wall clamp)
-    180DEG_Clamp — Connects Glass to inline wall or floor at 180 deg angle
-    135DEG_Clamp — Connects Glass to inline wall or floor at 135 deg angle
+    U_Clamp         — U-bracket on base plate (default floor clamp)
+    L_Clamp         — L-bracket with pressure plate (default wall clamp)
+    180DEG_Clamp    — Connects Glass to inline wall or floor at 180 deg angle
+    90DEG_G2G_Clamp — Glass-to-glass corner clamp (90 deg)
+    180DEG_G2G_Clamp — Glass-to-glass inline clamp (180 deg)
+    135DEG_G2G_Clamp    — Connects Glass to glass at 135 deg angle
+    90DEG_Tee_Clamp — Glass-to-glass T-junction clamp (3 panels)
 """
 
 import FreeCAD as App
@@ -27,23 +30,18 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
 # ---------------------------------------------------------------------------
 
 def _buildGlassClamp(dims):
-    bs = dims["base_size"]                    # 45 mm (overall W and H)
-    bt = dims["base_thickness"]               # 4.5 mm
-    gg = dims["glass_gap"]                    # 10 mm
-    cd = dims["cutout_depth"]                 # 20 mm
-    cr = dims["cutout_radius"]                # 10 mm
-    cs = dims["chamfer_size"]                 # 3mm
+    bs = dims["base_size"]
+    bt = dims["base_thickness"]
+    gg = dims["glass_gap"]
+    cd = dims["cutout_depth"]
+    cr = dims["cutout_radius"]
+    cs = dims["chamfer_size"]
     #Make Slot
-    slot_center = Part.makeCylinder(
+    slot = Part.makeCylinder(
         cr, gg,
         App.Vector(0, 0, 0),
         App.Vector(0, 1, 0)
     )
-    slot_base = Part.makeBox(
-        cr * 2, gg, cd,
-        App.Vector(-gg, 0, -cd)
-    )
-    slot = slot_center.fuse(slot_base)
     #Make beveled front plate
     front_plate = Part.makeBox(
         bs, bt, bs,
@@ -67,12 +65,12 @@ def _buildGlassClamp(dims):
 
 def _buildUClamp(dims):
 
-    bs = dims["base_size"]                    # 45 mm (overall W and H)
-    bt = dims["base_thickness"]               # 4.5 mm
-    gg = dims["glass_gap"]                    # 10 mm
-    cd = dims["cutout_depth"]                 # 20 mm
-    cr = dims["cutout_radius"]                # 10 mm
-    cs = dims["chamfer_size"]                 # 3mm
+    bs = dims["base_size"]
+    bt = dims["base_thickness"]
+    gg = dims["glass_gap"]
+    cd = dims["cutout_depth"]
+    cr = dims["cutout_radius"]
+    cs = dims["chamfer_size"]
 
     glass_clamp = _buildGlassClamp(dims)
     #Make Slot
@@ -89,16 +87,16 @@ def _buildLClamp(dims):
     """
     Build an L-Clamp shape: U-Clamp + WallPlate
     """
-    bs = dims["base_size"]                    # 45 mm (overall W and H)
-    bt = dims["base_thickness"]               # 4.5 mm
-    gg = dims["glass_gap"]                    # 10 mm
-    cd = dims["cutout_depth"]                 # 20 mm
+    bs = dims["base_size"]
+    bt = dims["base_thickness"]
+    gg = dims["glass_gap"]
+    cd = dims["cutout_depth"]
 
     u_clamp = _buildUClamp(dims)
     # Wall plate
     wall_plate = Part.makeBox(
         bs, bs, bt,
-        App.Vector(-bs/2, gg, -cd))              # Plate at 90angle from bottom of back plate
+        App.Vector(-bs/2, gg, -cd))
 
     l_clamp = u_clamp.fuse(wall_plate)
     shape = l_clamp.removeSplitter()
@@ -108,10 +106,10 @@ def _build180degClamp(dims):
     """
     Build an 180deg_Clamp shape: U-Clamp + WallPlate
     """
-    bs = dims["base_size"]                    # 45 mm (overall W and H)
-    bt = dims["base_thickness"]               # 4.5 mm
-    gg = dims["glass_gap"]                    # 10 mm
-    cd = dims["cutout_depth"]                 # 20 mm
+    bs = dims["base_size"]
+    bt = dims["base_thickness"]
+    gg = dims["glass_gap"]
+    cd = dims["cutout_depth"]
 
     u_clamp = _buildUClamp(dims)
     # Wall plate
@@ -128,12 +126,12 @@ def _build135degClamp(dims):
     """
     Build an 135deg_Clamp shape: U-Clamp + WallPlate
     """
-    bs = dims["base_size"]                    # 45 mm (overall W and H)
-    bt = dims["base_thickness"]               # 4.5 mm
-    gg = dims["glass_gap"]                    # 10 mm
-    cd = dims["cutout_depth"]                 # 20 mm
+    bs = dims["base_size"]
+    bt = dims["base_thickness"]
+    gg = dims["glass_gap"]
+    cd = dims["cutout_depth"]
 
-    u_clamp = _buildUClamp(dims)
+    u_clamp = _buildGlassClamp(dims)
     # Wall plate
     wall_plate = Part.makeBox(
         bs, bs, bt,
@@ -144,6 +142,122 @@ def _build135degClamp(dims):
     l_clamp = u_clamp.fuse(wall_plate)
     shape = l_clamp.removeSplitter()
     return shape
+
+def _build90degG2GClamp(dims):
+    """
+    Build a 90° glass-to-glass clamp: two glass slots at right angles.
+
+    Uses two _buildGlassClamp instances fused at 90°. The front (beveled)
+    faces point outward on two perpendicular sides, forming a corner piece.
+    """
+    bt = dims["base_thickness"]
+    gg = dims["glass_gap"]
+    cd = dims["cutout_depth"]
+
+    clamp1 = _buildGlassClamp(dims)
+    clamp2 = _buildGlassClamp(dims)
+    clamp2.rotate(App.Vector(0, 0, -cd), App.Vector(0, 1, 0), 180)
+    clamp2.rotate(App.Vector(0, gg, -cd), App.Vector(1, 0, 0), 90)
+    shape = clamp1.fuse(clamp2)
+    return shape.removeSplitter()
+
+
+def _build180degG2GClamp(dims):
+    """
+    Build a 180° glass-to-glass clamp: two inline glass slots back to back.
+
+    The top slot opens upward and the bottom slot opens downward, connecting
+    two inline glass panels. Rotated around Y-axis to keep both front
+    (beveled) plates facing the same direction.
+    """
+    cd = dims["cutout_depth"]
+
+    top = _buildGlassClamp(dims)
+    bottom = _buildGlassClamp(dims)
+    bottom.rotate(App.Vector(0, 0, -cd), App.Vector(0, 1, 0), 180)
+
+    shape = top.fuse(bottom)
+    return shape.removeSplitter()
+
+
+def _build135degG2GClamp(dims):
+    """
+    Build an 135deg_Clamp shape: U-Clamp + WallPlate
+    """
+    bt = dims["base_thickness"]
+    gg = dims["glass_gap"]
+    cd = dims["cutout_depth"]
+
+    clamp1 = _buildGlassClamp(dims)
+    clamp2 = _buildGlassClamp(dims)
+    clamp2.rotate(App.Vector(0, 0, -cd), App.Vector(0, 1, 0), 180)
+    clamp2.rotate(App.Vector(0, gg, -cd), App.Vector(1, 0, 0), 45)
+    shape = clamp1.fuse(clamp2)
+    return shape.removeSplitter()
+
+def _build90degTeeClamp(dims):
+    """
+    Build a 90° glass-to-glass tee clamp: T-junction with 3 glass slots.
+
+    Two inline slots form the bar of the T (shifted ±bs/2 along X),
+    and one perpendicular slot forms the stem (rotated 90° around Z).
+    """
+    bs = dims["base_size"]
+    ip = dims["inline_plate"]
+    bt = dims["base_thickness"]
+    gg = dims["glass_gap"]
+    cd = dims["cutout_depth"]
+    cr = dims["cutout_radius"]
+    ci = dims["inline_cutout"]
+    cs = dims["chamfer_size"]
+
+    front_plate = Part.makeBox(
+        bs, bt, ip,
+        App.Vector(-bs/2, -bt, -ip/2)
+        )
+    front_edges = []
+    for edge in front_plate.Edges:
+            # We check the midpoint of the edge to see if it lies on the front plane
+            midpoint = edge.valueAt(edge.FirstParameter + (edge.LastParameter - edge.FirstParameter) / 2)
+            if midpoint.y == -bt:
+                front_edges.append(edge)
+    beveled_front_plate = front_plate.makeChamfer(cs, front_edges)
+    bottom_cutout = Part.makeCylinder(
+        cr, gg,
+        App.Vector(0, 0, -ci/2),
+        App.Vector(0, 1, 0)
+    )
+    top_cutout = Part.makeCylinder(
+        cr, gg,
+        App.Vector(0, 0, ci/2),
+        App.Vector(0, 1, 0)
+    )
+    front_plate = beveled_front_plate.fuse(bottom_cutout).fuse(top_cutout)
+    bottom_back_plate = Part.makeBox(
+        bs, bt, bs,
+        App.Vector(-bs/2, gg, -ip/2)
+        )
+    bottom_div_plate = Part.makeBox(
+        bs, bs, bt,
+        App.Vector(-bs/2, gg, -ip/2+bs-bt)
+        )
+    bottom_plate = bottom_back_plate.fuse(bottom_div_plate)
+    top_back_plate = Part.makeBox(
+        bs, bt, bs,
+        App.Vector(-bs/2, gg, ip/2 - bs)
+        )
+    top_div_plate = Part.makeBox(
+        bs, bs, bt,
+        App.Vector(-bs/2, gg, ip/2-bs)
+        )
+    top_plate = top_back_plate.fuse(top_div_plate)
+    div_cutout = Part.makeCylinder(
+        cr, ip-bs*2,
+        App.Vector(0, gg+cd, -ip/2+bs),
+        App.Vector(0, 0, 1)
+    )
+    t_clamp = front_plate.fuse(bottom_plate).fuse(top_plate).fuse(div_cutout)
+    return t_clamp.removeSplitter()
 
 def _buildPlaceholderBox(spec):
     """Build a simple box from the bounding_box spec (placeholder shape)."""
@@ -184,7 +298,10 @@ _SHAPE_BUILDERS = {
     "U_Clamp": _buildUClamp,
     "L_Clamp": _buildLClamp,
     "180DEG_Clamp": _build180degClamp,
-    "135DEG_Clamp": _build135degClamp,
+    "135DEG_G2G_Clamp": _build135degG2GClamp,
+    "90DEG_G2G_Clamp": _build90degG2GClamp,
+    "180DEG_G2G_Clamp": _build180degG2GClamp,
+    "90DEG_Tee_Clamp": _build90degTeeClamp,
 }
 
 

@@ -15,7 +15,8 @@
       "mcp__freecad__inspect_object",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(pdftotext:*)"
+      "Bash(pdftotext:*)",
+      "mcp__freecad__set_view_angle"
     ]
   }
 }

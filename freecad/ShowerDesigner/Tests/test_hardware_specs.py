@@ -24,10 +24,6 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HANDLE_PLACEMENT_DEFAULTS,
     SUPPORT_BAR_SPECS,
     SUPPORT_BAR_RULES,
-    SEAL_SPECS,
-    SEAL_COLOURS,
-    SEAL_MATERIALS,
-    CATALOGUE_SEAL_SPECS,
     CLAMP_SPECS,
     CLAMP_PLACEMENT_DEFAULTS,
     CHANNEL_SPECS,
@@ -42,11 +38,6 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     validateClampLoad,
     requiresSupportBar,
     validateHandlePlacement,
-    selectSeal,
-    getSealsByCategory,
-    getSealsByAngle,
-    getSealsByLocation,
-    lookupSealProductCode,
     CATALOGUE_HANDLE_FINISHES,
     CATALOGUE_HANDLE_SPECS,
     getHandleModelsForCategory,
@@ -57,6 +48,18 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     validateSliderSystem,
     lookupSliderProductCode,
     BEVEL_CLAMP_SPECS,
+)
+
+from freecad.ShowerDesigner.Data.SealSpecs import (
+    SEAL_SPECS,
+    SEAL_COLOURS,
+    SEAL_MATERIALS,
+    CATALOGUE_SEAL_SPECS,
+    selectSeal,
+    getSealsByCategory,
+    getSealsByAngle,
+    getSealsByLocation,
+    lookupSealProductCode,
 )
 
 
@@ -692,6 +695,40 @@ def test_slider_system_city_has_roller_variants():
     assert "roller_variants" in city
     assert "clip_in" in city["roller_variants"]
     assert "heavy_duty" in city["roller_variants"]
+
+
+def test_slider_system_city_roller_variants_required_keys():
+    city = SLIDER_SYSTEM_SPECS["city_slider"]
+    required_keys = {
+        "code", "glass_cutout_depth", "door_top_deduction",
+        "fixed_door_clearance", "max_weight_kg", "door_glass_thickness",
+    }
+    for variant_key, variant in city["roller_variants"].items():
+        for rk in required_keys:
+            assert rk in variant, f"city_slider variant '{variant_key}' missing '{rk}'"
+
+
+def test_slider_system_city_heavy_duty_weight():
+    city = SLIDER_SYSTEM_SPECS["city_slider"]
+    hd = city["roller_variants"]["heavy_duty"]
+    assert hd["max_weight_kg"] == 90
+
+
+def test_slider_system_city_clip_in_weight():
+    city = SLIDER_SYSTEM_SPECS["city_slider"]
+    clip = city["roller_variants"]["clip_in"]
+    assert clip["max_weight_kg"] == 45
+
+
+def test_slider_system_city_variant_glass_thickness():
+    city = SLIDER_SYSTEM_SPECS["city_slider"]
+    clip = city["roller_variants"]["clip_in"]
+    hd = city["roller_variants"]["heavy_duty"]
+    assert clip["door_glass_thickness"] == [6, 8]
+    assert hd["door_glass_thickness"] == [8, 10]
+    # Top-level is union of both
+    for t in clip["door_glass_thickness"] + hd["door_glass_thickness"]:
+        assert t in city["door_glass_thickness"]
 
 
 def test_slider_system_city_corner_capable():

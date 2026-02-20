@@ -21,6 +21,8 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     CLAMP_PLACEMENT_DEFAULTS,
     CHANNEL_SPECS,
     HARDWARE_FINISHES,
+    GLASS_DEDUCTIONS,
+    isGlassToGlassClamp,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
@@ -183,6 +185,58 @@ class FixedPanelAssembly(AssemblyController):
         vs.setEditorMode("Area", 1)
 
     # ------------------------------------------------------------------
+    # Glass deductions
+    # ------------------------------------------------------------------
+
+    def _calculateGlassDeductions(self, vs):
+        """Calculate per-edge glass deductions based on hardware configuration.
+
+        The glass is cut smaller than the nominal opening so it seats inside
+        clamps/channels.  The returned offsets position the glass inward from
+        the hardware edge so the clearance gap is visible.
+
+        Returns:
+            tuple: (glass_width, glass_height, x_offset, z_offset)
+        """
+        width = vs.Width.Value
+        height = vs.Height.Value
+
+        left_ded = 0.0
+        right_ded = 0.0
+        bottom_ded = 0.0
+
+        # --- Wall hardware (left / right edges → width) ---
+        if vs.WallHardware == "Channel":
+            ded = GLASS_DEDUCTIONS["channel"]
+            if vs.WallMountEdge in ("Left", "Both"):
+                left_ded = ded
+            if vs.WallMountEdge in ("Right", "Both"):
+                right_ded = ded
+        elif vs.WallHardware == "Clamp":
+            if isGlassToGlassClamp(vs.WallClampType):
+                ded = GLASS_DEDUCTIONS["g2g_clamp"]
+            else:
+                ded = GLASS_DEDUCTIONS["wall_clamp"]
+            if vs.WallMountEdge in ("Left", "Both"):
+                left_ded = ded
+            if vs.WallMountEdge in ("Right", "Both"):
+                right_ded = ded
+
+        # --- Floor hardware (bottom edge → height) ---
+        if vs.FloorHardware == "Channel":
+            bottom_ded = GLASS_DEDUCTIONS["channel"]
+        elif vs.FloorHardware == "Clamp":
+            if isGlassToGlassClamp(vs.FloorClampType):
+                bottom_ded = GLASS_DEDUCTIONS["g2g_clamp"]
+            else:
+                bottom_ded = GLASS_DEDUCTIONS["wall_clamp"]
+
+        glass_width = max(width - left_ded - right_ded, 1.0)
+        glass_height = max(height - bottom_ded, 1.0)
+
+        return glass_width, glass_height, left_ded, bottom_ded
+
+    # ------------------------------------------------------------------
     # execute — rebuild children when VarSet changes
     # ------------------------------------------------------------------
 
@@ -198,12 +252,16 @@ class FixedPanelAssembly(AssemblyController):
             App.Console.PrintError("Invalid panel dimensions\n")
             return
 
-        # --- Update Glass child ---
+        # --- Calculate glass deductions & update Glass child ---
+        glass_w, glass_h, x_off, z_off = self._calculateGlassDeductions(vs)
         glass = self._getChild(part_obj, "Glass")
         if glass:
-            glass.Width = width
-            glass.Height = height
+            glass.Width = glass_w
+            glass.Height = glass_h
             glass.Thickness = thickness
+            glass.Placement = App.Placement(
+                App.Vector(x_off, 0, z_off), App.Rotation()
+            )
             if hasattr(glass, "GlassType"):
                 glass.GlassType = vs.GlassType
 
@@ -279,12 +337,12 @@ class FixedPanelAssembly(AssemblyController):
                     if edge == "Left":
                         rot = App.Rotation(App.Vector(0, 1, 0), 90)
                         child.Placement = App.Placement(
-                            App.Vector(20, 0, z_pos), rot
+                            App.Vector(0, 0, z_pos), rot
                         )
                     else:  # Right
                         rot = App.Rotation(App.Vector(0, 1, 0), -90)
                         child.Placement = App.Placement(
-                            App.Vector(width - 20, 0, z_pos), rot
+                            App.Vector(width , 0, z_pos), rot
                         )
                 idx += 1
 
@@ -319,12 +377,12 @@ class FixedPanelAssembly(AssemblyController):
                 channel_depth = vs.ChannelDepth.Value
                 if edge == "Left":
                     child.Placement = App.Placement(
-                        App.Vector(-2, 13, 0),
+                        App.Vector(0, 13, 0),
                         App.Rotation(App.Vector(0,0,1), -90)
                     )
                 else:
                     child.Placement = App.Placement(
-                        App.Vector(width + 2, -2, 0),
+                        App.Vector(width, -2, 0),
                         App.Rotation(App.Vector(0,0,1), 90)
                     )
 
@@ -365,7 +423,7 @@ class FixedPanelAssembly(AssemblyController):
             if child:
                 child.ClampType = clamp_type
                 child.Placement = App.Placement(
-                    App.Vector(x_pos, 0, 20), App.Rotation()
+                    App.Vector(x_pos, 0, 0), App.Rotation()
                 )
 
     def _removeFloorClamps(self, part_obj):
@@ -389,7 +447,7 @@ class FixedPanelAssembly(AssemblyController):
             child.ChannelLocation = "floor"
             child.ChannelLength = width
             child.Placement = App.Placement(
-                App.Vector(0, -2, -2),
+                App.Vector(0, -2, 0),
                 App.Rotation(0, 90, 0)
             )
             child.Placement.Rotation = App.Rotation(App.Vector(1, 0, 0), 90) * child.Placement.Rotation

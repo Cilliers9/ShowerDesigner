@@ -425,6 +425,10 @@ class SliderTrackChild:
             "App::PropertyLength", "TubeSupportX", "Slider",
             "X position of tube support bracket (0 = none)"
         ).TubeSupportX = 0
+        obj.addProperty(
+            "App::PropertyString", "CityRollerVariant", "Slider",
+            "City slider roller variant key"
+        ).CityRollerVariant = "heavy_duty"
 
     def execute(self, obj):
         system_key = obj.SliderSystem
@@ -498,8 +502,12 @@ class SliderTrackChild:
             # City slider: U-channel profile from technical drawing
             track_w = dims["track_width"]   # 55mm
             track_h = dims["track_height"]  # 50mm
-            rail_h = 26   # upper rail section height (where wheels ride)
-            wall_h = track_h - rail_h  # 24mm lower glass channel walls
+            variant_key = getattr(obj, "CityRollerVariant", "heavy_duty")
+            variants = spec["roller_variants"]
+            variant = variants.get(variant_key, variants["heavy_duty"])
+            cutout_depth = variant["glass_cutout_depth"]
+            rail_h = track_h - cutout_depth  # upper rail section height
+            wall_h = cutout_depth  # lower glass channel walls
             wall_t = 5    # wall thickness
 
             # Upper rail body: full width solid block at top
@@ -576,7 +584,7 @@ class SliderRollerChild:
             # Duplo roller: wheel axis along Y, centered on origin
             obj.Shape = Part.makeCylinder(
                 radius, wheel_w,
-                App.Vector(0, -wheel_w / 2, 0), App.Vector(0, 1, 0)
+                App.Vector(0, 0, 0), App.Vector(0, 1, 0)
             )
             return
         elif system_key == "edge_slider":
@@ -584,7 +592,7 @@ class SliderRollerChild:
             wheel_w = 10
             obj.Shape = Part.makeCylinder(
                 radius, wheel_w,
-                App.Vector(0, -wheel_w / 2, 0), App.Vector(0, 1, 0)
+                App.Vector(0, 0, 0), App.Vector(0, 1, 0)
             )
             return
         else:
@@ -593,7 +601,7 @@ class SliderRollerChild:
             wheel_w = 10
             obj.Shape = Part.makeCylinder(
                 radius, wheel_w,
-                App.Vector(0, -wheel_w / 2, 0), App.Vector(0, 1, 0)
+                App.Vector(0, 0, 0), App.Vector(0, 1, 0)
             )
             return
 

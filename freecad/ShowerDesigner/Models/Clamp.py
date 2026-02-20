@@ -39,13 +39,13 @@ def _buildGlassClamp(dims):
     #Make Slot
     slot = Part.makeCylinder(
         cr, gg,
-        App.Vector(0, 0, 0),
+        App.Vector(0, 0, cd),
         App.Vector(0, 1, 0)
     )
     #Make beveled front plate
     front_plate = Part.makeBox(
         bs, bt, bs,
-        App.Vector(-bs/2, -bt, -cd)
+        App.Vector(-bs/2, -bt, 0)
     )
     front_edges = []
     for edge in front_plate.Edges:
@@ -58,7 +58,7 @@ def _buildGlassClamp(dims):
     #Make back plate
     back_plate = Part.makeBox(
         bs, bt, bs,
-        App.Vector(-bs/2, gg, -cd)
+        App.Vector(-bs/2, gg, 0)
     )
     clamp = front_slot.fuse(back_plate)
     return clamp
@@ -76,7 +76,7 @@ def _buildUClamp(dims):
     #Make Slot
     slot_base = Part.makeBox(
         cr * 2, gg, cd,
-        App.Vector(-gg, 0, -cd)
+        App.Vector(-gg, 0, 0)
     )
     clamp = glass_clamp.fuse(slot_base)
     shape = clamp.removeSplitter()
@@ -96,7 +96,7 @@ def _buildLClamp(dims):
     # Wall plate
     wall_plate = Part.makeBox(
         bs, bs, bt,
-        App.Vector(-bs/2, gg, -cd))
+        App.Vector(-bs/2, gg, 0))
 
     l_clamp = u_clamp.fuse(wall_plate)
     shape = l_clamp.removeSplitter()
@@ -115,7 +115,7 @@ def _build180degClamp(dims):
     # Wall plate
     wall_plate = Part.makeBox(
         bs, bt, bs,
-        App.Vector(-bs/2, gg, -cd-bs)
+        App.Vector(-bs/2, gg, -bs)
     )                                                   # Extend back plate down by base size
 
     l_clamp = u_clamp.fuse(wall_plate)
@@ -138,7 +138,7 @@ def _build135degClamp(dims):
         App.Vector(0, 0, 0))            # Extend back plate down by base size
     rotation = App.Rotation(App.Vector(1, 0, 0), -45)
     wall_plate.Placement.Rotation = rotation
-    wall_plate.translate(App.Vector(-bs/2, gg, -cd))
+    wall_plate.translate(App.Vector(-bs/2, gg, 0))
     l_clamp = u_clamp.fuse(wall_plate)
     shape = l_clamp.removeSplitter()
     return shape
@@ -156,8 +156,8 @@ def _build90degG2GClamp(dims):
 
     clamp1 = _buildGlassClamp(dims)
     clamp2 = _buildGlassClamp(dims)
-    clamp2.rotate(App.Vector(0, 0, -cd), App.Vector(0, 1, 0), 180)
-    clamp2.rotate(App.Vector(0, gg, -cd), App.Vector(1, 0, 0), 90)
+    clamp2.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), 180)
+    clamp2.rotate(App.Vector(0, gg, 0), App.Vector(1, 0, 0), 90)
     shape = clamp1.fuse(clamp2)
     return shape.removeSplitter()
 
@@ -174,7 +174,7 @@ def _build180degG2GClamp(dims):
 
     top = _buildGlassClamp(dims)
     bottom = _buildGlassClamp(dims)
-    bottom.rotate(App.Vector(0, 0, -cd), App.Vector(0, 1, 0), 180)
+    bottom.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), 180)
 
     shape = top.fuse(bottom)
     return shape.removeSplitter()
@@ -190,8 +190,8 @@ def _build135degG2GClamp(dims):
 
     clamp1 = _buildGlassClamp(dims)
     clamp2 = _buildGlassClamp(dims)
-    clamp2.rotate(App.Vector(0, 0, -cd), App.Vector(0, 1, 0), 180)
-    clamp2.rotate(App.Vector(0, gg, -cd), App.Vector(1, 0, 0), 45)
+    clamp2.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), 180)
+    clamp2.rotate(App.Vector(0, gg, 0), App.Vector(1, 0, 0), 45)
     shape = clamp1.fuse(clamp2)
     return shape.removeSplitter()
 

@@ -118,6 +118,14 @@ class SlidingDoorAssembly(AssemblyController):
         vs.SliderSystem = list(SLIDER_SYSTEM_SPECS.keys())
         vs.SliderSystem = "edge_slider"
 
+        # City roller variant (only relevant when SliderSystem == city_slider)
+        vs.addProperty(
+            "App::PropertyEnumeration", "CityRollerVariant", "Slider Configuration",
+            "City slider roller variant (clip-in or heavy-duty)"
+        )
+        vs.CityRollerVariant = ["clip_in", "heavy_duty"]
+        vs.CityRollerVariant = "heavy_duty"
+
         # Handle hardware
         vs.addProperty(
             "App::PropertyEnumeration", "HandleType", "Handle Hardware",
@@ -310,6 +318,17 @@ class SlidingDoorAssembly(AssemblyController):
         )
 
     # ------------------------------------------------------------------
+    # City roller variant helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _getCityRollerVariant(vs):
+        """Return the roller_variants dict entry for the active CityRollerVariant."""
+        variant_key = getattr(vs, "CityRollerVariant", "heavy_duty")
+        variants = SLIDER_SYSTEM_SPECS["city_slider"]["roller_variants"]
+        return variants.get(variant_key, variants["heavy_duty"])
+
+    # ------------------------------------------------------------------
     # Slider track
     # ------------------------------------------------------------------
 
@@ -327,6 +346,10 @@ class SlidingDoorAssembly(AssemblyController):
         track_length = _calculateTrackLength(vs)
         child.SliderSystem = system_key
         child.TrackLength = track_length
+        if vs.SlideDirection == "Right":
+            track_x = 0
+        else:
+            track_x = -track_length/2
 
         # Tube support bracket at fixed panel junction
         if hasattr(child, "TubeSupportX"):
@@ -344,10 +367,13 @@ class SlidingDoorAssembly(AssemblyController):
             track_y = -dims["fixed_panel_to_door_clearance"]
             track_z = -dims["door_fixed_height_diff"] + dims["lower_tube_to_fixed_panel"]
         elif system_key == "city_slider":
+            variant = self._getCityRollerVariant(vs)
             track_w = dims["track_width"]
             track_h = dims["track_height"]
-            track_y = -track_w/2 - dims["fixed_door_clearance_hd"]/2
-            track_z = dims["door_top_deduction_hd"] - track_h
+            track_y = -track_w/2 - variant["fixed_door_clearance"]/2
+            track_z = variant["door_top_deduction"] - track_h
+            if hasattr(child, "CityRollerVariant"):
+                child.CityRollerVariant = getattr(vs, "CityRollerVariant", "heavy_duty")
         else: #edge slider
             track_w = dims["track_width"]
             track_h = dims["track_height"]
@@ -355,7 +381,7 @@ class SlidingDoorAssembly(AssemblyController):
             track_z = -dims["track_center_from_top"] - track_h/2
 
         child.Placement = App.Placement(
-            App.Vector(0, track_y, height + track_z), App.Rotation()
+            App.Vector(track_x, track_y, height + track_z), App.Rotation()
         )
 
     # ------------------------------------------------------------------
@@ -420,31 +446,30 @@ class SlidingDoorAssembly(AssemblyController):
                 else:  # city_slider
                     from_side = dims["door_runner_hole_from_sides"]
                     x_positions = [from_side, width - from_side]
-                if system_key in ("edge_slider", "city_slider"):
-                    track_w = dims["track_width"]
-                    y_offset = thickness / 2
-                else:
-                    y_offset = thickness / 2
             else:
                 overlap = vs.OverlapWidth.Value
                 base_x = width - overlap
                 x_positions = [base_x + 20, base_x + width - 20]
-                y_offset = thickness / 2 + thickness + 5
+                y_pos = thickness / 2 + thickness + 5
 
             if system_key == "duplo":
                 z_pos = (height - dims["door_fixed_height_diff"] + dims["lower_tube_to_fixed_panel"]
                          + dims["tube_spacing_ctc"] / 2)
+                y_pos = -dims["fixed_panel_to_door_clearance"] - dims["tube_diameter"]/2
             elif system_key == "edge_slider":
                 z_pos = height - dims["wheel_center_from_top"]
-            else:
-                z_pos = height - dims.get("wheel_center_from_top", 60)
+                y_pos = -dims["fixed_panel_door_clearance"]/2 - dims["track_width"]/2
+            else: #City Slider
+                variant = self._getCityRollerVariant(vs)
+                z_pos = height - dims["wheel_center_from_top"]
+                y_pos = -variant["fixed_door_clearance"]/2
 
             for x_pos in x_positions:
                 child = self._getChild(part_obj, f"SliderRoller{idx}")
                 if child:
                     child.SliderSystem = system_key
                     child.Placement = App.Placement(
-                        App.Vector(x_pos, y_offset, z_pos), App.Rotation()
+                        App.Vector(x_pos, y_pos, z_pos), App.Rotation()
                     )
                 idx += 1
 

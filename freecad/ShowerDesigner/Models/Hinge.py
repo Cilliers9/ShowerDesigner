@@ -118,6 +118,8 @@ def _buildWallToGlass(dims, glass_t, sub_type):
         App.Vector(0, -plate_t, -45/2)
     )
     glass_clamp_cut = glass_clamp.cut(hinge_cut)
+
+
     wall_plate = Part.makeBox(
         plate_t, wall_pw, body_h,
         App.Vector(-wg_offset, -wall_pw/2 + glass_t/2, -body_h/2)
@@ -181,32 +183,41 @@ def _buildPivotHinge(dims, glass_t, sub_type):
 
     Origin: bottom-center of knuckle barrel.
     """
-    body_h = dims["body_height"]
-    knuckle_d = dims["knuckle_diameter"]
-    knuckle_w = dims["knuckle_width"]
-    glass_ph = dims.get("glass_plate_height", 55)
-    cutout_depth = dims.get("glass_cutout_depth", 41)
-    plate_t = 5
 
-    # Glass clamp (extends in +Y)
-    clamp_depth = plate_t + cutout_depth
-    clamp = _makeGlassClamp(dims, glass_t)
-    clamp.translate(App.Vector(-glass_ph / 2, 0, 0))
+    bw =dims["body_height"]
 
-    # Pivot body (extends in -Y)
-    pivot_depth = dims.get("pivot_plate_depth", 20)
-    pivot_h = dims.get("pivot_plate_height", body_h)
-    pivot = Part.makeBox(glass_ph, pivot_depth, pivot_h)
-    pivot.translate(App.Vector(-glass_ph / 2, -pivot_depth, 0))
 
-    # Knuckle
-    knuckle = Part.makeCylinder(
-        knuckle_d / 2, knuckle_w,
-        App.Vector(0, 0, (body_h - knuckle_w) / 2),
-        App.Vector(0, 0, 1)
-    )
+    glass_clamp = _makeGlassClamp(dims, glass_t)
+    rotation = App.Rotation(App.Vector(0, 1, 0), -90) # Rotate glass clamp to be horizontal
+    glass_clamp.Placement.Rotation = rotation
+    if sub_type == "Bevel 360° Glass to Wall Pivot Hinge":
+        fo = dims["floor_offset"]
+        ppd = dims["pivot_plate_depth"]
+        pph= dims["pivot_plate_height"]
+        pivot = Part.makeCylinder(
+            5, fo,
+            App.Vector(0, glass_t/2, -fo),
+            App.Vector(0, 0, 1)
+        )
+        pivot_plate = Part.makeBox(
+            bw, ppd, pph,
+            App.Vector(-bw/2, glass_t/2 - ppd/2, -fo)
+        )
+        return glass_clamp.fuse(pivot).fuse(pivot_plate)
+    else:
+        go = dims["glass_to_glass_offset"]
+        pivot = Part.makeCylinder(
+            5, go,
+            App.Vector(0, glass_t/2, -go),
+            App.Vector(0, 0, 1)
+        )
+        glass_clamp2 = _makeGlassClamp(dims, glass_t)
+        rotation = App.Rotation(App.Vector(0, 1, 0), 90)
+        glass_clamp2.Placement.Base = App.Vector(0, 0, -go)
+        glass_clamp2.Placement.Rotation = rotation
+        return glass_clamp.fuse(pivot).fuse(glass_clamp2)
 
-    return clamp.fuse(pivot).fuse(knuckle)
+    return glass_clamp
 
 
 def _buildTeeHinge(dims, glass_t, sub_type):

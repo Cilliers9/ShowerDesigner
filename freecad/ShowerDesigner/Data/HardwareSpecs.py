@@ -5,7 +5,8 @@
 Hardware specifications database for shower enclosures.
 
 This module contains standardized specifications for all hardware types:
-hinges, handles, clamps, channels, tracks, rollers, support bars, and seals.
+hinges, handles, clamps, channels, tracks, rollers, and support bars.
+Seal specs live in SealSpecs.py (re-exported here for backward compatibility).
 
 Pure Python — no FreeCAD imports. Models import from here, never the reverse.
 """
@@ -312,7 +313,7 @@ BEVEL_HINGE_SPECS = {
             "knuckle_depth": 37,
             "knuckle_width": 58,
             "knuckle_diameter": 16,
-            "glass_to_glass_offset": 4,  # for 8mm glass
+            "glass_to_glass_offset": 5,  # for 8mm glass
         },
         "product_codes": [
             {"code": "SDH-202-180", "material": "S/S 304", "finish": "Bright Polished",
@@ -346,15 +347,14 @@ BEVEL_HINGE_SPECS = {
         "angle": 360,
         "max_opening_angle": 360,
         "dimensions": {
-            "body_height": 70,
-            "body_width": 90,
+            "body_height": 90,
+            "body_width": 70,
             "knuckle_width": 58,
             "knuckle_depth": 37,
             "knuckle_diameter": 16,
-            "glass_plate_height": 55,
+            "glass_plate_width": 55,
             "glass_cutout_width": 63,
             "glass_cutout_depth": 41,
-            "glass_slot_depth": 16,
             "floor_offset": 15,
             "pivot_plate_depth": 20,
             "pivot_plate_height": 9,
@@ -378,15 +378,14 @@ BEVEL_HINGE_SPECS = {
         "angle": 360,
         "max_opening_angle": 360,
         "dimensions": {
-            "body_height": 116,
-            "body_width": 90,
+            "body_height": 90,
+            "body_width": 116,
             "knuckle_width": 58,
             "knuckle_depth": 37,
             "knuckle_diameter": 16,
-            "glass_plate_height": 55,
+            "glass_plate_width": 55,
             "glass_cutout_width": 63,
             "glass_cutout_depth": 41,
-            "glass_slot_depth": 16,
             "glass_to_glass_offset": 9,
         },
         "product_codes": [
@@ -543,11 +542,11 @@ HINGE_PLACEMENT_DEFAULTS = {
 # ---------------------------------------------------------------------------
 DOOR_MOUNTING_VARIANTS = {
     "Wall Mounted": {
-        "legacy_types": ["standard_wall_mount", "heavy_duty_wall_mount"],
+        "legacy_types": [],
         "bevel_mounting_types": ["Wall-to-Glass"],
     },
     "Glass Mounted": {
-        "legacy_types": ["standard_glass_to_glass"],
+        "legacy_types": [],
         "bevel_mounting_types": ["Glass-to-Glass", "Glass-to-Glass-Tee"],
     },
     "Pivot": {
@@ -568,20 +567,15 @@ def getHingeModelsForVariant(variant):
         list[str]: ["Legacy", ...bevel keys...] or just bevel keys
     """
     info = DOOR_MOUNTING_VARIANTS.get(variant)
-    if info is None:
-        return ["Legacy"]
 
     models = []
-    # Add "Legacy" entry if there are compatible legacy hinge types
-    if info["legacy_types"]:
-        models.append("Legacy")
 
     # Add matching Bevel hinge keys
     for key, spec in BEVEL_HINGE_SPECS.items():
         if spec["mounting_type"] in info["bevel_mounting_types"]:
             models.append(key)
 
-    return models if models else ["Legacy"]
+    return models
 
 # ---------------------------------------------------------------------------
 # Handle specifications
@@ -1024,442 +1018,19 @@ SUPPORT_BAR_RULES = {
 }
 
 # ---------------------------------------------------------------------------
-# Seal specifications
+# Seal specifications — re-exported from SealSpecs for backward compatibility
 # ---------------------------------------------------------------------------
-
-# Available seal colours
-SEAL_COLOURS = ["Clear", "Black", "White", "Brown"]
-
-# Material codes:  PVC = flexible, PC = polycarbonate (rigid)
-SEAL_MATERIALS = ["PVC", "PC"]
-
-SEAL_SPECS = {
-    "door_sweep": {
-        "thickness": 6,   # mm
-        "location": "bottom",
-        "description": "Bottom door sweep for water containment",
-    },
-    "vertical_seal": {
-        "thickness": 8,   # mm
-        "location": "side",
-        "description": "Vertical edge seal between panels",
-    },
-    "magnetic_seal": {
-        "thickness": 10,  # mm
-        "location": "side",
-        "description": "Magnetic closure seal for door edges",
-    },
-}
-
-# ---------------------------------------------------------------------------
-# Catalogue seal specs — from Showers-Ex-Sliding catalogue pp. 35-42
-# ---------------------------------------------------------------------------
-CATALOGUE_SEAL_SPECS = {
-    # ------------------------------------------------------------------
-    # Soft Lip Seals
-    # ------------------------------------------------------------------
-    "centre_lip": {
-        "name": "Centre Lip Seal",
-        "category": "soft_lip",
-        "angle": 0,
-        "location": "side",
-        "dimensions": {
-            "soft_lip_length": 12,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-001-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-001-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-            {"code": "TUV-001-12", "glass_thickness": "10-12", "colour": "Clear",
-             "length": 3000},
-        ],
-    },
-    "180_soft_lip": {
-        "name": "180\u00b0 Soft Lip Seal",
-        "category": "soft_lip",
-        "angle": 180,
-        "location": "side",
-        "dimensions": {
-            "soft_lip_length": 16,  # 20mm for 10-12mm glass
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-003-6", "glass_thickness": "4-6", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-003-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-003-8", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500},
-            {"code": "TSS-003-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-003-10", "glass_thickness": "8-10", "colour": "Black",
-             "length": 2500},
-            {"code": "TUV-003-12", "glass_thickness": "10-12", "colour": "Clear",
-             "length": 3000},
-            {"code": "BUV-003-12", "glass_thickness": "10-12", "colour": "Black",
-             "length": 3000},
-        ],
-    },
-    "180_long_lip": {
-        "name": "180\u00b0 Long Lip Seal",
-        "category": "soft_lip",
-        "angle": 180,
-        "location": "side",
-        "dimensions": {
-            "soft_lip_length": 22,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-003-8-22", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-003-8-22", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500},
-            {"code": "TSS-003-10-22", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-003-10-22", "glass_thickness": "8-10", "colour": "Black",
-             "length": 2500},
-        ],
-    },
-    "90_soft_lip": {
-        "name": "90\u00b0 Soft Lip Seal",
-        "category": "soft_lip",
-        "angle": 90,
-        "location": "side",
-        "dimensions": {
-            "soft_lip_length": 8,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-007-6", "glass_thickness": "4-6", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-007-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-007-8", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500},
-            {"code": "TSS-007-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-007-10", "glass_thickness": "8-10", "colour": "Black",
-             "length": 2500},
-            {"code": "TUV-007-12", "glass_thickness": "10-12", "colour": "Clear",
-             "length": 3000},
-        ],
-    },
-    "135_soft_lip": {
-        "name": "135\u00b0 Soft Lip Seal",
-        "category": "soft_lip",
-        "angle": 135,
-        "location": "side",
-        "dimensions": {
-            "soft_lip_length": 16,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-005-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-005-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-        ],
-    },
-    # ------------------------------------------------------------------
-    # Bubble Seals
-    # ------------------------------------------------------------------
-    "bubble_seal": {
-        "name": "Bubble Seal",
-        "category": "bubble",
-        "angle": 0,
-        "location": "side",
-        "dimensions": {
-            "bubble_length": 8,  # standard; 12mm and 24mm variants exist
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-004-6", "glass_thickness": "4-6", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-004-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-004-8", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500},
-            {"code": "TSS-004-8-12", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-004-8-24", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-004-8-24", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500},
-            {"code": "TSS-004-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-            {"code": "BSS-004-10", "glass_thickness": "8-10", "colour": "Black",
-             "length": 2500},
-        ],
-    },
-    # ------------------------------------------------------------------
-    # Bottom Seals
-    # ------------------------------------------------------------------
-    "wipe_seal_bubble": {
-        "name": "Wipe Seal with Bubble",
-        "category": "bottom",
-        "angle": 0,
-        "location": "bottom",
-        "dimensions": {
-            "soft_lip_length": 11,
-            "bubble_length": 8,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-009-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-        ],
-    },
-    "drip_wipe_seal": {
-        "name": "Drip & Wipe Seal",
-        "category": "bottom",
-        "angle": 0,
-        "location": "bottom",
-        "dimensions": {
-            "hard_lip_length": 8,
-            "soft_lip_length": 10,
-        },
-        "material": "PVC",  # PVC standard; PC variants exist
-        "product_codes": [
-            {"code": "TSS-009B1-6", "glass_thickness": "6", "colour": "Clear",
-             "length": 2500, "material": "PVC"},
-            {"code": "TSS-009B1-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500, "material": "PVC"},
-            {"code": "BSS-009B1-8", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500, "material": "PVC"},
-            {"code": "TSS-009B1-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500, "material": "PVC"},
-            {"code": "BSS-009B1-10", "glass_thickness": "8-10", "colour": "Black",
-             "length": 2500, "material": "PVC"},
-            {"code": "TSS-009B1-12", "glass_thickness": "10-12", "colour": "Clear",
-             "length": 2500, "material": "PVC"},
-            {"code": "BSS-009B1-12", "glass_thickness": "10-12", "colour": "Black",
-             "length": 2500, "material": "PVC"},
-            {"code": "PSS-009B1-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500, "material": "PC"},
-            {"code": "PSS-009B1-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500, "material": "PC"},
-        ],
-    },
-    # ------------------------------------------------------------------
-    # Hard Lip Seals
-    # ------------------------------------------------------------------
-    "180_hard_lip": {
-        "name": "180\u00b0 Hard Lip Seal",
-        "category": "hard_lip",
-        "angle": 180,
-        "location": "side",
-        "dimensions": {
-            "hard_lip_length": 10,
-            "soft_lip_length": 5,
-        },
-        "material": "PVC",  # PVC standard; PC variants exist
-        "product_codes": [
-            {"code": "TSS-003A-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500, "material": "PVC"},
-            {"code": "BSS-003A-8", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500, "material": "PVC"},
-            {"code": "TSS-003A-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500, "material": "PVC"},
-            {"code": "BSS-003A-10", "glass_thickness": "8-10", "colour": "Black",
-             "length": 2500, "material": "PVC"},
-            {"code": "TUV-003A-12", "glass_thickness": "10-12", "colour": "Clear",
-             "length": 3000, "material": "PVC"},
-            {"code": "PSS-003A-8", "glass_thickness": "8", "colour": "Clear",
-             "length": 2500, "material": "PC"},
-            {"code": "PUV-003A-10", "glass_thickness": "10", "colour": "Clear",
-             "length": 3000, "material": "PC"},
-        ],
-    },
-    "135_hard_lip": {
-        "name": "135\u00b0 Hard Lip Seal",
-        "category": "hard_lip",
-        "angle": 135,
-        "location": "side",
-        "dimensions": {
-            "hard_lip_length": 10,
-            "soft_lip_length": 5,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-005A-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-005A-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-        ],
-    },
-    "90_extended_hard_lip": {
-        "name": "90\u00b0 Extended Hard Lip Seal",
-        "category": "hard_lip",
-        "angle": 90,
-        "location": "side",
-        "dimensions": {
-            "hard_lip_length": 10,
-            "soft_lip_length": 8,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-011A-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-011A-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-        ],
-    },
-    "90_hard_lip": {
-        "name": "90\u00b0 Hard Lip Seal",
-        "category": "hard_lip",
-        "angle": 90,
-        "location": "side",
-        "dimensions": {
-            "hard_lip_length": 10,
-            "soft_lip_length": 10,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-011C-8", "glass_thickness": "6-8", "colour": "Clear",
-             "length": 2500},
-            {"code": "TSS-011C-10", "glass_thickness": "8-10", "colour": "Clear",
-             "length": 2500},
-        ],
-    },
-    "90_hard_soft_lip": {
-        "name": "90\u00b0 Hard/Soft Lip Seal",
-        "category": "hard_lip",
-        "angle": 90,
-        "location": "side",
-        "dimensions": {
-            "hard_lip_length": 10,
-            "soft_lip_length": 14,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "BSS-004A-8", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500},
-            {"code": "TUV-04A-12", "glass_thickness": "10-12", "colour": "Clear",
-             "length": 3000},
-        ],
-    },
-    "double_hard_lip_h": {
-        "name": "Double Hard Lip Seal (H)",
-        "category": "hard_lip",
-        "angle": 180,
-        "location": "side",
-        "dimensions": {
-            "hard_lip_length": 8,
-        },
-        "material": "PC",
-        "product_codes": [
-            {"code": "TUV-010-8", "glass_thickness": "8", "colour": "Clear",
-             "length": 3000},
-            {"code": "TUV-010-10", "glass_thickness": "10", "colour": "Clear",
-             "length": 3000},
-            {"code": "TUV-010-12", "glass_thickness": "12", "colour": "Clear",
-             "length": 3000},
-        ],
-    },
-    # ------------------------------------------------------------------
-    # Magnetic Seals
-    # ------------------------------------------------------------------
-    "90_180_magnetic": {
-        "name": "90\u00b0/180\u00b0 Magnetic Seal",
-        "category": "magnetic",
-        "angle": 90,  # works at 90 and 180
-        "location": "door",
-        "dimensions": {
-            "magnet_lip_length": 12,
-            "inside_measurement": 10,   # based on 8mm glass
-            "outside_measurement": 18,  # based on 8mm glass
-        },
-        "material": "PVC",  # PVC standard; PC variants exist
-        "product_codes": [
-            {"code": "TSS-008A-8", "glass_thickness": "6-8", "colour": "White",
-             "length": 2500, "material": "PVC"},
-            {"code": "SM090-08B", "glass_thickness": "6-8", "colour": "Brown",
-             "length": 2500, "material": "PVC"},
-            {"code": "BSS-008A-8", "glass_thickness": "6-8", "colour": "Black",
-             "length": 2500, "material": "PVC"},
-            {"code": "TSS-008A-10", "glass_thickness": "8-10", "colour": "White",
-             "length": 2500, "material": "PVC"},
-            {"code": "SM090-10B", "glass_thickness": "8-10", "colour": "Brown",
-             "length": 2500, "material": "PVC"},
-            {"code": "BSS-008A-10", "glass_thickness": "8-10", "colour": "Black",
-             "length": 2500, "material": "PVC"},
-            {"code": "TUV-008A-12", "glass_thickness": "10-12", "colour": "White",
-             "length": 3000, "material": "PVC"},
-            {"code": "SM090-12B", "glass_thickness": "10-12", "colour": "Brown",
-             "length": 3000, "material": "PVC"},
-            {"code": "BUV-008A-12", "glass_thickness": "10-12", "colour": "Black",
-             "length": 3000, "material": "PVC"},
-            {"code": "PSS-008A-8", "glass_thickness": "8", "colour": "White",
-             "length": 2500, "material": "PC"},
-            {"code": "PUV-008A-10", "glass_thickness": "10", "colour": "White",
-             "length": 3000, "material": "PC"},
-        ],
-    },
-    "180_flat_magnetic": {
-        "name": "180\u00b0 Flat Magnetic Seal",
-        "category": "magnetic",
-        "angle": 180,
-        "location": "door",
-        "dimensions": {
-            "magnet_lip_length": 12,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-008B-8", "glass_thickness": "6-8", "colour": "White",
-             "length": 2500},
-            {"code": "SM180-08B", "glass_thickness": "6-8", "colour": "Brown",
-             "length": 2500},
-            {"code": "TSS-008B-10", "glass_thickness": "8-10", "colour": "White",
-             "length": 2500},
-            {"code": "SM180-10B", "glass_thickness": "8-10", "colour": "Brown",
-             "length": 2500},
-        ],
-    },
-    "135_magnetic": {
-        "name": "135\u00b0 Magnetic Seal",
-        "category": "magnetic",
-        "angle": 135,
-        "location": "door",
-        "dimensions": {
-            "magnet_lip_length": 12,
-        },
-        "material": "PVC",
-        "product_codes": [
-            {"code": "TSS-008C-8", "glass_thickness": "6-8", "colour": "White",
-             "length": 2500},
-            {"code": "SM135-08B", "glass_thickness": "6-8", "colour": "Brown",
-             "length": 2500},
-            {"code": "TSS-008C-10", "glass_thickness": "8-10", "colour": "White",
-             "length": 2500},
-            {"code": "SM135-10B", "glass_thickness": "8-10", "colour": "Brown",
-             "length": 2500},
-        ],
-    },
-    # ------------------------------------------------------------------
-    # Infill Seals
-    # ------------------------------------------------------------------
-    "180_g2g_infill": {
-        "name": "180\u00b0 Glass to Glass Infill Seal",
-        "category": "infill",
-        "angle": 180,
-        "location": "side",
-        "dimensions": {
-            "inside_measurement": 8,    # based on 8mm glass
-            "outside_measurement": 18,  # based on 8mm glass
-        },
-        "material": "PC",
-        "product_codes": [
-            {"code": "IS-180-6", "glass_thickness": "6", "colour": "Clear",
-             "length": 3000},
-            {"code": "IS-180-10", "glass_thickness": "10", "colour": "Clear",
-             "length": 3000},
-            {"code": "IS-180-12", "glass_thickness": "12", "colour": "Clear",
-             "length": 3000},
-        ],
-    },
-}
+from freecad.ShowerDesigner.Data.SealSpecs import (  # noqa: F401, E402
+    SEAL_COLOURS,
+    SEAL_MATERIALS,
+    SEAL_SPECS,
+    CATALOGUE_SEAL_SPECS,
+    selectSeal,
+    getSealsByCategory,
+    getSealsByAngle,
+    getSealsByLocation,
+    lookupSealProductCode,
+)
 
 # ---------------------------------------------------------------------------
 # Clamp specifications
@@ -1930,6 +1501,27 @@ CHANNEL_SPECS = {
 }
 
 # ---------------------------------------------------------------------------
+# Glass edge deductions by hardware type (mm per edge)
+# ---------------------------------------------------------------------------
+GLASS_DEDUCTIONS = {
+    "wall_clamp": 5,   # Wall-to-glass clamp
+    "g2g_clamp": 2,    # Glass-to-glass clamp
+    "channel": 6,       # Wall or floor channel
+    "sill_plate": 18,    # Door sill plate under door
+    "no_sill_plate": 8,  # No Door sill under door
+    "bevel_90_wall_to_glass_full": 10,
+    "bevel_90_wall_to_glass_half": 10,
+    "bevel_135_wall_to_glass": 17,
+    "bevel_90_glass_to_glass": 10,
+    "bevel_135_glass_to_glass_unequal": 11,
+    "bevel_135_glass_to_glass_equal": 11,
+    "bevel_180_glass_to_glass": 5,
+    "bevel_360_wall_pivot": 15,
+    "bevel_360_glass_pivot": 9,
+    "bevel_90_tee": 10,
+}
+
+# ---------------------------------------------------------------------------
 # Track profile specifications (moved from SlidingDoor.py)
 # ---------------------------------------------------------------------------
 TRACK_PROFILES = {
@@ -1980,6 +1572,8 @@ SLIDER_SYSTEM_SPECS = {
         "name": "Duplo Double Tube Slider System",
         "max_door_width": 750,
         "max_weight_kg": 27,
+        "fixed_door_clearance": 13,
+        "fixed_door_overlap": 50,
         "door_glass_thickness": [6],
         "fixed_glass_thickness": [6, 8],
         "dimensions": {
@@ -1990,7 +1584,7 @@ SLIDER_SYSTEM_SPECS = {
             "lower_tube_to_fixed_panel": 24,
             "fixed_panel_to_door_clearance": 13,
             "fixed_panel_floor_deduction": 5,
-            "door_panel_floor_clearance": 10,
+            "door_panel_floor_clearance": 12,
             "door_fixed_overlap": 50,
             "door_wheel_hole_diameter": 12,
             "door_wheel_hole_from_top": 42,
@@ -2025,6 +1619,8 @@ SLIDER_SYSTEM_SPECS = {
         "name": "Edge Slider System",
         "max_door_width": 850,
         "max_weight_kg": 45,
+        "fixed_door_clearance": 26,
+        "fixed_door_overlap": 50,
         "door_glass_thickness": [6, 8],
         "fixed_glass_thickness": [8, 10],
         "adjustable_height": True,
@@ -2074,7 +1670,9 @@ SLIDER_SYSTEM_SPECS = {
     "city_slider": {
         "name": "City Slider System",
         "max_door_width": 900,
-        "max_weight_kg": 45,
+        "max_weight_kg": 90,
+        "fixed_door_clearance": 16,
+        "fixed_door_overlap": 50,
         "door_glass_thickness": [6, 8, 10],
         "fixed_glass_thickness": [6, 8],
         "has_fixed_adapter": True,
@@ -2103,9 +1701,11 @@ SLIDER_SYSTEM_SPECS = {
         },
         "roller_variants": {
             "clip_in":    {"code": "CSL-RWH",    "glass_cutout_depth": 26,
-                           "door_top_deduction": 56, "fixed_door_clearance": 12},
+                           "door_top_deduction": 56, "fixed_door_clearance": 12,
+                           "max_weight_kg": 45, "door_glass_thickness": [6, 8]},
             "heavy_duty": {"code": "CSL-RWH-HD", "glass_cutout_depth": 24,
-                           "door_top_deduction": 54, "fixed_door_clearance": 16},
+                           "door_top_deduction": 54, "fixed_door_clearance": 16,
+                           "max_weight_kg": 90, "door_glass_thickness": [8, 10]},
         },
         "components": {
             "slider_track":  {"code": "CSLT-2000B", "qty_per_system": 1},
@@ -2202,6 +1802,15 @@ def validateHingeLoad(hinge_type, weight, count):
             f"({count}x {capacity} kg = {total_capacity} kg)"
         )
     return True, "Hinge load OK"
+
+
+def isGlassToGlassClamp(clamp_type):
+    """Return True if the clamp type is a glass-to-glass variant.
+
+    Glass-to-glass clamp keys contain 'G2G' or 'Tee' in their name.
+    Everything else (U_Clamp, L_Clamp, 180DEG_Clamp) is wall-to-glass.
+    """
+    return "G2G" in clamp_type or "Tee" in clamp_type
 
 
 def selectClamp(panel_weight, glass_thickness, mounting_type):
@@ -2423,91 +2032,6 @@ def lookupSliderProductCode(code):
         tuple: (system_key, product_code_dict) or (None, None)
     """
     for key, spec in SLIDER_SYSTEM_SPECS.items():
-        for pc in spec["product_codes"]:
-            if pc["code"] == code:
-                return key, pc
-    return None, None
-
-
-def selectSeal(location, glass_thickness, gap):
-    """
-    Select the appropriate seal type (legacy).
-
-    Args:
-        location: "bottom", "side", or "magnetic"
-        glass_thickness: Glass thickness in mm
-        gap: Gap size in mm
-
-    Returns:
-        str: Key into SEAL_SPECS
-    """
-    if location == "bottom":
-        return "door_sweep"
-    elif location == "magnetic":
-        return "magnetic_seal"
-    return "vertical_seal"
-
-
-def getSealsByCategory(category):
-    """
-    Return catalogue seal keys matching a category.
-
-    Args:
-        category: "soft_lip", "bubble", "bottom", "hard_lip", "magnetic",
-                  or "infill"
-
-    Returns:
-        list[str]: Matching keys from CATALOGUE_SEAL_SPECS
-    """
-    return [
-        key for key, spec in CATALOGUE_SEAL_SPECS.items()
-        if spec["category"] == category
-    ]
-
-
-def getSealsByAngle(angle):
-    """
-    Return catalogue seal keys matching an angle.
-
-    Args:
-        angle: Joint angle in degrees (0, 90, 135, 180)
-
-    Returns:
-        list[str]: Matching keys from CATALOGUE_SEAL_SPECS
-    """
-    return [
-        key for key, spec in CATALOGUE_SEAL_SPECS.items()
-        if spec["angle"] == angle
-    ]
-
-
-def getSealsByLocation(location):
-    """
-    Return catalogue seal keys matching a location.
-
-    Args:
-        location: "side", "bottom", or "door"
-
-    Returns:
-        list[str]: Matching keys from CATALOGUE_SEAL_SPECS
-    """
-    return [
-        key for key, spec in CATALOGUE_SEAL_SPECS.items()
-        if spec["location"] == location
-    ]
-
-
-def lookupSealProductCode(code):
-    """
-    Find the catalogue seal entry for a product code.
-
-    Args:
-        code: Product code string (e.g. "TSS-003-8", "PSS-008A-8")
-
-    Returns:
-        tuple: (seal_key, product_code_dict) or (None, None)
-    """
-    for key, spec in CATALOGUE_SEAL_SPECS.items():
         for pc in spec["product_codes"]:
             if pc["code"] == code:
                 return key, pc

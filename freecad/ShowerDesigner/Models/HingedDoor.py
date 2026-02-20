@@ -25,6 +25,7 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HARDWARE_FINISHES,
     DOOR_MOUNTING_VARIANTS,
     getHingeModelsForVariant,
+    GLASS_DEDUCTIONS,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 
@@ -112,6 +113,10 @@ class HingedDoorAssembly(AssemblyController):
         vs.HingeSide = ["Left", "Right"]
         vs.HingeSide = "Left"
         vs.addProperty(
+            "App::PropertyBool", "SillPlate", "Door Configuration",
+            "Add sill plate under door for better water retention"
+        ).SillPlate = True
+        vs.addProperty(
             "App::PropertyAngle", "OpeningAngle", "Door Configuration",
             "Maximum opening angle"
         ).OpeningAngle = 90
@@ -147,7 +152,7 @@ class HingedDoorAssembly(AssemblyController):
         vs.addProperty(
             "App::PropertyLength", "HandleHeight", "Handle Hardware",
             "Height of handle from floor"
-        ).HandleHeight = 1050
+        ).HandleHeight = 950
         vs.addProperty(
             "App::PropertyLength", "HandleOffset", "Handle Hardware",
             "Distance from handle to door edge"
@@ -226,12 +231,16 @@ class HingedDoorAssembly(AssemblyController):
         else:
             vs.setEditorMode("HingeCount", 0)  # Editable
 
-        # --- Update Glass child ---
+        # --- Calculate glass deductions & update Glass child ---
+        glass_w, glass_h, x_off, z_off = self._calculateGlassDeductions(vs)
         glass = self._getChild(part_obj, "Glass")
         if glass:
-            glass.Width = width
-            glass.Height = height
+            glass.Width = glass_w
+            glass.Height = glass_h
             glass.Thickness = thickness
+            glass.Placement = App.Placement(
+                App.Vector(x_off, 0, z_off), App.Rotation()
+            )
             if hasattr(glass, "GlassType"):
                 glass.GlassType = vs.GlassType
 
@@ -264,6 +273,50 @@ class HingedDoorAssembly(AssemblyController):
         # --- Calculated properties ---
         self._updateCalculatedProperties(vs)
 
+    # ------------------------------------------------------------------
+    # Glass deductions
+    # ------------------------------------------------------------------
+
+    def _calculateGlassDeductions(self, vs):
+        """Calculate per-edge glass deductions based on hardware configuration.
+
+        The glass is cut smaller than the nominal opening so it seats inside
+        hinge/under door seal.  The returned offsets position the glass inward from
+        the hardware edge so the clearance gap is visible.
+
+        Returns:
+            tuple: (glass_width, glass_height, x_offset, z_offset)
+        """
+        width = vs.Width.Value
+        height = vs.Height.Value
+        hinge_side = vs.HingeSide
+        hinge_model = vs.HingeModel
+
+        left_ded = 0.0
+        right_ded = 0.0
+        bottom_ded = 0.0
+        top_ded = 0
+
+        # --- Hinge hardware (left / right edges → width) ---
+        if hinge_model not in ("bevel_360_wall_pivot", "bevel_360_glass_pivot"):
+            if hinge_side == "Left":
+                left_ded = GLASS_DEDUCTIONS[hinge_model]
+            else:   #Right side
+                right_ded = GLASS_DEDUCTIONS[hinge_model]
+
+        # --- Floor hardware (bottom edge → height) ---
+        if hinge_model in ("bevel_360_wall_pivot", "bevel_360_glass_pivot"):
+            bottom_ded = GLASS_DEDUCTIONS[hinge_model]
+            top_ded = GLASS_DEDUCTIONS[hinge_model]
+        elif vs.SillPlate == True:
+            bottom_ded = GLASS_DEDUCTIONS["sill_plate"]
+        else:
+            bottom_ded = GLASS_DEDUCTIONS["no_sill_plate"]
+
+        glass_width = max(width - left_ded - right_ded, 1.0)
+        glass_height = max(height - bottom_ded - top_ded, 1.0)
+
+        return glass_width, glass_height, left_ded, bottom_ded
     # ------------------------------------------------------------------
     # Hinge management
     # ------------------------------------------------------------------
@@ -323,9 +376,9 @@ class HingedDoorAssembly(AssemblyController):
                     child.GlassThickness = thickness
 
                 if hinge_side == "Left":
-                    x_pos = 0
+                    x_pos = GLASS_DEDUCTIONS[hinge_model]
                 else:
-                    x_pos = width
+                    x_pos = width - GLASS_DEDUCTIONS[hinge_model]
 
                 y_pos = 0
                 z_offset = z_pos
@@ -402,11 +455,11 @@ class HingedDoorAssembly(AssemblyController):
                 # Glass-to-Glass bevel: origin at knuckle center,
                 # positioned at the hinge-side glass edge
                 if hinge_side == "Left":
-                    x_pos = 0
+                    x_pos = GLASS_DEDUCTIONS[hinge_model]
                     y_pos = thickness / 2
                     rot = App.Rotation()
                 else:
-                    x_pos = width
+                    x_pos = width - GLASS_DEDUCTIONS[hinge_model]
                     y_pos = thickness / 2
                     rot = App.Rotation(App.Vector(0, 0, 1), 180)
 
@@ -456,10 +509,11 @@ class HingedDoorAssembly(AssemblyController):
         floor_offset = bevel_dims.get("floor_offset", 15)
 
         # Pivot positions: bottom near floor, top near ceiling
-        positions = [floor_offset, height - floor_offset - body_h]
+        positions = [floor_offset, height - floor_offset]
 
         for i, z_pos in enumerate(positions):
             child = self._getChild(part_obj, f"Hinge{i + 1}")
+            y_pos = 0
             if child is None:
                 continue
 
@@ -468,13 +522,14 @@ class HingedDoorAssembly(AssemblyController):
                 child.GlassThickness = thickness
 
             if hinge_side == "Left":
-                x_pos = 0
-                y_pos = thickness / 2
-                rot = App.Rotation()
+                x_pos = 75
             else:
-                x_pos = width
-                y_pos = thickness / 2
-                rot = App.Rotation(App.Vector(0, 0, 1), 180)
+                x_pos = width - 75
+
+            if i == 1:
+                rot = App.Rotation(App.Vector(0, 1, 0), 180)
+            else:
+                rot = App.Rotation()
 
             child.Placement = App.Placement(
                 App.Vector(x_pos, y_pos, z_pos), rot

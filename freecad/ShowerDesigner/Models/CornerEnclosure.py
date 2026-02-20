@@ -2,7 +2,7 @@
 # SPDX-FileNotice: Part of the ShowerDesigner workbench.
 
 """
-Corner shower enclosure assembly — App::Part containing a fixed back panel
+Corner shower enclosure assembly — App::Part containing a fixed panel
 and a door (hinged or sliding) at 90 degrees.
 """
 
@@ -18,8 +18,8 @@ class CornerEnclosureAssembly(AssemblyController):
 
     Creates an App::Part containing:
       - VarSet with all user-editable properties
-      - BackPanel (nested App::Part — FixedPanel assembly)
-      - SidePanel (nested App::Part — FixedPanel or Door assembly)
+      - FixedPanel (nested App::Part — FixedPanel assembly)
+      - DoorPanel (nested App::Part — FixedPanel or Door assembly)
     """
 
     def __init__(self, part_obj):
@@ -32,11 +32,11 @@ class CornerEnclosureAssembly(AssemblyController):
         # Dimensions
         vs.addProperty(
             "App::PropertyLength", "Width", "Dimensions",
-            "Width of the enclosure (back panel)"
+            "Width of the enclosure"
         ).Width = 900
         vs.addProperty(
             "App::PropertyLength", "Depth", "Dimensions",
-            "Depth of the enclosure (side panel)"
+            "Depth of the enclosure"
         ).Depth = 900
         vs.addProperty(
             "App::PropertyLength", "Height", "Dimensions",
@@ -57,9 +57,9 @@ class CornerEnclosureAssembly(AssemblyController):
         # Door configuration
         vs.addProperty(
             "App::PropertyEnumeration", "DoorType", "Door Configuration",
-            "Type of door on the side panel"
+            "Type of door on the door panel"
         )
-        vs.DoorType = ["HingedDoor", "SlidingDoor", "FixedPanel"]
+        vs.DoorType = ["HingedDoor", "FixedPanel"]
         vs.DoorType = "HingedDoor"
         vs.addProperty(
             "App::PropertyEnumeration", "DoorSide", "Door Configuration",
@@ -80,35 +80,31 @@ class CornerEnclosureAssembly(AssemblyController):
         """Create the nested panel assemblies."""
         from freecad.ShowerDesigner.Models.FixedPanel import FixedPanelAssembly
 
-        # Back panel — always a fixed panel
+        # Fixed panel — always a fixed panel
         doc = part_obj.Document
-        back = doc.addObject("App::Part", "BackPanel")
-        FixedPanelAssembly(back)
-        part_obj.addObject(back)
-        self._manifest["BackPanel"] = back.Name
+        fixed = doc.addObject("App::Part", "FixedPanel")
+        FixedPanelAssembly(fixed)
+        part_obj.addObject(fixed)
+        self._manifest["FixedPanel"] = fixed.Name
 
-        # Side panel — created based on DoorType
-        self._createSidePanel(part_obj, vs)
+        # Door panel — created based on DoorType
+        self._createDoorPanel(part_obj, vs)
 
-    def _createSidePanel(self, part_obj, vs):
+    def _createDoorPanel(self, part_obj, vs):
         doc = part_obj.Document
         door_type = vs.DoorType
 
         if door_type == "HingedDoor":
             from freecad.ShowerDesigner.Models.HingedDoor import HingedDoorAssembly
-            side = doc.addObject("App::Part", "SidePanel")
-            HingedDoorAssembly(side)
-        elif door_type == "SlidingDoor":
-            from freecad.ShowerDesigner.Models.SlidingDoor import SlidingDoorAssembly
-            side = doc.addObject("App::Part", "SidePanel")
-            SlidingDoorAssembly(side)
+            door = doc.addObject("App::Part", "DoorPanel")
+            HingedDoorAssembly(door)
         else:
             from freecad.ShowerDesigner.Models.FixedPanel import FixedPanelAssembly
-            side = doc.addObject("App::Part", "SidePanel")
-            FixedPanelAssembly(side)
+            door = doc.addObject("App::Part", "DoorPanel")
+            FixedPanelAssembly(door)
 
-        part_obj.addObject(side)
-        self._manifest["SidePanel"] = side.Name
+        part_obj.addObject(door)
+        self._manifest["DoorPanel"] = door.Name
 
     # ------------------------------------------------------------------
     # execute
@@ -128,45 +124,57 @@ class CornerEnclosureAssembly(AssemblyController):
             App.Console.PrintError("Invalid enclosure dimensions\n")
             return
 
-        # --- Update back panel ---
-        back = self._getChild(part_obj, "BackPanel")
-        if back:
-            back_vs = self._getNestedVarSet(back)
-            if back_vs:
-                back_vs.Width = width
-                back_vs.Height = height
-                back_vs.Thickness = thickness
-                if hasattr(back_vs, "GlassType"):
-                    back_vs.GlassType = vs.GlassType
-                if hasattr(back_vs, "HardwareFinish"):
-                    back_vs.HardwareFinish = vs.HardwareFinish
-            # Position back panel along the back wall
-            back.Placement = App.Placement(
-                App.Vector(0, depth - thickness, 0), App.Rotation()
-            )
+        door_right = vs.DoorSide == "Right"
 
-        # --- Update side panel ---
-        side = self._getChild(part_obj, "SidePanel")
-        if side:
-            side_vs = self._getNestedVarSet(side)
-            if side_vs:
-                side_vs.Width = depth
-                side_vs.Height = height
-                side_vs.Thickness = thickness
-                if hasattr(side_vs, "GlassType"):
-                    side_vs.GlassType = vs.GlassType
-                if hasattr(side_vs, "HardwareFinish"):
-                    side_vs.HardwareFinish = vs.HardwareFinish
-            # Position side panel along the side wall (rotated 90 degrees)
-            if vs.DoorSide == "Right":
-                side.Placement = App.Placement(
-                    App.Vector(width, 0, 0),
+        # --- Update fixed panel ---
+        fixed = self._getChild(part_obj, "FixedPanel")
+        if fixed:
+            fixed_vs = self._getNestedVarSet(fixed)
+            if fixed_vs:
+                fixed_vs.Width = width if door_right else depth
+                fixed_vs.Height = height
+                fixed_vs.Thickness = thickness
+                if hasattr(fixed_vs, "GlassType"):
+                    fixed_vs.GlassType = vs.GlassType
+                if hasattr(fixed_vs, "HardwareFinish"):
+                    fixed_vs.HardwareFinish = vs.HardwareFinish
+            if door_right:
+                # Fixed panel on origin
+                fixed_vs.WallMountEdge = "Left"
+                fixed.Placement = App.Placement(
+                    App.Vector(0, 0, 0),
+                    App.Rotation(App.Vector(0, 0, 1), 0)
+                )
+            else:
+                # Fixed panel on the right
+                fixed_vs.WallMountEdge = "Right"
+                fixed.Placement = App.Placement(
+                    App.Vector(width, thickness, 0),
+                    App.Rotation(App.Vector(0, 0, 1), 90)
+                )
+        # --- Update door panel (door) ---
+        door = self._getChild(part_obj, "DoorPanel")
+        if door:
+            door_vs = self._getNestedVarSet(door)
+            if door_vs:
+                door_vs.Width = depth if door_right else width
+                door_vs.Height = height
+                door_vs.Thickness = thickness
+                if hasattr(door_vs, "GlassType"):
+                    door_vs.GlassType = vs.GlassType
+                if hasattr(door_vs, "HardwareFinish"):
+                    door_vs.HardwareFinish = vs.HardwareFinish
+            if door_right:
+                # Door on right
+                door.Placement = App.Placement(
+                    App.Vector(width, thickness, 0),
                     App.Rotation(App.Vector(0, 0, 1), 90)
                 )
             else:
-                side.Placement = App.Placement(
+                # Door at origin
+                door.Placement = App.Placement(
                     App.Vector(0, 0, 0),
-                    App.Rotation(App.Vector(0, 0, 1), -90)
+                    App.Rotation(App.Vector(0, 0, 1), 0)
                 )
 
     def _getNestedVarSet(self, part_obj):

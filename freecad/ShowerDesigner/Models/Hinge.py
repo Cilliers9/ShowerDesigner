@@ -91,7 +91,7 @@ def _makeGlassClamp(dims, glass_t):
     beveled_plate.Placement.Rotation = rotation
     beveled_plate.translate(App.Vector(0, glass_t, 0))
     glass_clamp = front_cutout.fuse(beveled_plate)
-    return glass_clamp
+    return glass_clamp.removeSplitter()
 
 
 def _buildWallToGlass(dims, glass_t, sub_type):
@@ -130,7 +130,7 @@ def _buildWallToGlass(dims, glass_t, sub_type):
         wg_offset + 27, glass_t, 45,
         App.Vector(-wg_offset, 0, -45/2)
     )
-    return glass_clamp_cut.fuse(hinge_plate).fuse(wall_plate)
+    return glass_clamp_cut.fuse(hinge_plate).fuse(wall_plate).removeSplitter()
 
 
 def _buildGlassToGlass(dims, glass_t, sub_type):
@@ -174,7 +174,7 @@ def _buildGlassToGlass(dims, glass_t, sub_type):
         App.Vector(0, 0, 1)
     )
 
-    return clamp_pos.fuse(clamp_neg).fuse(knuckle)
+    return clamp_pos.fuse(clamp_neg).fuse(knuckle).removeSplitter()
 
 
 def _buildPivotHinge(dims, glass_t, sub_type):
@@ -203,7 +203,7 @@ def _buildPivotHinge(dims, glass_t, sub_type):
             bw, ppd, pph,
             App.Vector(-bw/2, glass_t/2 - ppd/2, -fo)
         )
-        return glass_clamp.fuse(pivot).fuse(pivot_plate)
+        return glass_clamp.fuse(pivot).fuse(pivot_plate).removeSplitter()
     else:
         go = dims["glass_to_glass_offset"]
         pivot = Part.makeCylinder(
@@ -215,7 +215,7 @@ def _buildPivotHinge(dims, glass_t, sub_type):
         rotation = App.Rotation(App.Vector(0, 1, 0), 90)
         glass_clamp2.Placement.Base = App.Vector(0, 0, -go)
         glass_clamp2.Placement.Rotation = rotation
-        return glass_clamp.fuse(pivot).fuse(glass_clamp2)
+        return glass_clamp.fuse(pivot).fuse(glass_clamp2).removeSplitter()
 
     return glass_clamp
 
@@ -277,7 +277,7 @@ def _buildTeeHinge(dims, glass_t, sub_type):
     )
 
     shape = clamp_pos.fuse(clamp_neg).fuse(arm).fuse(knuckle)
-    return shape.cut(hole_cyl)
+    return shape.cut(hole_cyl).removeSplitter()
 
 
 # Dispatch table: mounting_type → builder function
@@ -341,7 +341,7 @@ def createMonzaWallHingeShape(glass_thickness=8):
             App.Vector(0, 0, 1)
         )
 
-        return glass_clamp.fuse(bridge).fuse(wall_plate).fuse(knuckle)
+        return glass_clamp.fuse(bridge).fuse(wall_plate).fuse(knuckle).removeSplitter()
     except Exception as e:
         App.Console.PrintError(
             f"Monza wall hinge CSG failed: {e} — using fallback box\n"
@@ -395,7 +395,7 @@ def createMonzaFoldHingeShape(glass_thickness=8):
             App.Vector(0, 0, 1)
         )
 
-        return clamp_pos.fuse(clamp_neg).fuse(knuckle)
+        return clamp_pos.fuse(clamp_neg).fuse(knuckle).removeSplitter()
     except Exception as e:
         App.Console.PrintError(
             f"Monza fold hinge CSG failed: {e} — using fallback box\n"

@@ -497,7 +497,7 @@ class SliderTrackChild:
                     )
                 )
                 shape = shape.fuse(plate).fuse(tab)
-            obj.Shape = shape
+            obj.Shape = shape.removeSplitter()
         elif system_key == "city_slider":
             # City slider: U-channel profile from technical drawing
             track_w = dims["track_width"]   # 55mm
@@ -522,7 +522,7 @@ class SliderTrackChild:
                 App.Vector(0, track_w - wall_t, 0)
             )
             shape = upper.fuse(left_wall).fuse(right_wall)
-            obj.Shape = shape
+            obj.Shape = shape.removeSplitter()
         else:
             # Edge slider: simple rectangular track profile
             track_w = dims["track_width"]
@@ -542,7 +542,7 @@ class SliderTrackChild:
                 App.Vector(length, -2.5, -2.5)
             )
             shape = shape.fuse(f1).fuse(f2)
-            obj.Shape = shape
+            obj.Shape = shape.removeSplitter()
 
     def onChanged(self, obj, prop):
         pass

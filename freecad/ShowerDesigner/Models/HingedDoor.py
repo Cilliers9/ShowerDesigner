@@ -28,6 +28,11 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     GLASS_DEDUCTIONS,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
+from freecad.ShowerDesigner.Data.SealSpecs import (
+    HINGED_DOOR_SEAL_OPTIONS,
+    CLOSING_AGAINST_OPTIONS,
+    getDoorSealDeduction,
+)
 
 
 def _setupGlassVP(obj):
@@ -181,6 +186,20 @@ class HingedDoorAssembly(AssemblyController):
             "Show swing arc on floor plane"
         ).ShowSwingArc = False
 
+        # Seal
+        vs.addProperty(
+            "App::PropertyEnumeration", "DoorSeal", "Seal",
+            "Closing seal type on handle side"
+        )
+        vs.DoorSeal = HINGED_DOOR_SEAL_OPTIONS
+        vs.DoorSeal = "No Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "ClosingAgainst", "Seal",
+            "What the door closes against (affects magnet seal deduction)"
+        )
+        vs.ClosingAgainst = CLOSING_AGAINST_OPTIONS
+        vs.ClosingAgainst = "Inline Panel"
+
         # Calculated (read-only)
         vs.addProperty(
             "App::PropertyFloat", "Weight", "Calculated",
@@ -312,6 +331,15 @@ class HingedDoorAssembly(AssemblyController):
             bottom_ded = GLASS_DEDUCTIONS["sill_plate"]
         else:
             bottom_ded = GLASS_DEDUCTIONS["no_sill_plate"]
+
+        # --- Closing seal (handle side, opposite hinge side) ---
+        seal_ded = getDoorSealDeduction(
+            vs.DoorSeal, vs.ClosingAgainst
+        )
+        if hinge_side == "Left":
+            right_ded += seal_ded
+        else:
+            left_ded += seal_ded
 
         glass_width = max(width - left_ded - right_ded, 1.0)
         glass_height = max(height - bottom_ded - top_ded, 1.0)

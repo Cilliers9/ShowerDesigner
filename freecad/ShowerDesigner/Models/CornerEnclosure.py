@@ -10,6 +10,10 @@ import FreeCAD as App
 import Part
 from freecad.ShowerDesigner.Models.AssemblyBase import AssemblyController
 from freecad.ShowerDesigner.Data.HardwareSpecs import HARDWARE_FINISHES
+from freecad.ShowerDesigner.Data.SealSpecs import (
+    getCornerDoorConstraints,
+    getReturnPanelMagnetDeduction,
+)
 
 
 class CornerEnclosureAssembly(AssemblyController):
@@ -107,6 +111,33 @@ class CornerEnclosureAssembly(AssemblyController):
         self._manifest["DoorPanel"] = door.Name
 
     # ------------------------------------------------------------------
+    # Door constraint helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _filterEnum(varset, prop, allowed):
+        """Save current enum value, set new list, restore if still valid."""
+        current = getattr(varset, prop)
+        setattr(varset, prop, allowed)
+        if current in allowed:
+            setattr(varset, prop, current)
+        else:
+            setattr(varset, prop, allowed[0])
+
+    def _applyDoorConstraints(self, door_vs, closes_on_panel):
+        """Filter MountingType, DoorSeal, and set ClosingAgainst on the door."""
+        constraints = getCornerDoorConstraints(closes_on_panel)
+
+        if hasattr(door_vs, "MountingType"):
+            self._filterEnum(door_vs, "MountingType", constraints["mounting_types"])
+
+        if hasattr(door_vs, "DoorSeal"):
+            self._filterEnum(door_vs, "DoorSeal", constraints["seal_options"])
+
+        if hasattr(door_vs, "ClosingAgainst"):
+            door_vs.ClosingAgainst = constraints["closing_against"]
+
+    # ------------------------------------------------------------------
     # execute
     # ------------------------------------------------------------------
 
@@ -126,6 +157,23 @@ class CornerEnclosureAssembly(AssemblyController):
 
         door_right = vs.DoorSide == "Right"
 
+        # --- Apply door constraints & check seal for fixed panel deduction ---
+        fixed_panel_seal_ded = 0.0
+        door = self._getChild(part_obj, "DoorPanel")
+        if door:
+            door_vs = self._getNestedVarSet(door)
+            if door_vs and hasattr(door_vs, "HingeSide"):
+                closes_on_panel = vs.DoorSide == door_vs.HingeSide
+                self._applyDoorConstraints(door_vs, closes_on_panel)
+                if (
+                    closes_on_panel
+                    and hasattr(door_vs, "DoorSeal")
+                    and door_vs.DoorSeal == "Magnet Seal"
+                ):
+                    fixed_panel_seal_ded = getReturnPanelMagnetDeduction(
+                        thickness
+                    )
+
         # --- Update fixed panel ---
         fixed = self._getChild(part_obj, "FixedPanel")
         if fixed:
@@ -134,6 +182,8 @@ class CornerEnclosureAssembly(AssemblyController):
                 fixed_vs.Width = width if door_right else depth
                 fixed_vs.Height = height
                 fixed_vs.Thickness = thickness
+                if hasattr(fixed_vs, "SealDeduction"):
+                    fixed_vs.SealDeduction = fixed_panel_seal_ded
                 if hasattr(fixed_vs, "GlassType"):
                     fixed_vs.GlassType = vs.GlassType
                 if hasattr(fixed_vs, "HardwareFinish"):
@@ -149,7 +199,7 @@ class CornerEnclosureAssembly(AssemblyController):
                 # Fixed panel on the right
                 fixed_vs.WallMountEdge = "Right"
                 fixed.Placement = App.Placement(
-                    App.Vector(width, thickness, 0),
+                    App.Vector(width, 0, 0),
                     App.Rotation(App.Vector(0, 0, 1), 90)
                 )
         # --- Update door panel (door) ---
@@ -157,7 +207,7 @@ class CornerEnclosureAssembly(AssemblyController):
         if door:
             door_vs = self._getNestedVarSet(door)
             if door_vs:
-                door_vs.Width = depth if door_right else width
+                door_vs.Width = (depth - thickness) if door_right else (width - thickness)
                 door_vs.Height = height
                 door_vs.Thickness = thickness
                 if hasattr(door_vs, "GlassType"):

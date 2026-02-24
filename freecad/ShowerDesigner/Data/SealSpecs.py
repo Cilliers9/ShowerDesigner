@@ -536,3 +536,99 @@ def lookupSealProductCode(code):
             if pc["code"] == code:
                 return key, pc
     return None, None
+
+
+# ---------------------------------------------------------------------------
+# Door closing seal deductions
+# ---------------------------------------------------------------------------
+
+# Width deduction (mm) applied to the handle side of door glass to
+# accommodate the closing seal.  Magnet seals vary by what the door
+# closes against; all others are a flat value.
+DOOR_SEAL_DEDUCTIONS = {
+    "Magnet Seal": {"Inline Panel": 24, "Return Panel": 10, "Wall": 34},
+    "Hard Lip Seal": 5,
+    "Bubble Seal": 7,
+    "Side Lip Seal": 5,
+    "No Seal": 3,
+}
+
+# Seal options available per door type
+HINGED_DOOR_SEAL_OPTIONS = [
+    "No Seal", "Magnet Seal", "Hard Lip Seal", "Bubble Seal", "Side Lip Seal",
+]
+SLIDING_DOOR_SEAL_OPTIONS = ["No Seal", "Magnet Seal", "Bubble Seal"]
+
+CLOSING_AGAINST_OPTIONS = ["Inline Panel", "Return Panel", "Wall"]
+
+
+def getReturnPanelMagnetDeduction(glass_thickness):
+    """
+    Return the width deduction (mm) for a fixed/return panel when the
+    adjacent door uses a magnet seal.
+
+    Args:
+        glass_thickness: Glass thickness in mm
+
+    Returns:
+        float: Deduction in mm (10 + glass_thickness)
+    """
+    return 10 + glass_thickness
+
+
+# ---------------------------------------------------------------------------
+# Corner enclosure door constraints
+# ---------------------------------------------------------------------------
+
+# When DoorSide == HingeSide the door closes against the return (fixed) panel;
+# otherwise it closes against the wall.  Each case limits the allowed
+# MountingType and DoorSeal options.
+CORNER_DOOR_CONSTRAINTS = {
+    True: {   # DoorSide == HingeSide → closes on return panel
+        "closing_against": "Return Panel",
+        "mounting_types": ["Wall Mounted", "Pivot"],
+        "seal_options": [
+            "No Seal", "Magnet Seal", "Hard Lip Seal", "Bubble Seal", "Side Lip Seal",
+        ],
+    },
+    False: {  # DoorSide != HingeSide → closes on wall
+        "closing_against": "Wall",
+        "mounting_types": ["Glass Mounted", "Pivot"],
+        "seal_options": [
+            "No Seal", "Magnet Seal", "Bubble Seal", "Side Lip Seal",
+        ],
+    },
+}
+
+
+def getCornerDoorConstraints(closes_on_panel):
+    """
+    Return the door constraint dict for a corner enclosure.
+
+    Args:
+        closes_on_panel: True when DoorSide == HingeSide (door closes
+                         against the return panel), False otherwise.
+
+    Returns:
+        dict with keys "closing_against", "mounting_types", "seal_options"
+    """
+    return CORNER_DOOR_CONSTRAINTS[closes_on_panel]
+
+
+def getDoorSealDeduction(seal_type, closing_against):
+    """
+    Return the handle-side width deduction (mm) for a door closing seal.
+
+    Args:
+        seal_type: One of the keys in DOOR_SEAL_DEDUCTIONS
+        closing_against: "Inline Panel", "Return Panel", or "Wall"
+        glass_thickness: Glass thickness in mm (used for magnet + return panel)
+
+    Returns:
+        float: Deduction in mm
+    """
+    entry = DOOR_SEAL_DEDUCTIONS.get(seal_type, 0)
+    if isinstance(entry, dict):
+        base = entry.get(closing_against, 0)
+        return base
+    return entry

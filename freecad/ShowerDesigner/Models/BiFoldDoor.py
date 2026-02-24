@@ -24,8 +24,14 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HARDWARE_FINISHES,
     MONZA_BIFOLD_HINGE_SPECS,
     MONZA_FINISHES,
+    GLASS_DEDUCTIONS,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
+from freecad.ShowerDesigner.Data.SealSpecs import (
+    HINGED_DOOR_SEAL_OPTIONS,
+    CLOSING_AGAINST_OPTIONS,
+    getDoorSealDeduction,
+)
 
 
 def _setupGlassVP(obj):
@@ -117,6 +123,10 @@ class BiFoldDoorAssembly(AssemblyController):
         vs.HingeSide = ["Left", "Right"]
         vs.HingeSide = "Left"
         vs.addProperty(
+            "App::PropertyBool", "SillPlate", "Door Configuration",
+            "Use sill plate under door"
+        ).SillPlate = False
+        vs.addProperty(
             "App::PropertyAngle", "FoldAngle", "Door Configuration",
             "Current fold angle (0=closed)"
         ).FoldAngle = 0
@@ -172,6 +182,20 @@ class BiFoldDoorAssembly(AssemblyController):
             "Show folded position ghost"
         ).ShowFoldedPosition = False
 
+        # Seal
+        vs.addProperty(
+            "App::PropertyEnumeration", "DoorSeal", "Seal",
+            "Closing seal type on handle side"
+        )
+        vs.DoorSeal = HINGED_DOOR_SEAL_OPTIONS
+        vs.DoorSeal = "No Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "ClosingAgainst", "Seal",
+            "What the door closes against (affects magnet seal deduction)"
+        )
+        vs.ClosingAgainst = CLOSING_AGAINST_OPTIONS
+        vs.ClosingAgainst = "Inline Panel"
+
         # Calculated (read-only)
         vs.addProperty(
             "App::PropertyFloat", "Weight", "Calculated",
@@ -208,6 +232,16 @@ class BiFoldDoorAssembly(AssemblyController):
             "Max fold angle in primary direction"
         )
         vs.setEditorMode("MaxFoldAngle", 1)
+        vs.addProperty(
+            "App::PropertyLength", "GlassWidth", "Calculated",
+            "Width of each glass panel after deductions"
+        )
+        vs.setEditorMode("GlassWidth", 1)
+        vs.addProperty(
+            "App::PropertyLength", "GlassHeight", "Calculated",
+            "Height of glass panels after deductions"
+        )
+        vs.setEditorMode("GlassHeight", 1)
 
     # ------------------------------------------------------------------
     # execute
@@ -229,25 +263,42 @@ class BiFoldDoorAssembly(AssemblyController):
 
         panel_width = width / 2
 
-        # --- Update glass children ---
+        # --- Calculate glass deductions & update glass children ---
+        wall_gw, free_gw, glass_h, wall_xoff, free_xoff, z_off = (
+            self._calculateGlassDeductions(vs)
+        )
+
         wall_panel = self._getChild(part_obj, "WallPanel")
         if wall_panel:
-            wall_panel.Width = panel_width
-            wall_panel.Height = height
+            wall_panel.Width = wall_gw
+            wall_panel.Height = glass_h
             wall_panel.Thickness = thickness
             if hasattr(wall_panel, "GlassType"):
                 wall_panel.GlassType = vs.GlassType
+            if vs.HingeSide == "Left":
+                wall_panel.Placement = App.Placement(
+                    App.Vector(wall_xoff, 0, z_off), App.Rotation()
+                )
+            else:
+                wall_panel.Placement = App.Placement(
+                    App.Vector(0, 0, z_off), App.Rotation()
+                )
 
         free_panel = self._getChild(part_obj, "FreePanel")
         if free_panel:
-            free_panel.Width = panel_width
-            free_panel.Height = height
+            free_panel.Width = free_gw
+            free_panel.Height = glass_h
             free_panel.Thickness = thickness
             if hasattr(free_panel, "GlassType"):
                 free_panel.GlassType = vs.GlassType
-            free_panel.Placement = App.Placement(
-                App.Vector(panel_width, 0, 0), App.Rotation()
-            )
+            if vs.HingeSide == "Left":
+                free_panel.Placement = App.Placement(
+                    App.Vector(panel_width + free_xoff, 0, z_off), App.Rotation()
+                )
+            else:
+                free_panel.Placement = App.Placement(
+                    App.Vector(panel_width - free_gw, 0, z_off), App.Rotation()
+                )
 
         show_hw = vs.ShowHardware
         finish = vs.HardwareFinish
@@ -306,6 +357,62 @@ class BiFoldDoorAssembly(AssemblyController):
 
         # --- Calculated properties ---
         self._updateCalculatedProperties(vs)
+
+    # ------------------------------------------------------------------
+    # Glass deductions
+    # ------------------------------------------------------------------
+
+    def _calculateGlassDeductions(self, vs):
+        """Calculate per-edge glass deductions based on hardware configuration.
+
+        Monza hinges use offset values from their spec dimensions.
+        Legacy hinges have no glass deductions.
+
+        Returns:
+            tuple: (wall_glass_w, free_glass_w, glass_h,
+                    wall_x_offset, free_x_offset, z_offset)
+        """
+        width = vs.Width.Value
+        height = vs.Height.Value
+        panel_width = width / 2
+        use_monza = hasattr(vs, "HingeModel") and vs.HingeModel == "Monza"
+
+        wall_hinge_ded = 0.0
+        fold_hinge_ded = 0.0
+
+        if use_monza:
+            wall_dims = MONZA_BIFOLD_HINGE_SPECS[
+                "monza_90_wall_to_glass"]["dimensions"]
+            fold_dims = MONZA_BIFOLD_HINGE_SPECS[
+                "monza_180_glass_to_glass"]["dimensions"]
+            wall_hinge_ded = wall_dims["wall_to_glass_offset"]
+            fold_hinge_ded = fold_dims["glass_to_glass_offset"]
+
+        # Bottom deduction (sill plate or floor clearance)
+        if hasattr(vs, "SillPlate") and vs.SillPlate:
+            bottom_ded = GLASS_DEDUCTIONS["sill_plate"]
+        else:
+            bottom_ded = GLASS_DEDUCTIONS["no_sill_plate"]
+        top_ded = 0.0
+
+        # --- Closing seal (handle side = free panel outer edge) ---
+        seal_ded = getDoorSealDeduction(
+            vs.DoorSeal, vs.ClosingAgainst, vs.Thickness.Value
+        )
+
+        # Wall panel: hinge-side deduction + fold-side deduction
+        wall_glass_w = max(panel_width - wall_hinge_ded, 1.0)
+        # Free panel: fold-side deduction + seal deduction on handle side
+        free_glass_w = max(panel_width - fold_hinge_ded - seal_ded, 1.0)
+        glass_h = max(height - bottom_ded - top_ded, 1.0)
+
+        # Offsets position glass inward from hardware edges
+        wall_x_offset = wall_hinge_ded
+        free_x_offset = fold_hinge_ded
+        z_offset = bottom_ded
+
+        return (wall_glass_w, free_glass_w, glass_h,
+                wall_x_offset, free_x_offset, z_offset)
 
     # ------------------------------------------------------------------
     # Wall hinges (attach wall panel to wall)
@@ -562,6 +669,15 @@ class BiFoldDoorAssembly(AssemblyController):
                 vs.ClearanceDepth = panel_width
             if hasattr(vs, "MaxFoldAngle"):
                 vs.MaxFoldAngle = spec.get("primary_angle", 180)
+
+            # Glass deduction results
+            wall_gw, free_gw, glass_h, _, _, _ = (
+                self._calculateGlassDeductions(vs)
+            )
+            if hasattr(vs, "GlassWidth"):
+                vs.GlassWidth = wall_gw
+            if hasattr(vs, "GlassHeight"):
+                vs.GlassHeight = glass_h
 
         except Exception as e:
             App.Console.PrintWarning(

@@ -27,6 +27,11 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     FLOOR_GUIDE_SPECS,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
+from freecad.ShowerDesigner.Data.SealSpecs import (
+    SLIDING_DOOR_SEAL_OPTIONS,
+    CLOSING_AGAINST_OPTIONS,
+    getDoorSealDeduction,
+)
 
 
 def _setupGlassVP(obj):
@@ -158,6 +163,20 @@ class SlidingDoorAssembly(AssemblyController):
             "Show hardware components"
         ).ShowHardware = True
 
+        # Seal
+        vs.addProperty(
+            "App::PropertyEnumeration", "DoorSeal", "Seal",
+            "Closing seal type on handle side"
+        )
+        vs.DoorSeal = SLIDING_DOOR_SEAL_OPTIONS
+        vs.DoorSeal = "No Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "ClosingAgainst", "Seal",
+            "What the door closes against (affects magnet seal deduction)"
+        )
+        vs.ClosingAgainst = CLOSING_AGAINST_OPTIONS
+        vs.ClosingAgainst = "Inline Panel"
+
         # Calculated (read-only)
         vs.addProperty(
             "App::PropertyFloat", "Weight", "Calculated",
@@ -248,22 +267,71 @@ class SlidingDoorAssembly(AssemblyController):
         self._updateCalculatedProperties(vs)
 
     # ------------------------------------------------------------------
+    # Glass deductions
+    # ------------------------------------------------------------------
+
+    def _calculateGlassDeductions(self, vs):
+        """Calculate per-edge glass deductions based on slider system.
+
+        The glass is cut smaller than the nominal opening so it clears the
+        track/rollers at the top and the floor at the bottom.
+
+        Returns:
+            tuple: (glass_width, glass_height, x_offset, z_offset)
+        """
+        width = vs.Width.Value
+        height = vs.Height.Value
+        system_key = vs.SliderSystem
+        spec = SLIDER_SYSTEM_SPECS[system_key]
+        dims = spec["dimensions"]
+
+        top_ded = 0.0
+        bottom_ded = 0.0
+
+        if system_key == "duplo":
+            bottom_ded = dims["door_panel_floor_clearance"]
+        elif system_key == "edge_slider":
+            bottom_ded = dims["door_floor_clearance"]
+        elif system_key == "city_slider":
+            variant = self._getCityRollerVariant(vs)
+            top_ded = variant["door_top_deduction"]
+            bottom_ded = dims["door_bottom_deduction"]
+
+        # --- Closing seal (handle side, opposite slide direction) ---
+        seal_ded = getDoorSealDeduction(
+            vs.DoorSeal, vs.ClosingAgainst, vs.Thickness.Value
+        )
+
+        glass_width = max(width - seal_ded, 1.0)
+        glass_height = max(height - top_ded - bottom_ded, 1.0)
+
+        # Handle is opposite slide direction; offset glass when handle is left
+        if vs.SlideDirection == "Right":
+            x_offset = 0.0  # handle on left, glass starts at origin
+        else:
+            x_offset = seal_ded  # handle on right, shift glass right
+
+        return glass_width, glass_height, x_offset, bottom_ded
+
+    # ------------------------------------------------------------------
     # Panel management
     # ------------------------------------------------------------------
 
     def _updatePanels(self, part_obj, vs, panel_count):
-        width = vs.Width.Value
-        height = vs.Height.Value
         thickness = vs.Thickness.Value
+        glass_w, glass_h, x_off, z_off = self._calculateGlassDeductions(vs)
 
         # Panel 1 always exists
         panel1 = self._getChild(part_obj, "Panel1")
         if panel1:
-            panel1.Width = width
-            panel1.Height = height
+            panel1.Width = glass_w
+            panel1.Height = glass_h
             panel1.Thickness = thickness
             if hasattr(panel1, "GlassType"):
                 panel1.GlassType = vs.GlassType
+            panel1.Placement = App.Placement(
+                App.Vector(x_off, 0, z_off), App.Rotation()
+            )
 
         # Panel 2: add or remove based on panel count
         if panel_count == 2:
@@ -271,14 +339,14 @@ class SlidingDoorAssembly(AssemblyController):
                 self._addChild(part_obj, "Panel2", GlassChild, _setupGlassVP)
             panel2 = self._getChild(part_obj, "Panel2")
             if panel2:
-                panel2.Width = width
-                panel2.Height = height
+                panel2.Width = glass_w
+                panel2.Height = glass_h
                 panel2.Thickness = thickness
                 if hasattr(panel2, "GlassType"):
                     panel2.GlassType = vs.GlassType
                 overlap = vs.OverlapWidth.Value
                 panel2.Placement = App.Placement(
-                    App.Vector(width - overlap, thickness + 25, 0),
+                    App.Vector(vs.Width.Value - overlap, thickness + 25, z_off),
                     App.Rotation()
                 )
         else:
@@ -407,7 +475,7 @@ class SlidingDoorAssembly(AssemblyController):
         else:
             x_pos = 0
         y_offset = thickness / 2 - guide_w / 2
-        z_offset = -7
+        z_offset = 0
 
         child.Placement = App.Placement(
             App.Vector(x_pos, y_offset, z_offset), App.Rotation()

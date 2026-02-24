@@ -4,7 +4,7 @@
 
 This phase focuses on improving the parametric models to create production-ready shower enclosure designs with proper glass panel systems, door mechanisms, and hardware integration.
 
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-02-24
 
 ---
 
@@ -17,19 +17,20 @@ This phase focuses on improving the parametric models to create production-ready
 | 1.3 | Panel Spacing & Constraints | ◐ In Progress | 60% |
 | 1.4 | Fixed Panel Implementation | ✓ Complete | 100% |
 | 2.1 | Hinged Door System | ✓ Complete | 100% |
-| 2.2 | Sliding Door System | ◐ In Progress | 90% |
+| 2.2 | Sliding Door System | ◐ In Progress | 95% |
 | 2.3 | Bi-Fold Door System | ✓ Complete | 100% |
 | 3.1 | Hinge Catalog | ✓ Complete | 100% |
 | 3.2 | Handle and Knob Library | ✓ Complete | 100% |
 | 3.3 | Support Bars and Braces | ◐ In Progress | 90% |
-| 3.4 | Seals and Gaskets | ◐ In Progress | 60% |
+| 3.4 | Seals and Gaskets | ◐ In Progress | 80% |
 | 3.5 | Clamp Catalog | ✓ Complete | 100% |
-| 4.1 | Update CornerEnclosure | ◐ In Progress | 50% |
+| 3.6 | Seal Deduction System | ◐ In Progress | 85% |
+| 4.1 | Update CornerEnclosure | ◐ In Progress | 65% |
 | 4.2 | Update AlcoveEnclosure | ◐ In Progress | 50% |
 | 4.3 | Update WalkInEnclosure | ◐ In Progress | 50% |
 | 4.4 | Update CustomEnclosure | ◐ In Progress | 50% |
 
-**Overall Phase 1 Completion: ~84%**
+**Overall Phase 1 Completion: ~87%**
 
 ### Architecture Note
 All models have been refactored from standalone `Part::FeaturePython` to an `App::Part` assembly architecture.
@@ -219,6 +220,7 @@ def distributeEvenly(panels, total_width):
 **File:** `freecad/ShowerDesigner/Models/FixedPanel.py`
 - `class FixedPanelAssembly(AssemblyController)` -- App::Part assembly containing glass + mounting hardware
 - VarSet properties for wall/floor hardware type, clamp count, clamp placement
+- `SealDeduction` property (read-only) -- set by parent enclosure to deduct glass on the free edge when adjacent door uses a closing seal (see Task 3.6)
 - Automatic clamp spacing calculation with configurable offsets
 - Single-clamp configuration support (centered placement)
 - Full integration with `Clamp.py` shape builders and `HardwareSpecs.py` specs
@@ -227,6 +229,7 @@ def distributeEvenly(panels, total_width):
 - Automatic WallClamp spacing calculation (Default: 300mm from top and bottom)
 - Automatic FloorClamp spacing calculation (Default: 75mm from left and right)
 - Single-clamp centered placement fix (commit e925695)
+- Seal deduction applied to free (non-wall-mounted) edge based on `WallMountEdge`
 
 **Testing:**
 - Test with different panel heights
@@ -250,10 +253,11 @@ def distributeEvenly(panels, total_width):
 
 **File:** `freecad/ShowerDesigner/Models/HingedDoor.py`
 - `class HingedDoorAssembly(AssemblyController)` -- App::Part assembly containing glass + hinges + handle
-- VarSet properties: Width, Height, Thickness, SwingDirection, HingeCount, OpeningAngle, HandleType, MountingVariant
+- VarSet properties: Width, Height, Thickness, SwingDirection, HingeCount, OpeningAngle, HandleType, MountingVariant, DoorSeal, ClosingAgainst
 - Mounting variants: Wall-to-Glass, Glass-to-Glass, Glass-to-Glass-90 (via `DOOR_MOUNTING_VARIANTS`)
 - Bevel hinge 3D model integration (commit 2f7d3f6)
 - Automatic hinge placement from `HINGE_PLACEMENT_DEFAULTS`
+- Seal deduction applied to handle-side glass edge (see Task 3.6)
 
 **Features:**
 - Automatic hinge spacing calculation
@@ -263,7 +267,7 @@ def distributeEvenly(panels, total_width):
 
 ---
 
-#### 2.2 Sliding Door System -- ◐ IN PROGRESS (90%)
+#### 2.2 Sliding Door System -- ◐ IN PROGRESS (95%)
 **Priority:** High
 **Estimated Effort:** High
 **Dependencies:** 1.1
@@ -276,7 +280,9 @@ def distributeEvenly(panels, total_width):
 
 **File:** `freecad/ShowerDesigner/Models/SlidingDoor.py`
 - `class SlidingDoorAssembly(AssemblyController)` -- App::Part assembly containing glass + track + rollers + guides
-- VarSet properties: Width, Height, Thickness, SliderSystem, TrackFinish, HandleType
+- VarSet properties: Width, Height, Thickness, SliderSystem, TrackFinish, HandleType, DoorSeal, ClosingAgainst
+- Per-system glass deduction logic via `_calculateGlassDeductions()` (see Task 3.6)
+- Slide-direction-aware glass placement offsets
 
 **Data specs** in `freecad/ShowerDesigner/Data/HardwareSpecs.py`:
 - `SLIDER_SYSTEM_SPECS` -- 3 complete slider systems from catalogue:
@@ -307,10 +313,11 @@ def distributeEvenly(panels, total_width):
 
 **File:** `freecad/ShowerDesigner/Models/BiFoldDoor.py`
 - `class BiFoldDoorAssembly(AssemblyController)` -- App::Part assembly containing 2 glass panels + hinges + handle
-- VarSet properties: Width, Height, Thickness, FoldDirection, HingeSide, FoldAngle
+- VarSet properties: Width, Height, Thickness, FoldDirection, HingeSide, FoldAngle, SillPlate, DoorSeal, ClosingAgainst
 - Monza bi-fold hinge integration (commit 3432104)
-- Auto-calculated: PanelWidth, FoldedWidth, OpeningWidth, ClearanceDepth
+- Auto-calculated: PanelWidth, FoldedWidth, OpeningWidth, ClearanceDepth, GlassWidth, GlassHeight
 - `MONZA_BIFOLD_HINGE_SPECS` and `MONZA_PAIRING` in HardwareSpecs.py
+- `_calculateGlassDeductions()` -- per-edge deduction logic with hinge-side-aware panel placement (see Task 3.6)
 
 **Calculations:**
 - Panel width = Total Width / 2
@@ -318,6 +325,7 @@ def distributeEvenly(panels, total_width):
 - Folded width = PanelWidth + Thickness [+ PivotOffset]
 - Opening width = Width - FoldedWidth
 - Clearance depth = PanelWidth + PivotOffset
+- Glass deductions applied per edge (wall side, free side, top, bottom) based on hardware and seal type
 
 ---
 
@@ -421,7 +429,7 @@ def distributeEvenly(panels, total_width):
 
 ---
 
-#### 3.4 Seals and Gaskets -- ◐ IN PROGRESS (60%)
+#### 3.4 Seals and Gaskets -- ◐ IN PROGRESS (80%)
 **Priority:** Medium
 **Estimated Effort:** Low
 **Dependencies:** 1.1, 2.1, 2.2
@@ -433,8 +441,10 @@ def distributeEvenly(panels, total_width):
 
 **What was implemented:**
 
-**Data specs** in `freecad/ShowerDesigner/Data/HardwareSpecs.py`:
+**Data specs** in `freecad/ShowerDesigner/Data/SealSpecs.py` (extracted from HardwareSpecs.py):
 - `SEAL_SPECS` -- 3 generic types (door sweep, vertical seal, magnetic seal)
+- `SEAL_COLOURS` -- 4 available colours (Clear, Black, White, Brown)
+- `SEAL_MATERIALS` -- PVC (flexible), PC (polycarbonate rigid)
 - `CATALOGUE_SEAL_SPECS` -- 18 seal types across 6 categories from catalogue pp. 35-42:
   - Soft lip (5): centre lip, 180/90/135 soft lip, 180 long lip
   - Bubble (1): bubble seal (8/12/24mm variants)
@@ -445,17 +455,21 @@ def distributeEvenly(panels, total_width):
   - Each with product codes, glass thickness ranges, PVC/PC material, clear/black colour options
 - Reference document: `Resources/Documents/seals-spec.md`
 
-**Helper functions** in HardwareSpecs.py:
-- `selectSeal(location, glass_thickness, gap)`
+**Helper functions** in SealSpecs.py:
+- `selectSeal(location, glass_thickness, gap)` -- legacy seal selection
 - `getSealsByCategory(category)`
 - `getSealsByAngle(angle)`
 - `getSealsByLocation(location)`
 - `lookupSealProductCode(code)`
 
+**Architecture note:** Seal data was extracted from `HardwareSpecs.py` into its own
+`Data/SealSpecs.py` module to keep the data layer manageable. The module follows the
+same pure-Python pattern (no FreeCAD imports). Door seal deduction logic and
+enclosure constraint data also live in this file (see Task 3.6).
+
 **Remaining:**
 - No `Models/Seal.py` yet -- 3D geometry model for seal visualization not created
-- No seal integration with door/panel assemblies
-- No seal gap calculation tied to panel spacing
+- No seal gap calculation tied to panel spacing (see Task 1.3 remaining items)
 
 ---
 
@@ -507,17 +521,86 @@ def distributeEvenly(panels, total_width):
 
 ---
 
-### 4. Enhanced Enclosure Models
-
-#### 4.1 Update CornerEnclosure -- ◐ IN PROGRESS (50%)
+#### 3.6 Seal Deduction System -- ◐ IN PROGRESS (85%)
 **Priority:** High
 **Estimated Effort:** Medium
-**Dependencies:** 1.1, 2.1
+**Dependencies:** 3.4, 2.1, 2.2, 2.3, 1.4
+
+**Objectives:**
+- Glass width/height deductions driven by closing seal type
+- Per-door-type seal selection with appropriate options
+- Enclosure-level constraint enforcement (which seals and mounting types are valid)
+- Return panel deduction when adjacent door uses magnet seal
+
+**What was implemented:**
+
+**Data layer** in `freecad/ShowerDesigner/Data/SealSpecs.py`:
+- `DOOR_SEAL_DEDUCTIONS` -- Width deduction (mm) per seal type applied to the handle side of door glass; magnet seals vary by what the door closes against (Inline Panel: 24mm, Return Panel: 10mm, Wall: 34mm), other seal types are flat values (Hard Lip: 5mm, Bubble: 7mm, Side Lip: 5mm, No Seal: 3mm)
+- `HINGED_DOOR_SEAL_OPTIONS` -- 5 seal types for hinged/bi-fold doors (No Seal, Magnet, Hard Lip, Bubble, Side Lip)
+- `SLIDING_DOOR_SEAL_OPTIONS` -- 3 seal types for sliding doors (No Seal, Magnet, Bubble)
+- `CLOSING_AGAINST_OPTIONS` -- 3 targets (Inline Panel, Return Panel, Wall)
+- `CORNER_DOOR_CONSTRAINTS` -- Constraint dict keyed by whether DoorSide == HingeSide; each entry defines allowed `mounting_types`, `seal_options`, and `closing_against` value
+- `getDoorSealDeduction(seal_type, closing_against)` -- Returns mm deduction for given seal/target combination
+- `getCornerDoorConstraints(closes_on_panel)` -- Returns constraint dict for corner enclosure door
+- `getReturnPanelMagnetDeduction(glass_thickness)` -- Returns fixed panel deduction (10 + glass_thickness mm) when adjacent door uses magnet seal
+
+**HingedDoor integration** in `freecad/ShowerDesigner/Models/HingedDoor.py`:
+- New VarSet properties: `DoorSeal` (enum, "Seal" group), `ClosingAgainst` (enum, "Seal" group)
+- `execute()` applies `getDoorSealDeduction()` to the handle-side glass edge (opposite hinge side)
+
+**BiFoldDoor integration** in `freecad/ShowerDesigner/Models/BiFoldDoor.py`:
+- New VarSet properties: `DoorSeal`, `ClosingAgainst`, `SillPlate` (bool)
+- New calculated properties: `GlassWidth`, `GlassHeight` (read-only)
+- New `_calculateGlassDeductions()` method with per-edge deduction logic
+- Panel placement now hinge-side-aware with proper X/Z offsets
+
+**SlidingDoor integration** in `freecad/ShowerDesigner/Models/SlidingDoor.py`:
+- New VarSet properties: `DoorSeal` (uses `SLIDING_DOOR_SEAL_OPTIONS`), `ClosingAgainst`
+- New `_calculateGlassDeductions()` method accounting for per-system top/bottom clearances:
+  - Duplo: floor clearance from `door_panel_floor_clearance`
+  - Edge Slider: floor clearance from `door_floor_clearance`
+  - City Slider: top deduction from roller variant `door_top_deduction`, bottom from `door_bottom_deduction`
+- Seal deduction applied to handle side (opposite slide direction)
+- Glass placement offset based on `SlideDirection`
+
+**FixedPanel integration** in `freecad/ShowerDesigner/Models/FixedPanel.py`:
+- New VarSet property: `SealDeduction` (read-only, set by parent enclosure)
+- Deduction applied to the free (non-wall-mounted) edge based on `WallMountEdge`
+
+**CornerEnclosure integration** in `freecad/ShowerDesigner/Models/CornerEnclosure.py`:
+- Imports `getCornerDoorConstraints()` and `getReturnPanelMagnetDeduction()` from SealSpecs
+- New `_applyDoorConstraints(door_vs, closes_on_panel)` method dynamically filters the nested door's `MountingType` and `DoorSeal` enums based on corner geometry
+- New `_filterEnum(varset, prop, allowed)` helper for safe enum list replacement
+- `execute()` calculates `fixed_panel_seal_ded` and propagates to FixedPanel's `SealDeduction` when magnet seal is active
+- Bug fix: fixed panel placement vector corrected (removed erroneous thickness Y-offset)
+- Bug fix: door width now properly subtracts glass thickness from depth
+
+**ChildProxies updates** in `freecad/ShowerDesigner/Models/ChildProxies.py`:
+- Minor refinements to child proxy classes supporting the seal deduction flow
+
+**Remaining:**
+- AlcoveEnclosure seal/constraint integration (same pattern as CornerEnclosure)
+- WalkInEnclosure and CustomEnclosure seal deduction propagation
+- Seal deduction validation (warn if deduction exceeds panel width)
+
+---
+
+### 4. Enhanced Enclosure Models
+
+#### 4.1 Update CornerEnclosure -- ◐ IN PROGRESS (65%)
+**Priority:** High
+**Estimated Effort:** Medium
+**Dependencies:** 1.1, 2.1, 3.6
 
 **What was implemented:**
 - `class CornerEnclosureAssembly(AssemblyController)` -- App::Part assembly
 - Contains nested App::Part children: BackPanel (FixedPanel) + SidePanel (FixedPanel, HingedDoor, or SlidingDoor)
 - VarSet with DoorType selection, per-panel dimensions
+- Door constraint enforcement via `_applyDoorConstraints()` -- dynamically filters nested door's MountingType and DoorSeal enums based on whether door closes against return panel or wall (uses `CORNER_DOOR_CONSTRAINTS` from SealSpecs)
+- Fixed panel seal deduction propagation -- when door uses magnet seal, FixedPanel's `SealDeduction` is set via `getReturnPanelMagnetDeduction(glass_thickness)`
+- Bug fix: fixed panel placement vector corrected (removed erroneous thickness Y-offset)
+- Bug fix: door width now subtracts glass thickness from depth for correct glass-to-glass fit
+- Corner layout research: `Resources/Documents/Possible corner enclosure layout - Sheet1.csv`
 
 **Remaining:**
 - Additional door configuration options (left/right variants)
@@ -599,10 +682,11 @@ def distributeEvenly(panels, total_width):
 5. ◐ Update WalkInEnclosure (4.3) -- assembly refactored, features remain
 
 ### Sprint 4 (Week 7-8): Finalization -- ◐ IN PROGRESS
-1. ✓ Implement BiFoldDoor (2.3) -- with Monza hinges
-2. ◐ Add Seals system (3.4) -- data specs complete (18 types), 3D model not started
-3. ◐ Update CustomEnclosure (4.4) -- assembly refactored, features remain
-4. ○ Documentation and examples -- not started
+1. ✓ Implement BiFoldDoor (2.3) -- with Monza hinges + glass deductions + SillPlate
+2. ◐ Add Seals system (3.4) -- data specs complete (18 types), extracted to SealSpecs.py, 3D model not started
+3. ◐ Seal Deduction System (3.6) -- data layer + door integration complete, enclosure propagation in progress
+4. ◐ Update CustomEnclosure (4.4) -- assembly refactored, features remain
+5. ○ Documentation and examples -- not started
 
 ### Additional completed work (not originally planned):
 - ✓ Assembly architecture refactor (all models migrated to App::Part pattern)
@@ -614,6 +698,10 @@ def distributeEvenly(panels, total_width):
 - ✓ `CATALOGUE_HANDLE_SPECS` -- 18 handle types with product codes
 - ✓ `BEVEL_CLAMP_SPECS` -- 13 Bevel clamp entries with product codes
 - ✓ Door mounting variants system (`DOOR_MOUNTING_VARIANTS`)
+- ◐ `Data/SealSpecs.py` -- Seal data extracted from HardwareSpecs into dedicated module
+- ◐ `DOOR_SEAL_DEDUCTIONS` + `CORNER_DOOR_CONSTRAINTS` -- Seal deduction and enclosure constraint system
+- ◐ Glass deduction methods added to HingedDoor, BiFoldDoor, SlidingDoor, FixedPanel
+- ◐ CornerEnclosure door constraint filtering and fixed panel seal deduction propagation
 
 ---
 

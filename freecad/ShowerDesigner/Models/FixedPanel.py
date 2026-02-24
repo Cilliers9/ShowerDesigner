@@ -172,6 +172,13 @@ class FixedPanelAssembly(AssemblyController):
             "Show hardware in 3D view"
         ).ShowHardware = True
 
+        # Seal deduction (set by parent enclosure, not user-editable)
+        vs.addProperty(
+            "App::PropertyLength", "SealDeduction", "Seal",
+            "Glass deduction on the free edge for closing seal"
+        ).SealDeduction = 0
+        vs.setEditorMode("SealDeduction", 1)  # Read-only
+
         # Calculated (read-only)
         vs.addProperty(
             "App::PropertyFloat", "Weight", "Calculated",
@@ -230,6 +237,16 @@ class FixedPanelAssembly(AssemblyController):
                 bottom_ded = GLASS_DEDUCTIONS["g2g_clamp"]
             else:
                 bottom_ded = GLASS_DEDUCTIONS["wall_clamp"]
+
+        # --- Seal deduction on the free (non-wall-mounted) edge ---
+        seal_ded = 0.0
+        if hasattr(vs, "SealDeduction"):
+            seal_ded = vs.SealDeduction.Value
+        if vs.WallMountEdge == "Left":
+            right_ded += seal_ded
+        elif vs.WallMountEdge == "Right":
+            left_ded += seal_ded
+        # "Both" — no free edge, seal deduction not applicable
 
         glass_width = max(width - left_ded - right_ded, 1.0)
         glass_height = max(height - bottom_ded, 1.0)

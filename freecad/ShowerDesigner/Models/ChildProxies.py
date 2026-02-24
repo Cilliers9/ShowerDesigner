@@ -664,11 +664,19 @@ class SliderFloorGuideChild:
         obj.Proxy = self
 
     def execute(self, obj):
-        obj.Shape = Part.makeBox(
+
+        shape = Part.makeBox(
             FLOOR_GUIDE_SPECS["length"],
             FLOOR_GUIDE_SPECS["width"],
             FLOOR_GUIDE_SPECS["height"],
         )
+        cutout = Part.makeBox(
+            FLOOR_GUIDE_SPECS["length"],
+            FLOOR_GUIDE_SPECS["width"] - 18,
+            FLOOR_GUIDE_SPECS["height"] - 5,
+            App.Vector(0, 9, 5)
+        )
+        obj.Shape = shape.cut(cutout)
 
     def onChanged(self, obj, prop):
         pass

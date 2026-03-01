@@ -19,6 +19,7 @@ from freecad.ShowerDesigner.Models.ChildProxies import (
 )
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     BIFOLD_HINGE_SPECS,
+    HANDLE_SPECS,
     HINGE_SPECS,
     HINGE_PLACEMENT_DEFAULTS,
     HARDWARE_FINISHES,
@@ -28,7 +29,9 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 from freecad.ShowerDesigner.Data.SealSpecs import (
-    HINGED_DOOR_SEAL_OPTIONS,
+    BIFOLD_DOOR_FLOOR_SEAL_OPTIONS,
+    BIFOLD_DOOR_WALL_HINGE_SEAL_OPTIONS,
+    BIFOLD_DOOR_FOLD_HINGE_SEAL_OPTIONS,
     CLOSING_AGAINST_OPTIONS,
     getDoorSealDeduction,
 )
@@ -148,8 +151,8 @@ class BiFoldDoorAssembly(AssemblyController):
             "App::PropertyEnumeration", "HandleType", "Handle Hardware",
             "Type of door handle"
         )
-        vs.HandleType = ["None", "Knob", "Bar", "Pull"]
-        vs.HandleType = "Bar"
+        vs.HandleType = ["None"] + list(HANDLE_SPECS.keys())
+        vs.HandleType = "mushroom_knob_b2b"
         vs.addProperty(
             "App::PropertyLength", "HandleHeight", "Handle Hardware",
             "Height of handle from floor"
@@ -184,11 +187,23 @@ class BiFoldDoorAssembly(AssemblyController):
 
         # Seal
         vs.addProperty(
-            "App::PropertyEnumeration", "DoorSeal", "Seal",
-            "Closing seal type on handle side"
+            "App::PropertyEnumeration", "FloorSeal", "Seal",
+            "Seal type along floor edge"
         )
-        vs.DoorSeal = HINGED_DOOR_SEAL_OPTIONS
-        vs.DoorSeal = "No Seal"
+        vs.FloorSeal = BIFOLD_DOOR_FLOOR_SEAL_OPTIONS
+        vs.FloorSeal = "Drip & Wipe Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "WallHingeSeal", "Seal",
+            "Seal type on wall-hinge side edge"
+        )
+        vs.WallHingeSeal = BIFOLD_DOOR_WALL_HINGE_SEAL_OPTIONS
+        vs.WallHingeSeal = "180 Soft Lip Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "FoldHingeSeal", "Seal",
+            "Seal type at fold-hinge joint"
+        )
+        vs.FoldHingeSeal = BIFOLD_DOOR_FOLD_HINGE_SEAL_OPTIONS
+        vs.FoldHingeSeal = "180 Soft Lip Seal"
         vs.addProperty(
             "App::PropertyEnumeration", "ClosingAgainst", "Seal",
             "What the door closes against (affects magnet seal deduction)"
@@ -396,8 +411,9 @@ class BiFoldDoorAssembly(AssemblyController):
         top_ded = 0.0
 
         # --- Closing seal (handle side = free panel outer edge) ---
+        # Bi-fold uses the fold-hinge seal for the closing edge deduction
         seal_ded = getDoorSealDeduction(
-            vs.DoorSeal, vs.ClosingAgainst, vs.Thickness.Value
+            vs.FoldHingeSeal, vs.ClosingAgainst
         )
 
         # Wall panel: hinge-side deduction + fold-side deduction
@@ -594,7 +610,7 @@ class BiFoldDoorAssembly(AssemblyController):
             x_pos = handle_offset
 
         child.Placement = App.Placement(
-            App.Vector(x_pos, thickness / 2, handle_height), App.Rotation()
+            App.Vector(x_pos, 0, handle_height), App.Rotation()
         )
 
     # ------------------------------------------------------------------

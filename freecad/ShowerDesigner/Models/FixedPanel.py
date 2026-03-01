@@ -25,6 +25,15 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     isGlassToGlassClamp,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
+from freecad.ShowerDesigner.Data.PanelConstraints import (
+    validateWallGap,
+    validatePanelToFloorGap,
+)
+from freecad.ShowerDesigner.Data.SealSpecs import (
+    FIXED_PANEL_WALL_SEAL_OPTIONS,
+    FIXED_PANEL_FLOOR_SEAL_OPTIONS,
+    FIXED_PANEL_BETWEEN_SEAL_OPTIONS,
+)
 
 
 def _setupGlassVP(obj):
@@ -172,6 +181,26 @@ class FixedPanelAssembly(AssemblyController):
             "Show hardware in 3D view"
         ).ShowHardware = True
 
+        # Seal options
+        vs.addProperty(
+            "App::PropertyEnumeration", "WallSeal", "Seal",
+            "Seal type along wall edge"
+        )
+        vs.WallSeal = FIXED_PANEL_WALL_SEAL_OPTIONS
+        vs.WallSeal = "Bubble Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "FloorSeal", "Seal",
+            "Seal type along floor edge"
+        )
+        vs.FloorSeal = FIXED_PANEL_FLOOR_SEAL_OPTIONS
+        vs.FloorSeal = "Bubble Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "PanelSeal", "Seal",
+            "Seal type between adjacent panels"
+        )
+        vs.PanelSeal = FIXED_PANEL_BETWEEN_SEAL_OPTIONS
+        vs.PanelSeal = "No Seal"
+
         # Seal deduction (set by parent enclosure, not user-editable)
         vs.addProperty(
             "App::PropertyLength", "SealDeduction", "Seal",
@@ -312,6 +341,9 @@ class FixedPanelAssembly(AssemblyController):
 
         # --- Calculated properties ---
         self._updateCalculatedProperties(vs)
+
+        # --- Validate gaps for seal fitment ---
+        self._validateGaps(vs)
 
     # ------------------------------------------------------------------
     # Wall clamp management
@@ -497,6 +529,26 @@ class FixedPanelAssembly(AssemblyController):
             App.Console.PrintWarning(
                 f"Error updating calculated properties: {e}\n"
             )
+
+    # ------------------------------------------------------------------
+    # Gap validation for seal fitment
+    # ------------------------------------------------------------------
+
+    def _validateGaps(self, vs):
+        """Log warnings when clamp offsets produce gaps outside seal range."""
+        # Wall gap: clamp offset determines gap between glass edge and wall
+        if vs.WallHardware == "Clamp":
+            wall_gap = GLASS_DEDUCTIONS.get("wall_clamp", 0)
+            valid, msg = validateWallGap(wall_gap)
+            if not valid:
+                App.Console.PrintWarning(f"FixedPanel: {msg}\n")
+
+        # Floor gap: clamp offset determines gap between glass bottom and floor
+        if vs.FloorHardware == "Clamp":
+            floor_gap = GLASS_DEDUCTIONS.get("wall_clamp", 0)
+            valid, msg = validatePanelToFloorGap(floor_gap)
+            if not valid:
+                App.Console.PrintWarning(f"FixedPanel: {msg}\n")
 
     # ------------------------------------------------------------------
     # onChanged — validate VarSet property edits

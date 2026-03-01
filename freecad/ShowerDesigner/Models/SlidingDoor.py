@@ -22,13 +22,16 @@ from freecad.ShowerDesigner.Models.ChildProxies import (
     AntiLiftPinChild,
 )
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
+    HANDLE_SPECS,
     HARDWARE_FINISHES,
     SLIDER_SYSTEM_SPECS,
     FLOOR_GUIDE_SPECS,
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 from freecad.ShowerDesigner.Data.SealSpecs import (
-    SLIDING_DOOR_SEAL_OPTIONS,
+    SLIDING_DOOR_FLOOR_SEAL_OPTIONS,
+    SLIDING_DOOR_CLOSING_SEAL_OPTIONS,
+    SLIDING_DOOR_BACK_SEAL_OPTIONS,
     CLOSING_AGAINST_OPTIONS,
     getDoorSealDeduction,
 )
@@ -136,8 +139,8 @@ class SlidingDoorAssembly(AssemblyController):
             "App::PropertyEnumeration", "HandleType", "Handle Hardware",
             "Type of door handle"
         )
-        vs.HandleType = ["None", "Knob", "Bar", "Pull"]
-        vs.HandleType = "Bar"
+        vs.HandleType = ["None"] + list(HANDLE_SPECS.keys())
+        vs.HandleType = "flush_handle_with_plate"
         vs.addProperty(
             "App::PropertyLength", "HandleHeight", "Handle Hardware",
             "Height of handle from floor"
@@ -165,11 +168,23 @@ class SlidingDoorAssembly(AssemblyController):
 
         # Seal
         vs.addProperty(
-            "App::PropertyEnumeration", "DoorSeal", "Seal",
+            "App::PropertyEnumeration", "FloorSeal", "Seal",
+            "Seal type along floor edge"
+        )
+        vs.FloorSeal = SLIDING_DOOR_FLOOR_SEAL_OPTIONS
+        vs.FloorSeal = "No Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "ClosingSeal", "Seal",
             "Closing seal type on handle side"
         )
-        vs.DoorSeal = SLIDING_DOOR_SEAL_OPTIONS
-        vs.DoorSeal = "No Seal"
+        vs.ClosingSeal = SLIDING_DOOR_CLOSING_SEAL_OPTIONS
+        vs.ClosingSeal = "180 Flat Magnet Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "BackSeal", "Seal",
+            "Seal type on back edge (against fixed panel)"
+        )
+        vs.BackSeal = SLIDING_DOOR_BACK_SEAL_OPTIONS
+        vs.BackSeal = "No Seal"
         vs.addProperty(
             "App::PropertyEnumeration", "ClosingAgainst", "Seal",
             "What the door closes against (affects magnet seal deduction)"
@@ -299,7 +314,7 @@ class SlidingDoorAssembly(AssemblyController):
 
         # --- Closing seal (handle side, opposite slide direction) ---
         seal_ded = getDoorSealDeduction(
-            vs.DoorSeal, vs.ClosingAgainst, vs.Thickness.Value
+            vs.ClosingSeal, vs.ClosingAgainst
         )
 
         glass_width = max(width - seal_ded, 1.0)
@@ -382,7 +397,7 @@ class SlidingDoorAssembly(AssemblyController):
             x_pos = width - handle_offset
 
         child.Placement = App.Placement(
-            App.Vector(x_pos, thickness / 2, handle_height), App.Rotation()
+            App.Vector(x_pos, 0, handle_height), App.Rotation()
         )
 
     # ------------------------------------------------------------------

@@ -14,6 +14,10 @@ from freecad.ShowerDesigner.Data.SealSpecs import (
     getCornerDoorConstraints,
     getReturnPanelMagnetDeduction,
 )
+from freecad.ShowerDesigner.Data.PanelConstraints import (
+    validatePanelToPanelGap,
+    PANEL_TO_PANEL_GAP,
+)
 
 
 class CornerEnclosureAssembly(AssemblyController):
@@ -125,14 +129,14 @@ class CornerEnclosureAssembly(AssemblyController):
             setattr(varset, prop, allowed[0])
 
     def _applyDoorConstraints(self, door_vs, closes_on_panel):
-        """Filter MountingType, DoorSeal, and set ClosingAgainst on the door."""
+        """Filter MountingType, ClosingSeal, and set ClosingAgainst on the door."""
         constraints = getCornerDoorConstraints(closes_on_panel)
 
         if hasattr(door_vs, "MountingType"):
             self._filterEnum(door_vs, "MountingType", constraints["mounting_types"])
 
-        if hasattr(door_vs, "DoorSeal"):
-            self._filterEnum(door_vs, "DoorSeal", constraints["seal_options"])
+        if hasattr(door_vs, "ClosingSeal"):
+            self._filterEnum(door_vs, "ClosingSeal", constraints["seal_options"])
 
         if hasattr(door_vs, "ClosingAgainst"):
             door_vs.ClosingAgainst = constraints["closing_against"]
@@ -167,8 +171,11 @@ class CornerEnclosureAssembly(AssemblyController):
                 self._applyDoorConstraints(door_vs, closes_on_panel)
                 if (
                     closes_on_panel
-                    and hasattr(door_vs, "DoorSeal")
-                    and door_vs.DoorSeal == "Magnet Seal"
+                    and hasattr(door_vs, "ClosingSeal")
+                    and door_vs.ClosingSeal in (
+                        "90/180 Magnet Seal", "135 Magnet Seal",
+                        "180 Flat Magnet Seal",
+                    )
                 ):
                     fixed_panel_seal_ded = getReturnPanelMagnetDeduction(
                         thickness
@@ -226,6 +233,14 @@ class CornerEnclosureAssembly(AssemblyController):
                     App.Vector(0, 0, 0),
                     App.Rotation(App.Vector(0, 0, 1), 0)
                 )
+
+        # --- Validate panel-to-panel gap (fixed panel ↔ door panel) ---
+        # The gap between back panel and side panel is the glass thickness
+        # (they meet at the corner). Validate it against seal requirements.
+        gap = thickness  # panels meet at corner, gap = glass thickness
+        valid, msg = validatePanelToPanelGap(gap)
+        if not valid:
+            App.Console.PrintWarning(f"CornerEnclosure: {msg}\n")
 
     def _getNestedVarSet(self, part_obj):
         """Get VarSet from a nested assembly."""

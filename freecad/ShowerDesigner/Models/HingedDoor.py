@@ -18,6 +18,7 @@ from freecad.ShowerDesigner.Models.ChildProxies import (
     SwingArcChild,
 )
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
+    HANDLE_SPECS,
     HINGE_SPECS,
     BEVEL_HINGE_SPECS,
     BEVEL_FINISHES,
@@ -29,7 +30,9 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
 )
 from freecad.ShowerDesigner.Data.GlassSpecs import GLASS_SPECS
 from freecad.ShowerDesigner.Data.SealSpecs import (
-    HINGED_DOOR_SEAL_OPTIONS,
+    HINGED_DOOR_HINGE_SIDE_SEAL_OPTIONS,
+    HINGED_DOOR_FLOOR_SEAL_OPTIONS,
+    HINGED_DOOR_CLOSING_SEAL_OPTIONS,
     CLOSING_AGAINST_OPTIONS,
     getDoorSealDeduction,
 )
@@ -152,8 +155,8 @@ class HingedDoorAssembly(AssemblyController):
             "App::PropertyEnumeration", "HandleType", "Handle Hardware",
             "Type of door handle"
         )
-        vs.HandleType = ["None", "Knob", "Bar", "Pull"]
-        vs.HandleType = "Bar"
+        vs.HandleType = ["None"] + list(HANDLE_SPECS.keys())
+        vs.HandleType = "mushroom_knob_b2b"
         vs.addProperty(
             "App::PropertyLength", "HandleHeight", "Handle Hardware",
             "Height of handle from floor"
@@ -188,11 +191,23 @@ class HingedDoorAssembly(AssemblyController):
 
         # Seal
         vs.addProperty(
-            "App::PropertyEnumeration", "DoorSeal", "Seal",
+            "App::PropertyEnumeration", "HingeSideSeal", "Seal",
+            "Seal type on hinge side edge"
+        )
+        vs.HingeSideSeal = HINGED_DOOR_HINGE_SIDE_SEAL_OPTIONS
+        vs.HingeSideSeal = "180 Soft Lip Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "FloorSeal", "Seal",
+            "Seal type along floor edge"
+        )
+        vs.FloorSeal = HINGED_DOOR_FLOOR_SEAL_OPTIONS
+        vs.FloorSeal = "Drip & Wipe Seal"
+        vs.addProperty(
+            "App::PropertyEnumeration", "ClosingSeal", "Seal",
             "Closing seal type on handle side"
         )
-        vs.DoorSeal = HINGED_DOOR_SEAL_OPTIONS
-        vs.DoorSeal = "No Seal"
+        vs.ClosingSeal = HINGED_DOOR_CLOSING_SEAL_OPTIONS
+        vs.ClosingSeal = "90/180 Magnet Seal"
         vs.addProperty(
             "App::PropertyEnumeration", "ClosingAgainst", "Seal",
             "What the door closes against (affects magnet seal deduction)"
@@ -334,7 +349,7 @@ class HingedDoorAssembly(AssemblyController):
 
         # --- Closing seal (handle side, opposite hinge side) ---
         seal_ded = getDoorSealDeduction(
-            vs.DoorSeal, vs.ClosingAgainst
+            vs.ClosingSeal, vs.ClosingAgainst
         )
         if hinge_side == "Left":
             right_ded += seal_ded
@@ -592,7 +607,7 @@ class HingedDoorAssembly(AssemblyController):
         else:
             x_pos = handle_offset
 
-        y_pos = thickness / 2
+        y_pos = 0
         z_pos = handle_height
 
         child.Placement = App.Placement(

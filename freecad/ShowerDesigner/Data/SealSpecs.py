@@ -453,9 +453,39 @@ CATALOGUE_SEAL_SPECS = {
 # Seal helper functions
 # ---------------------------------------------------------------------------
 
+def _sealSpansGap(spec, gap_mm):
+    """Check if a seal's dimensions can span the given gap.
+
+    For side/bottom seals the relevant reach is the sum of soft and hard lip
+    lengths.  The seal fits if its reach is >= the gap.  For magnetic and
+    infill seals, ``inside_measurement`` is used as the minimum gap the
+    seal body requires.
+
+    Returns True when the seal is compatible with *gap_mm*.
+    """
+    dims = spec.get("dimensions", {})
+    reach = dims.get("soft_lip_length", 0) + dims.get("hard_lip_length", 0)
+    if reach > 0:
+        return reach >= gap_mm
+    bubble = dims.get("bubble_length", 0)
+    if bubble > 0:
+        return bubble >= gap_mm
+    inside = dims.get("inside_measurement", 0)
+    if inside > 0:
+        return inside >= gap_mm
+    magnet = dims.get("magnet_lip_length", 0)
+    if magnet > 0:
+        return magnet >= gap_mm
+    return False
+
+
 def selectSeal(location, glass_thickness, gap):
     """
-    Select the appropriate seal type (legacy).
+    Select the appropriate seal type, filtering by gap compatibility.
+
+    Searches CATALOGUE_SEAL_SPECS for seals matching *location* whose
+    dimensions can span *gap*.  Falls back to the legacy SEAL_SPECS
+    key when no catalogue match is found.
 
     Args:
         location: "bottom", "side", or "magnetic"
@@ -463,13 +493,43 @@ def selectSeal(location, glass_thickness, gap):
         gap: Gap size in mm
 
     Returns:
-        str: Key into SEAL_SPECS
+        str: Key into CATALOGUE_SEAL_SPECS, or SEAL_SPECS as fallback
     """
+    # Map legacy location names to catalogue locations
+    cat_location = "door" if location == "magnetic" else location
+
+    candidates = [
+        key for key, spec in CATALOGUE_SEAL_SPECS.items()
+        if spec["location"] == cat_location and _sealSpansGap(spec, gap)
+    ]
+    if candidates:
+        return candidates[0]
+
+    # Legacy fallback
     if location == "bottom":
         return "door_sweep"
     elif location == "magnetic":
         return "magnetic_seal"
     return "vertical_seal"
+
+
+def selectSealForGap(gap_mm, location, glass_thickness):
+    """
+    Return all catalogue seals whose profile fits within a given gap.
+
+    Args:
+        gap_mm: Gap between panel and adjacent surface in mm.
+        location: "side", "bottom", or "door".
+        glass_thickness: Glass thickness in mm (for future product-code
+                         filtering; currently unused beyond location match).
+
+    Returns:
+        list[str]: Keys from CATALOGUE_SEAL_SPECS that are compatible.
+    """
+    return [
+        key for key, spec in CATALOGUE_SEAL_SPECS.items()
+        if spec["location"] == location and _sealSpansGap(spec, gap_mm)
+    ]
 
 
 def getSealsByCategory(category):
@@ -553,7 +613,82 @@ DOOR_SEAL_DEDUCTIONS = {
     "No Seal": 3,
 }
 
-# Seal options available per door type
+# Map specific catalogue seal display names → generic deduction category
+_SEAL_NAME_TO_DEDUCTION_KEY = {
+    "No Seal": "No Seal",
+    "Bubble Seal": "Bubble Seal",
+    # Magnet seals
+    "90/180 Magnet Seal": "Magnet Seal",
+    "135 Magnet Seal": "Magnet Seal",
+    "180 Flat Magnet Seal": "Magnet Seal",
+    # Hard lip seals
+    "90 Hard Lip Seal": "Hard Lip Seal",
+    "180 Hard Lip Seal": "Hard Lip Seal",
+    "Hard Lip Seal": "Hard Lip Seal",
+    # Soft lip seals → Side Lip deduction
+    "Centre Lip Seal": "Side Lip Seal",
+    "180 Soft Lip Seal": "Side Lip Seal",
+    "180 Long Lip Seal": "Side Lip Seal",
+    "90 Soft Lip Seal": "Side Lip Seal",
+    # Bottom seals → Side Lip deduction
+    "Wipe Seal With Bubble": "Side Lip Seal",
+    "Drip & Wipe Seal": "Side Lip Seal",
+    # Legacy names (backward compat)
+    "Magnet Seal": "Magnet Seal",
+    "Side Lip Seal": "Side Lip Seal",
+}
+
+# ---------------------------------------------------------------------------
+# Per-model seal option lists (display names → catalogue seal entries)
+# ---------------------------------------------------------------------------
+
+# -- Fixed Panel seal options --
+FIXED_PANEL_WALL_SEAL_OPTIONS = [
+    "No Seal", "Bubble Seal", "Centre Lip Seal", "180 Soft Lip Seal",
+]
+FIXED_PANEL_FLOOR_SEAL_OPTIONS = [
+    "No Seal", "Bubble Seal", "Centre Lip Seal", "180 Soft Lip Seal",
+]
+FIXED_PANEL_BETWEEN_SEAL_OPTIONS = [
+    "No Seal", "Hard Lip Seal",
+]
+
+# -- Hinged Door seal options --
+HINGED_DOOR_HINGE_SIDE_SEAL_OPTIONS = [
+    "No Seal", "Centre Lip Seal", "180 Soft Lip Seal", "180 Long Lip Seal",
+]
+HINGED_DOOR_FLOOR_SEAL_OPTIONS = [
+    "No Seal", "Wipe Seal With Bubble", "Drip & Wipe Seal",
+    "Centre Lip Seal", "180 Soft Lip Seal",
+]
+HINGED_DOOR_CLOSING_SEAL_OPTIONS = [
+    "No Seal", "90/180 Magnet Seal", "135 Magnet Seal",
+    "90 Hard Lip Seal", "180 Hard Lip Seal", "Bubble Seal",
+]
+
+# -- Sliding Door seal options --
+SLIDING_DOOR_FLOOR_SEAL_OPTIONS = ["No Seal"]
+SLIDING_DOOR_CLOSING_SEAL_OPTIONS = [
+    "No Seal", "180 Flat Magnet Seal", "90/180 Magnet Seal", "Bubble Seal",
+]
+SLIDING_DOOR_BACK_SEAL_OPTIONS = [
+    "No Seal", "90 Soft Lip Seal", "90 Hard Lip Seal",
+]
+
+# -- Bi-Fold Door seal options --
+BIFOLD_DOOR_FLOOR_SEAL_OPTIONS = [
+    "No Seal", "Wipe Seal With Bubble", "Drip & Wipe Seal",
+    "Centre Lip Seal", "180 Soft Lip Seal",
+]
+BIFOLD_DOOR_WALL_HINGE_SEAL_OPTIONS = [
+    "No Seal", "Centre Lip Seal", "180 Soft Lip Seal", "180 Long Lip Seal",
+]
+BIFOLD_DOOR_FOLD_HINGE_SEAL_OPTIONS = [
+    "No Seal", "Centre Lip Seal", "180 Soft Lip Seal",
+    "180 Long Lip Seal", "Bubble Seal",
+]
+
+# Legacy option lists (kept for backward compatibility)
 HINGED_DOOR_SEAL_OPTIONS = [
     "No Seal", "Magnet Seal", "Hard Lip Seal", "Bubble Seal", "Side Lip Seal",
 ]
@@ -582,20 +717,21 @@ def getReturnPanelMagnetDeduction(glass_thickness):
 
 # When DoorSide == HingeSide the door closes against the return (fixed) panel;
 # otherwise it closes against the wall.  Each case limits the allowed
-# MountingType and DoorSeal options.
+# MountingType and ClosingSeal options.
 CORNER_DOOR_CONSTRAINTS = {
     True: {   # DoorSide == HingeSide → closes on return panel
         "closing_against": "Return Panel",
         "mounting_types": ["Wall Mounted", "Pivot"],
         "seal_options": [
-            "No Seal", "Magnet Seal", "Hard Lip Seal", "Bubble Seal", "Side Lip Seal",
+            "No Seal", "90/180 Magnet Seal", "135 Magnet Seal",
+            "90 Hard Lip Seal", "180 Hard Lip Seal", "Bubble Seal",
         ],
     },
     False: {  # DoorSide != HingeSide → closes on wall
         "closing_against": "Wall",
         "mounting_types": ["Glass Mounted", "Pivot"],
         "seal_options": [
-            "No Seal", "Magnet Seal", "Bubble Seal", "Side Lip Seal",
+            "No Seal", "90/180 Magnet Seal", "Bubble Seal",
         ],
     },
 }
@@ -619,16 +755,19 @@ def getDoorSealDeduction(seal_type, closing_against):
     """
     Return the handle-side width deduction (mm) for a door closing seal.
 
+    Accepts both legacy names ("Magnet Seal") and catalogue display names
+    ("90/180 Magnet Seal").  Catalogue names are mapped to the generic
+    deduction key via ``_SEAL_NAME_TO_DEDUCTION_KEY``.
+
     Args:
-        seal_type: One of the keys in DOOR_SEAL_DEDUCTIONS
+        seal_type: Seal display name (legacy or catalogue)
         closing_against: "Inline Panel", "Return Panel", or "Wall"
-        glass_thickness: Glass thickness in mm (used for magnet + return panel)
 
     Returns:
         float: Deduction in mm
     """
-    entry = DOOR_SEAL_DEDUCTIONS.get(seal_type, 0)
+    deduction_key = _SEAL_NAME_TO_DEDUCTION_KEY.get(seal_type, seal_type)
+    entry = DOOR_SEAL_DEDUCTIONS.get(deduction_key, 0)
     if isinstance(entry, dict):
-        base = entry.get(closing_against, 0)
-        return base
+        return entry.get(closing_against, 0)
     return entry

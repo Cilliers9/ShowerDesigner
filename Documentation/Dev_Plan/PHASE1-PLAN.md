@@ -4,7 +4,7 @@
 
 This phase focuses on improving the parametric models to create production-ready shower enclosure designs with proper glass panel systems, door mechanisms, and hardware integration.
 
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-03-01
 
 ---
 
@@ -21,16 +21,16 @@ This phase focuses on improving the parametric models to create production-ready
 | 2.3 | Bi-Fold Door System | ✓ Complete | 100% |
 | 3.1 | Hinge Catalog | ✓ Complete | 100% |
 | 3.2 | Handle and Knob Library | ✓ Complete | 100% |
-| 3.3 | Support Bars and Braces | ◐ In Progress | 90% |
-| 3.4 | Seals and Gaskets | ◐ In Progress | 80% |
+| 3.3 | Support Bars and Braces | ✓ Complete | 100% |
+| 3.4 | Seals and Gaskets (Seal Selection Rules) | ✓ Complete | 100% |
 | 3.5 | Clamp Catalog | ✓ Complete | 100% |
-| 3.6 | Seal Deduction System | ◐ In Progress | 85% |
+| 3.6 | Seal Deduction System | ◐ In Progress | 90% |
 | 4.1 | Update CornerEnclosure | ◐ In Progress | 65% |
 | 4.2 | Update AlcoveEnclosure | ◐ In Progress | 50% |
 | 4.3 | Update WalkInEnclosure | ◐ In Progress | 50% |
 | 4.4 | Update CustomEnclosure | ◐ In Progress | 50% |
 
-**Overall Phase 1 Completion: ~87%**
+**Overall Phase 1 Completion: ~86%**
 
 ### Architecture Note
 All models have been refactored from standalone `Part::FeaturePython` to an `App::Part` assembly architecture.
@@ -155,8 +155,8 @@ These are hard constraints driven by the seal products in `CATALOGUE_SEAL_SPECS`
 
 | Gap Type | Min (mm) | Max (mm) | Purpose |
 |----------|----------|----------|---------|
-| Panel-to-wall | 6 | 10 | Seal fitment between glass edge and wall surface |
-| Panel-to-floor | 6 | 10 | Seal fitment between glass bottom edge and floor/tray |
+| Panel-to-wall | 2 | 10 | Seal fitment between glass edge and wall surface |
+| Panel-to-floor | 2 | 10 | Seal fitment between glass bottom edge and floor/tray |
 | Panel-to-panel | 2 | 2 | Seal fitment between adjacent glass panel edges |
 
 Implementation tasks:
@@ -164,21 +164,21 @@ Implementation tasks:
 1. **Update constants in `PanelConstraints.py`** (data layer, no FreeCAD imports for constants)
    ```python
    # Panel-to-wall and panel-to-floor gap (for seal fitment)
-   MIN_WALL_FLOOR_GAP = 6   # mm -- seal requires at least 6mm
+   MIN_WALL_FLOOR_GAP = 2   # mm -- minimum gap
    MAX_WALL_FLOOR_GAP = 10  # mm -- seal cannot span more than 10mm
 
    # Panel-to-panel gap (for inter-panel seals)
    PANEL_TO_PANEL_GAP = 2   # mm -- fixed gap for panel-to-panel seals
    ```
-   Note: The existing `MIN_WALL_CLEARANCE = 5` must be corrected to 6mm to match seal requirements.
+   Note: `MIN_WALL_CLEARANCE` has been updated to 2mm to match `MIN_WALL_FLOOR_GAP`.
 
 2. **Add validation functions in `PanelConstraints.py`**
    ```python
    def validateWallGap(gap_mm):
-       """Validate panel-to-wall or panel-to-floor gap is 6-10mm for seal fitment."""
+       """Validate panel-to-wall or panel-to-floor gap is 2-10mm for seal fitment."""
 
    def validatePanelToFloorGap(gap_mm):
-       """Validate panel-to-floor gap is 6-10mm for seal fitment."""
+       """Validate panel-to-floor gap is 2-10mm for seal fitment."""
 
    def validatePanelToPanelGap(gap_mm):
        """Validate panel-to-panel gap is exactly 2mm for inter-panel seals."""
@@ -402,7 +402,7 @@ def distributeEvenly(panels, total_width):
 
 ---
 
-#### 3.3 Support Bars and Braces -- ◐ IN PROGRESS (90%)
+#### 3.3 Support Bars and Braces -- ✓ COMPLETE
 **Priority:** Medium
 **Estimated Effort:** Medium
 **Dependencies:** 1.1
@@ -429,14 +429,14 @@ def distributeEvenly(panels, total_width):
 
 ---
 
-#### 3.4 Seals and Gaskets -- ◐ IN PROGRESS (80%)
+#### 3.4 Seals and Gaskets -- ✓ COMPLETE
 **Priority:** Medium
 **Estimated Effort:** Low
 **Dependencies:** 1.1, 2.1, 2.2
 
 **Objectives:**
 - Water seal visualization
-- Seal type selection
+- Seal type selection per location with catalogue seal names
 - Gap calculation
 
 **What was implemented:**
@@ -455,12 +455,30 @@ def distributeEvenly(panels, total_width):
   - Each with product codes, glass thickness ranges, PVC/PC material, clear/black colour options
 - Reference document: `Resources/Documents/seals-spec.md`
 
+**Per-location seal option lists** in `freecad/ShowerDesigner/Data/SealSpecs.py` (added commit 668f024):
+- 10 per-model seal option lists using catalogue seal names:
+  - `FIXED_PANEL_WALL_SEAL_OPTIONS`, `FIXED_PANEL_FLOOR_SEAL_OPTIONS`, `FIXED_PANEL_PANEL_SEAL_OPTIONS`
+  - `HINGED_DOOR_HINGE_SIDE_SEAL_OPTIONS`, `HINGED_DOOR_FLOOR_SEAL_OPTIONS`, `HINGED_DOOR_CLOSING_SEAL_OPTIONS`
+  - `SLIDING_DOOR_FLOOR_SEAL_OPTIONS`, `SLIDING_DOOR_CLOSING_SEAL_OPTIONS`, `SLIDING_DOOR_BACK_SEAL_OPTIONS`
+  - `BIFOLD_DOOR_FLOOR_SEAL_OPTIONS`, `BIFOLD_DOOR_WALL_HINGE_SEAL_OPTIONS`, `BIFOLD_DOOR_FOLD_HINGE_SEAL_OPTIONS`
+- `_SEAL_NAME_TO_DEDUCTION_KEY` -- Mapping from catalogue seal names to legacy deduction keys
+- `CORNER_DOOR_CONSTRAINTS` updated to use catalogue seal names
+
+**Model integration** (commit 668f024):
+- `FixedPanel.py`: Added `WallSeal`, `FloorSeal`, `PanelSeal` enum properties using catalogue names
+- `HingedDoor.py`: Replaced single `DoorSeal` with `HingeSideSeal`, `FloorSeal`, `ClosingSeal`
+- `SlidingDoor.py`: Replaced single `DoorSeal` with `FloorSeal`, `ClosingSeal`, `BackSeal`
+- `BiFoldDoor.py`: Replaced single `DoorSeal` with `FloorSeal`, `WallHingeSeal`, `FoldHingeSeal`
+- `CornerEnclosure.py`: Updated `DoorSeal` references to `ClosingSeal`, magnet seal check updated for catalogue names
+- `getDoorSealDeduction()` updated to accept both legacy and catalogue seal names via `_SEAL_NAME_TO_DEDUCTION_KEY` mapping
+
 **Helper functions** in SealSpecs.py:
 - `selectSeal(location, glass_thickness, gap)` -- legacy seal selection
 - `getSealsByCategory(category)`
 - `getSealsByAngle(angle)`
 - `getSealsByLocation(location)`
 - `lookupSealProductCode(code)`
+- `getDoorSealDeduction(seal_type, closing_against)` -- now accepts both legacy and catalogue names
 
 **Architecture note:** Seal data was extracted from `HardwareSpecs.py` into its own
 `Data/SealSpecs.py` module to keep the data layer manageable. The module follows the
@@ -468,8 +486,7 @@ same pure-Python pattern (no FreeCAD imports). Door seal deduction logic and
 enclosure constraint data also live in this file (see Task 3.6).
 
 **Remaining:**
-- No `Models/Seal.py` yet -- 3D geometry model for seal visualization not created
-- No seal gap calculation tied to panel spacing (see Task 1.3 remaining items)
+- No `Models/Seal.py` yet -- 3D geometry model for seal visualization not created (deferred to Phase 2)
 
 ---
 
@@ -683,7 +700,7 @@ enclosure constraint data also live in this file (see Task 3.6).
 
 ### Sprint 4 (Week 7-8): Finalization -- ◐ IN PROGRESS
 1. ✓ Implement BiFoldDoor (2.3) -- with Monza hinges + glass deductions + SillPlate
-2. ◐ Add Seals system (3.4) -- data specs complete (18 types), extracted to SealSpecs.py, 3D model not started
+2. ✓ Add Seals system (3.4) -- data specs (18 types) + per-location seal selection with catalogue names on all models
 3. ◐ Seal Deduction System (3.6) -- data layer + door integration complete, enclosure propagation in progress
 4. ◐ Update CustomEnclosure (4.4) -- assembly refactored, features remain
 5. ○ Documentation and examples -- not started
@@ -698,7 +715,9 @@ enclosure constraint data also live in this file (see Task 3.6).
 - ✓ `CATALOGUE_HANDLE_SPECS` -- 18 handle types with product codes
 - ✓ `BEVEL_CLAMP_SPECS` -- 13 Bevel clamp entries with product codes
 - ✓ Door mounting variants system (`DOOR_MOUNTING_VARIANTS`)
-- ◐ `Data/SealSpecs.py` -- Seal data extracted from HardwareSpecs into dedicated module
+- ✓ `Data/SealSpecs.py` -- Seal data extracted from HardwareSpecs into dedicated module
+- ✓ Per-location seal selection rules -- 10 option lists with catalogue seal names across all models
+- ✓ `_SEAL_NAME_TO_DEDUCTION_KEY` -- Backward-compatible mapping from catalogue to legacy seal names
 - ◐ `DOOR_SEAL_DEDUCTIONS` + `CORNER_DOOR_CONSTRAINTS` -- Seal deduction and enclosure constraint system
 - ◐ Glass deduction methods added to HingedDoor, BiFoldDoor, SlidingDoor, FixedPanel
 - ◐ CornerEnclosure door constraint filtering and fixed panel seal deduction propagation

@@ -16,11 +16,78 @@ from typing import List, Tuple, Optional
 MIN_PANEL_SPACING = 2  # Minimum gap for seals
 MAX_PANEL_SPACING = 10  # Maximum gap for waterproofing
 STANDARD_SPACING = 6  # Typical for frameless enclosures
-MIN_WALL_CLEARANCE = 5  # Minimum clearance from wall
+MIN_WALL_CLEARANCE = 2  # Minimum clearance from wall
 STANDARD_WALL_CLEARANCE = 10  # Standard clearance from wall
 
+# Seal-fitment gap rules (all in millimeters)
+MIN_WALL_FLOOR_GAP = 2   # mm minimum gap
+MAX_WALL_FLOOR_GAP = 10  # Seal cannot span more than 10mm
+PANEL_TO_PANEL_GAP = 2   # Fixed gap for panel-to-panel seals
 
-def validateSpacing(panel1, panel2, min_spacing: float = MIN_PANEL_SPACING, 
+
+def validateWallGap(gap_mm):
+    """Validate panel-to-wall gap is 6-10mm for seal fitment.
+
+    Args:
+        gap_mm: Gap between panel edge and wall in mm.
+
+    Returns:
+        tuple: (is_valid, message)
+    """
+    if gap_mm < MIN_WALL_FLOOR_GAP:
+        return False, (
+            f"Wall gap {gap_mm:.1f}mm is below minimum {MIN_WALL_FLOOR_GAP}mm "
+            f"for seal fitment"
+        )
+    if gap_mm > MAX_WALL_FLOOR_GAP:
+        return False, (
+            f"Wall gap {gap_mm:.1f}mm exceeds maximum {MAX_WALL_FLOOR_GAP}mm "
+            f"for seal fitment"
+        )
+    return True, f"Wall gap {gap_mm:.1f}mm is acceptable"
+
+
+def validatePanelToFloorGap(gap_mm):
+    """Validate panel-to-floor gap is 6-10mm for seal fitment.
+
+    Args:
+        gap_mm: Gap between panel bottom and floor in mm.
+
+    Returns:
+        tuple: (is_valid, message)
+    """
+    if gap_mm < MIN_WALL_FLOOR_GAP:
+        return False, (
+            f"Floor gap {gap_mm:.1f}mm is below minimum {MIN_WALL_FLOOR_GAP}mm "
+            f"for seal fitment"
+        )
+    if gap_mm > MAX_WALL_FLOOR_GAP:
+        return False, (
+            f"Floor gap {gap_mm:.1f}mm exceeds maximum {MAX_WALL_FLOOR_GAP}mm "
+            f"for seal fitment"
+        )
+    return True, f"Floor gap {gap_mm:.1f}mm is acceptable"
+
+
+def validatePanelToPanelGap(gap_mm):
+    """Validate panel-to-panel gap is exactly 2mm for seal fitment.
+
+    Args:
+        gap_mm: Gap between adjacent panels in mm.
+
+    Returns:
+        tuple: (is_valid, message)
+    """
+    tolerance = 0.5  # allow +/- 0.5mm
+    if abs(gap_mm - PANEL_TO_PANEL_GAP) > tolerance:
+        return False, (
+            f"Panel-to-panel gap {gap_mm:.1f}mm deviates from required "
+            f"{PANEL_TO_PANEL_GAP}mm (tolerance ±{tolerance}mm)"
+        )
+    return True, f"Panel-to-panel gap {gap_mm:.1f}mm is acceptable"
+
+
+def validateSpacing(panel1, panel2, min_spacing: float = MIN_PANEL_SPACING,
                     max_spacing: float = MAX_PANEL_SPACING) -> Tuple[bool, str, float]:
     """
     Check if spacing between two panels is within acceptable range.

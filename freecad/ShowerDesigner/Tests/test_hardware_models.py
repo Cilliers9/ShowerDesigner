@@ -48,36 +48,36 @@ def test_createHingeShape():
 
 
 def test_createHandleShape_knob():
-    """Test knob handle shape."""
+    """Test mushroom knob handle shape (catalogue key: mushroom_knob_b2b)."""
     print("\n" + "=" * 70)
-    print("Test: createHandleShape - Knob")
+    print("Test: createHandleShape - mushroom_knob_b2b")
     print("=" * 70)
 
-    shape = createHandleShape("Knob")
-    assert shape is not None, "Knob shape should not be None"
-    print("  createHandleShape('Knob') - PASSED")
+    shape = createHandleShape("mushroom_knob_b2b")
+    assert shape is not None, "mushroom_knob_b2b shape should not be None"
+    print("  createHandleShape('mushroom_knob_b2b') - PASSED")
 
 
 def test_createHandleShape_bar():
-    """Test bar handle shape."""
+    """Test pull handle (round) shape (catalogue key: pull_handle_round)."""
     print("\n" + "=" * 70)
-    print("Test: createHandleShape - Bar")
+    print("Test: createHandleShape - pull_handle_round")
     print("=" * 70)
 
-    shape = createHandleShape("Bar", 300)
-    assert shape is not None, "Bar shape should not be None"
-    print("  createHandleShape('Bar', 300) - PASSED")
+    shape = createHandleShape("pull_handle_round")
+    assert shape is not None, "pull_handle_round shape should not be None"
+    print("  createHandleShape('pull_handle_round') - PASSED")
 
 
 def test_createHandleShape_pull():
-    """Test pull handle shape."""
+    """Test flush handle with plate shape (catalogue key: flush_handle_with_plate)."""
     print("\n" + "=" * 70)
-    print("Test: createHandleShape - Pull")
+    print("Test: createHandleShape - flush_handle_with_plate")
     print("=" * 70)
 
-    shape = createHandleShape("Pull", 200)
-    assert shape is not None, "Pull shape should not be None"
-    print("  createHandleShape('Pull', 200) - PASSED")
+    shape = createHandleShape("flush_handle_with_plate")
+    assert shape is not None, "flush_handle_with_plate shape should not be None"
+    print("  createHandleShape('flush_handle_with_plate') - PASSED")
 
 
 def test_createHandleShape_none():

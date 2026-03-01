@@ -57,7 +57,7 @@ def test_basic_creation():
         assert vs.FoldDirection == "Inward"
         assert vs.HingeSide == "Left"
         assert vs.FoldAngle.Value == 0
-        assert vs.HandleType == "Bar"
+        assert vs.HandleType == "mushroom_knob_b2b"
         assert vs.ShowHardware is True
         assert vs.ShowFoldedPosition is False
         assert vs.HingeCount == 2
@@ -237,9 +237,10 @@ def test_handle_types():
     print("Test 7: Handle types")
     print("=" * 70)
 
-    for handle_type in ["None", "Knob", "Bar", "Pull"]:
+    for handle_type in ["None", "mushroom_knob_b2b", "pull_handle_round", "flush_handle_with_plate"]:
         try:
-            door = createBiFoldDoor(f"Handle_{handle_type}")
+            safe_name = handle_type.replace("_", "")
+            door = createBiFoldDoor(f"Handle_{safe_name}")
             vs = _get_varset(door)
             vs.HandleType = handle_type
             App.ActiveDocument.recompute()

@@ -131,14 +131,14 @@ class HandleChild:
             "App::PropertyEnumeration", "HandleType", "Handle", "Handle type"
         )
         obj.HandleType = list(HANDLE_SPECS.keys())
-        obj.HandleType = "Bar"
+        obj.HandleType = "mushroom_knob_b2b"
         obj.addProperty(
             "App::PropertyLength", "HandleLength", "Handle", "Handle length"
         ).HandleLength = 300
 
     def execute(self, obj):
         from freecad.ShowerDesigner.Models.Handle import createHandleShape
-        shape = createHandleShape(obj.HandleType, obj.HandleLength.Value)
+        shape = createHandleShape(obj.HandleType)
         if shape is None:
             shape = Part.makeSphere(5)
         obj.Shape = shape

@@ -256,6 +256,79 @@ class SupportBarCommand:
         return True
 
 
+class CutListCommand:
+    """Generate a cut list / bill of materials from selected assemblies"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Cut List',
+            'ToolTip': 'Generate cut list / bill of materials',
+        }
+
+    def Activated(self):
+        import FreeCAD as App
+
+        from freecad.ShowerDesigner.Data.CutList import (
+            aggregateItems,
+            toConsoleTable,
+            toCSV,
+        )
+        from freecad.ShowerDesigner.Models.CutListExtractor import CutListExtractor
+
+        doc = App.ActiveDocument
+        if doc is None:
+            App.Console.PrintError("Cut List: No active document.\n")
+            return
+
+        # Collect from selection, or fall back to all top-level App::Part objects
+        sel = Gui.Selection.getSelection()
+        targets = []
+        if sel:
+            targets = list(sel)
+        else:
+            for obj in doc.Objects:
+                if obj.TypeId == "App::Part" and getattr(obj, "InList", None) == []:
+                    targets.append(obj)
+
+        if not targets:
+            App.Console.PrintMessage("Cut List: No assemblies found in document.\n")
+            return
+
+        extractor = CutListExtractor()
+        all_items = []
+        for obj in targets:
+            all_items.extend(extractor.extract(obj))
+
+        if not all_items:
+            App.Console.PrintMessage("Cut List: No BOM items found.\n")
+            return
+
+        aggregated = aggregateItems(all_items)
+
+        # Print to console
+        App.Console.PrintMessage("\n=== Cut List / Bill of Materials ===\n")
+        App.Console.PrintMessage(toConsoleTable(aggregated))
+        App.Console.PrintMessage(
+            f"Total items: {sum(i.quantity for i in aggregated)}\n\n"
+        )
+
+        # Copy CSV to clipboard
+        csv_text = toCSV(aggregated)
+        try:
+            from PySide import QtWidgets  # type: ignore[import-untyped]
+            clipboard = QtWidgets.QApplication.clipboard()
+            clipboard.setText(csv_text)
+            App.Console.PrintMessage("CSV copied to clipboard.\n")
+        except Exception:
+            App.Console.PrintMessage(
+                "Could not copy to clipboard. CSV output:\n" + csv_text
+            )
+
+    def IsActive(self):
+        import FreeCAD as App
+        return App.ActiveDocument is not None
+
 
 # Register component commands
 Gui.addCommand('ShowerDesigner_GlassPanel', GlassPanelCommand())
@@ -268,7 +341,6 @@ Gui.addCommand('ShowerDesigner_Clamp', ClampCommand())
 Gui.addCommand('ShowerDesigner_SupportBar', SupportBarCommand())
 Gui.addCommand('ShowerDesigner_Measure',
                PlaceholderCommand('Measure', 'Measurement tools'))
-Gui.addCommand('ShowerDesigner_CutList',
-               PlaceholderCommand('Cut List', 'Generate cut list'))
+Gui.addCommand('ShowerDesigner_CutList', CutListCommand())
 Gui.addCommand('ShowerDesigner_Export',
                PlaceholderCommand('Export', 'Export design'))

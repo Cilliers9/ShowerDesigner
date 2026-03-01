@@ -9,7 +9,11 @@ and a door (hinged or sliding) at 90 degrees.
 import FreeCAD as App
 import Part
 from freecad.ShowerDesigner.Models.AssemblyBase import AssemblyController
-from freecad.ShowerDesigner.Data.HardwareSpecs import HARDWARE_FINISHES
+from freecad.ShowerDesigner.Models.ChildProxies import SupportBarChild
+from freecad.ShowerDesigner.Data.HardwareSpecs import (
+    HARDWARE_FINISHES,
+    SUPPORT_BAR_SPECS,
+)
 from freecad.ShowerDesigner.Data.SealSpecs import (
     getCornerDoorConstraints,
     getReturnPanelMagnetDeduction,
@@ -18,6 +22,13 @@ from freecad.ShowerDesigner.Data.PanelConstraints import (
     validatePanelToPanelGap,
     PANEL_TO_PANEL_GAP,
 )
+
+
+def _setupHardwareVP(obj, finish="Chrome"):
+    from freecad.ShowerDesigner.Models.HardwareViewProvider import (
+        setupHardwareViewProvider,
+    )
+    setupHardwareViewProvider(obj, finish)
 
 
 class CornerEnclosureAssembly(AssemblyController):
@@ -76,6 +87,36 @@ class CornerEnclosureAssembly(AssemblyController):
         vs.DoorSide = ["Left", "Right"]
         vs.DoorSide = "Right"
 
+        # Layout
+        vs.addProperty(
+            "App::PropertyBool", "ShowReturnPanel", "Layout",
+            "Add a return panel on the opposite side from the door"
+        ).ShowReturnPanel = False
+        vs.addProperty(
+            "App::PropertyLength", "ReturnPanelWidth", "Layout",
+            "Width of the return panel"
+        ).ReturnPanelWidth = 300
+
+        # Support bar
+        vs.addProperty(
+            "App::PropertyBool", "ShowSupportBar", "Support Bar",
+            "Add support bar to stabilize fixed panel"
+        ).ShowSupportBar = True
+        vs.addProperty(
+            "App::PropertyEnumeration", "SupportBarType", "Support Bar",
+            "Type of support bar"
+        )
+        vs.SupportBarType = list(SUPPORT_BAR_SPECS.keys())
+        vs.SupportBarType = "Horizontal"
+        vs.addProperty(
+            "App::PropertyLength", "SupportBarHeight", "Support Bar",
+            "Height of support bar from floor"
+        ).SupportBarHeight = 1900
+        vs.addProperty(
+            "App::PropertyLength", "SupportBarDiameter", "Support Bar",
+            "Diameter of support bar"
+        ).SupportBarDiameter = 16
+
         # Hardware display
         vs.addProperty(
             "App::PropertyEnumeration", "HardwareFinish", "Hardware Display",
@@ -113,6 +154,77 @@ class CornerEnclosureAssembly(AssemblyController):
 
         part_obj.addObject(door)
         self._manifest["DoorPanel"] = door.Name
+        self._manifest["_doorType"] = vs.DoorType
+
+    # ------------------------------------------------------------------
+    # Layout management
+    # ------------------------------------------------------------------
+
+    def _removeNestedAssembly(self, part_obj, role):
+        """Remove a nested App::Part assembly and all its children."""
+        name = self._manifest.pop(role, None)
+        if name is None:
+            return
+        doc = part_obj.Document
+        obj = doc.getObject(name)
+        if obj is None:
+            return
+        for child in list(obj.Group):
+            obj.removeObject(child)
+            doc.removeObject(child.Name)
+        part_obj.removeObject(obj)
+        doc.removeObject(name)
+
+    def _ensureLayout(self, part_obj, vs):
+        """Rebuild door panel if DoorType has changed."""
+        current = self._manifest.get("_doorType")
+        wanted = vs.DoorType
+        if current == wanted:
+            return
+        self._removeNestedAssembly(part_obj, "DoorPanel")
+        self._createDoorPanel(part_obj, vs)
+
+    def _ensureReturnPanel(self, part_obj):
+        """Create the return panel nested assembly if it doesn't exist."""
+        if "ReturnPanel" in self._manifest:
+            name = self._manifest["ReturnPanel"]
+            if part_obj.Document.getObject(name) is not None:
+                return
+        from freecad.ShowerDesigner.Models.FixedPanel import FixedPanelAssembly
+
+        doc = part_obj.Document
+        ret = doc.addObject("App::Part", "ReturnPanel")
+        FixedPanelAssembly(ret)
+        part_obj.addObject(ret)
+        self._manifest["ReturnPanel"] = ret.Name
+
+    # ------------------------------------------------------------------
+    # Support bar
+    # ------------------------------------------------------------------
+
+    def _updateSupportBar(self, part_obj, vs, fixed_panel_width):
+        """Create or update the support bar child."""
+        if not self._hasChild(part_obj, "SupportBar"):
+            self._addChild(
+                part_obj, "SupportBar", SupportBarChild,
+                lambda obj: _setupHardwareVP(obj, vs.HardwareFinish)
+            )
+
+        child = self._getChild(part_obj, "SupportBar")
+        if child is None:
+            return
+
+        child.BarType = vs.SupportBarType
+        child.Length = fixed_panel_width
+        child.Diameter = vs.SupportBarDiameter.Value
+
+        thickness = vs.GlassThickness.Value
+        bar_height = vs.SupportBarHeight.Value
+
+        child.Placement = App.Placement(
+            App.Vector(0, thickness / 2, bar_height),
+            App.Rotation(App.Vector(0, 0, 1), 0)
+        )
 
     # ------------------------------------------------------------------
     # Door constraint helpers
@@ -150,6 +262,8 @@ class CornerEnclosureAssembly(AssemblyController):
         if vs is None:
             return
 
+        self._ensureLayout(part_obj, vs)
+
         width = vs.Width.Value
         depth = vs.Depth.Value
         height = vs.Height.Value
@@ -160,6 +274,7 @@ class CornerEnclosureAssembly(AssemblyController):
             return
 
         door_right = vs.DoorSide == "Right"
+        fixed_panel_width = width if door_right else depth
 
         # --- Apply door constraints & check seal for fixed panel deduction ---
         fixed_panel_seal_ded = 0.0
@@ -186,7 +301,7 @@ class CornerEnclosureAssembly(AssemblyController):
         if fixed:
             fixed_vs = self._getNestedVarSet(fixed)
             if fixed_vs:
-                fixed_vs.Width = width if door_right else depth
+                fixed_vs.Width = fixed_panel_width
                 fixed_vs.Height = height
                 fixed_vs.Thickness = thickness
                 if hasattr(fixed_vs, "SealDeduction"):
@@ -196,25 +311,26 @@ class CornerEnclosureAssembly(AssemblyController):
                 if hasattr(fixed_vs, "HardwareFinish"):
                     fixed_vs.HardwareFinish = vs.HardwareFinish
             if door_right:
-                # Fixed panel on origin
                 fixed_vs.WallMountEdge = "Left"
                 fixed.Placement = App.Placement(
                     App.Vector(0, 0, 0),
                     App.Rotation(App.Vector(0, 0, 1), 0)
                 )
             else:
-                # Fixed panel on the right
                 fixed_vs.WallMountEdge = "Right"
                 fixed.Placement = App.Placement(
                     App.Vector(width, 0, 0),
                     App.Rotation(App.Vector(0, 0, 1), 90)
                 )
-        # --- Update door panel (door) ---
+
+        # --- Update door panel ---
         door = self._getChild(part_obj, "DoorPanel")
         if door:
             door_vs = self._getNestedVarSet(door)
             if door_vs:
-                door_vs.Width = (depth - thickness) if door_right else (width - thickness)
+                door_vs.Width = (
+                    (depth - thickness) if door_right else (width - thickness)
+                )
                 door_vs.Height = height
                 door_vs.Thickness = thickness
                 if hasattr(door_vs, "GlassType"):
@@ -222,22 +338,60 @@ class CornerEnclosureAssembly(AssemblyController):
                 if hasattr(door_vs, "HardwareFinish"):
                     door_vs.HardwareFinish = vs.HardwareFinish
             if door_right:
-                # Door on right
                 door.Placement = App.Placement(
                     App.Vector(width, thickness, 0),
                     App.Rotation(App.Vector(0, 0, 1), 90)
                 )
             else:
-                # Door at origin
                 door.Placement = App.Placement(
                     App.Vector(0, 0, 0),
                     App.Rotation(App.Vector(0, 0, 1), 0)
                 )
 
+        # --- Return panel (three-panel layout) ---
+        if vs.ShowReturnPanel:
+            self._ensureReturnPanel(part_obj)
+            ret = self._getChild(part_obj, "ReturnPanel")
+            if ret:
+                ret_vs = self._getNestedVarSet(ret)
+                if ret_vs:
+                    ret_vs.Width = vs.ReturnPanelWidth.Value
+                    ret_vs.Height = height
+                    ret_vs.Thickness = thickness
+                    if hasattr(ret_vs, "GlassType"):
+                        ret_vs.GlassType = vs.GlassType
+                    if hasattr(ret_vs, "HardwareFinish"):
+                        ret_vs.HardwareFinish = vs.HardwareFinish
+                if door_right:
+                    # Return panel on the left side (front of depth wall)
+                    ret_vs.WallMountEdge = "Right"
+                    ret.Placement = App.Placement(
+                        App.Vector(0, 0, 0),
+                        App.Rotation(App.Vector(0, 0, 1), 90)
+                    )
+                else:
+                    # Return panel on the right side (front of depth wall)
+                    ret_vs.WallMountEdge = "Left"
+                    ret.Placement = App.Placement(
+                        App.Vector(width, depth, 0),
+                        App.Rotation(App.Vector(0, 0, 1), -90)
+                    )
+        else:
+            if "ReturnPanel" in self._manifest:
+                self._removeNestedAssembly(part_obj, "ReturnPanel")
+
+        # --- Support bar ---
+        if vs.ShowSupportBar:
+            self._updateSupportBar(part_obj, vs, fixed_panel_width)
+        else:
+            if self._hasChild(part_obj, "SupportBar"):
+                self._removeChild(part_obj, "SupportBar")
+
+        # --- Hardware finish propagation ---
+        self._updateAllHardwareFinish(part_obj, vs.HardwareFinish)
+
         # --- Validate panel-to-panel gap (fixed panel ↔ door panel) ---
-        # The gap between back panel and side panel is the glass thickness
-        # (they meet at the corner). Validate it against seal requirements.
-        gap = thickness  # panels meet at corner, gap = glass thickness
+        gap = thickness
         valid, msg = validatePanelToPanelGap(gap)
         if not valid:
             App.Console.PrintWarning(f"CornerEnclosure: {msg}\n")

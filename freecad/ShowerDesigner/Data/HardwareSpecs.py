@@ -581,29 +581,17 @@ def getHingeModelsForVariant(variant):
 # Handle specifications
 # ---------------------------------------------------------------------------
 HANDLE_SPECS = {
-    "Knob": {
-        "diameter": 40,       # mm
-        "depth": 15,          # mm (projection from glass)
-        "mounting_type": "Through-bolt",
-        "ada_compliant": False,
+    "mushroom_knob_b2b": {
+        "model_file": "MushroomKnob.FCStd",
+        "catalogue_key": "mushroom_knob_b2b",
     },
-    "Bar": {
-        "diameter": 24,       # mm (bar cross-section)
-        "lengths": [300, 450, 600],  # mm available lengths
-        "mounting_type": "Through-bolt",
-        "ada_compliant": True,
+    "pull_handle_round": {
+        "model_file": "RoundPullHandle.FCStd",
+        "catalogue_key": "pull_handle_round",
     },
-    "Pull": {
-        "diameter": 20,       # mm (bar cross-section)
-        "lengths": [200, 300, 400],  # mm available lengths
-        "mounting_type": "Through-bolt",
-        "ada_compliant": True,
-    },
-    "Towel_Bar": {
-        "diameter": 24,       # mm
-        "lengths": [300, 450, 600],  # mm
-        "mounting_type": "Through-bolt",
-        "ada_compliant": True,
+    "flush_handle_with_plate": {
+        "model_file": "FlushHandlePlate.FCStd",
+        "catalogue_key": "flush_handle_with_plate",
     },
 }
 
@@ -992,22 +980,22 @@ HANDLE_PLACEMENT_DEFAULTS = {
 SUPPORT_BAR_SPECS = {
     "Horizontal": {
         "diameter_range": [12, 25],  # mm
-        "default_diameter": 16,
+        "default_diameter": 19,
         "mounting": "Glass-to-Wall",
     },
     "Vertical": {
         "diameter_range": [12, 25],
-        "default_diameter": 16,
+        "default_diameter": 19,
         "mounting": "Glass-to-Floor-to-Ceiling",
     },
     "Diagonal": {
         "diameter_range": [12, 25],
-        "default_diameter": 16,
+        "default_diameter": 19,
         "mounting": "Glass-to-Wall",
     },
     "Ceiling": {
         "diameter_range": [12, 25],
-        "default_diameter": 16,
+        "default_diameter": 19,
         "mounting": "Glass-to-Ceiling",
     },
 }
@@ -1015,6 +1003,394 @@ SUPPORT_BAR_SPECS = {
 SUPPORT_BAR_RULES = {
     "walkin_needs_bar_width": 1000,    # mm — walk-in panels wider than this need a bar
     "fixed_needs_ceiling_height": 2400,  # mm — fixed panels taller than this need ceiling support
+}
+
+# ---------------------------------------------------------------------------
+# Catalogue stabiliser specifications — from Showers-Ex-Sliding-Catalogue, pp. 42–48
+# ---------------------------------------------------------------------------
+
+CATALOGUE_STABILISER_FINISHES = [
+    "Bright Chrome",
+    "Satin Chrome",
+    "Bright Polished",
+    "Antique Brass",
+    "Matte Black",
+    "Brushed",
+]
+
+CATALOGUE_STABILISER_SPECS = {
+    # ------------------------------------------------------------------
+    # Round connectors (11 entries)
+    # ------------------------------------------------------------------
+    "round_adjustable_wall_bracket": {
+        "name": "Adjustable Wall Mount Bracket",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "adjustable_wall_bracket",
+        "bar_diameter": 19,
+        "bore": 19.268,
+        "angle_adjustable": True,
+        "angle_range": [90, 270],
+        "angle_fixed": None,
+        "hole_size": None,
+        "dimensions": {"width": 35, "depth": 48, "height": 54},
+        "product_codes": [
+            {"code": "GSH-301", "material": "Brass", "finish": "Bright Chrome"},
+            {"code": "GSH-311", "material": "Brass", "finish": "Satin Chrome"},
+        ],
+    },
+    "round_adjustable_glass_bracket": {
+        "name": "Adjustable Glass Mount Bracket",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "adjustable_glass_bracket",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": True,
+        "angle_range": [90, 270],
+        "angle_fixed": None,
+        "hole_size": 14,
+        "dimensions": {"width": 29, "depth": 28, "height": 48},
+        "product_codes": [
+            {"code": "GSH-401", "material": "Brass", "finish": "Bright Chrome"},
+            {"code": "GSH-411", "material": "Brass", "finish": "Satin Chrome"},
+        ],
+    },
+    "round_adjustable_90_flange": {
+        "name": "90deg Adjustable Flange",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "adjustable_90_flange",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": True,
+        "angle_range": [90, 270],
+        "angle_fixed": None,
+        "hole_size": None,
+        "dimensions": {"diameter": 43.5},
+        "product_codes": [
+            {"code": "KA-003-19", "material": "Brass", "finish": "Bright Chrome"},
+        ],
+    },
+    "round_wall_flange": {
+        "name": "Wall Flange",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "wall_flange",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": 90,
+        "hole_size": None,
+        "dimensions": {"diameter": 35, "projection": 25},
+        "product_codes": [
+            {"code": "KA-101-19", "material": "Brass", "finish": "Bright Chrome"},
+            {"code": "KA-111-19", "material": "Brass", "finish": "Satin Chrome"},
+            {"code": "KA-181-19", "material": "Brass", "finish": "Antique Brass"},
+            {"code": "KA-191-19", "material": "Brass", "finish": "Matte Black"},
+        ],
+    },
+    "round_glass_mount_straight": {
+        "name": "Glass Mount (straight through)",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "glass_mount_straight",
+        "bar_diameter": 19,
+        "bore": 19.5,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": None,
+        "hole_size": 12,
+        "dimensions": {"width": 53, "height": 25},
+        "product_codes": [
+            {"code": "KA-102-19", "material": "Brass", "finish": "Bright Chrome"},
+            {"code": "KA-112-19", "material": "Brass", "finish": "Satin Chrome"},
+            {"code": "KA-182-19", "material": "Brass", "finish": "Antique Brass"},
+            {"code": "KA-192-19", "material": "Brass", "finish": "Matte Black"},
+        ],
+    },
+    "round_glass_mount_offset": {
+        "name": "Glass Mount Stabiliser",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "glass_mount_offset",
+        "bar_diameter": 19,
+        "bore": 19.5,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": None,
+        "hole_size": 12,
+        "dimensions": {"width": 53, "height": 25, "length": 60},
+        "product_codes": [
+            {"code": "KA-103-19", "material": "Brass", "finish": "Bright Chrome"},
+            {"code": "KA-113-19", "material": "Brass", "finish": "Satin Chrome"},
+            {"code": "KA-183-19", "material": "Brass", "finish": "Antique Brass"},
+            {"code": "KA-193-19", "material": "Brass", "finish": "Matte Black"},
+        ],
+    },
+    "round_adjustable_90_glass_mount": {
+        "name": "Adjustable 90deg Glass Mount",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "adjustable_90_glass_mount",
+        "bar_diameter": 19,
+        "bore": 19.5,
+        "angle_adjustable": True,
+        "angle_range": [80, 100],
+        "angle_fixed": None,
+        "hole_size": None,
+        "dimensions": {"width": 57, "depth": 50, "height": 25},
+        "product_codes": [
+            {"code": "KA-106-19", "material": "Brass", "finish": "Bright Chrome"},
+        ],
+    },
+    "round_wall_mount_45": {
+        "name": "Wall Mount 45deg",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "wall_mount_45",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": 45,
+        "hole_size": None,
+        "dimensions": {"projection": 25},
+        "product_codes": [
+            {"code": "KA-107-19", "material": "Brass", "finish": "Bright Chrome"},
+            {"code": "KA-187-19", "material": "Brass", "finish": "Antique Brass"},
+            {"code": "KA-197-19", "material": "Brass", "finish": "Matte Black"},
+        ],
+    },
+    "round_tee_coupler": {
+        "name": "Tee-Coupler",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "tee_coupler",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": 90,
+        "hole_size": None,
+        "dimensions": {"width": 70, "height": 65, "projection": 25},
+        "product_codes": [
+            {"code": "KA-108-19", "material": "Brass", "finish": "Bright Chrome"},
+            {"code": "KA-118-19", "material": "Brass", "finish": "Satin Chrome"},
+            {"code": "KA-188-19", "material": "Brass", "finish": "Antique Brass"},
+            {"code": "KA-198-19", "material": "Brass", "finish": "Matte Black"},
+        ],
+    },
+    "round_90deg_fixed_connector": {
+        "name": "90deg Fixed Connector",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "90deg_fixed_connector",
+        "bar_diameter": 19,
+        "bore": 19.5,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": 90,
+        "hole_size": None,
+        "dimensions": {"width": 60, "height": 25, "arm_a": 24, "arm_b": 20},
+        "product_codes": [
+            {"code": "KA-109-19", "material": "Brass", "finish": "Bright Chrome"},
+        ],
+    },
+    "round_through_glass_flange": {
+        "name": "Through Glass Flange",
+        "profile_shape": "round",
+        "component_type": "connector",
+        "connector_role": "through_glass_flange",
+        "bar_diameter": 19,
+        "bore": 20.4,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": None,
+        "hole_size": 14,
+        "dimensions": {"diameter": 30, "depth": 20.4},
+        "product_codes": [
+            {"code": "DP-GFT", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "DP-GFT-MB", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Round bars (1 entry, 16 product codes)
+    # ------------------------------------------------------------------
+    "round_19_bar": {
+        "name": "19mm Round Support Bar",
+        "profile_shape": "round",
+        "component_type": "bar",
+        "bar_diameter": 19,
+        "wall_thickness": 1,
+        "bar_lengths": [1000, 1500, 2000, 3000],
+        "dimensions": {"outer_diameter": 19, "inner_diameter": 17},
+        "product_codes": [
+            # 1000 mm — S/S 304
+            {"code": "SB19-1000A", "material": "S/S 304", "finish": "Antique Brass",
+             "bar_length": 1000},
+            {"code": "SB19-1000B", "material": "S/S 304", "finish": "Bright Polished",
+             "bar_length": 1000},
+            {"code": "SB19-1000N", "material": "S/S 304", "finish": "Brushed",
+             "bar_length": 1000},
+            # 1000 mm — Aluminium
+            {"code": "SBA19-1000MB", "material": "Aluminium", "finish": "Matte Black",
+             "bar_length": 1000},
+            # 1500 mm — S/S 304
+            {"code": "SB19-1500A", "material": "S/S 304", "finish": "Antique Brass",
+             "bar_length": 1500},
+            {"code": "SB19-1500B", "material": "S/S 304", "finish": "Bright Polished",
+             "bar_length": 1500},
+            {"code": "SB19-1500N", "material": "S/S 304", "finish": "Brushed",
+             "bar_length": 1500},
+            # 1500 mm — Aluminium
+            {"code": "SBA19-1500MB", "material": "Aluminium", "finish": "Matte Black",
+             "bar_length": 1500},
+            # 2000 mm — S/S 304
+            {"code": "SB19-2000A", "material": "S/S 304", "finish": "Antique Brass",
+             "bar_length": 2000},
+            {"code": "SB19-2000B", "material": "S/S 304", "finish": "Bright Polished",
+             "bar_length": 2000},
+            {"code": "SB19-2000N", "material": "S/S 304", "finish": "Brushed",
+             "bar_length": 2000},
+            # 2000 mm — Aluminium
+            {"code": "SBA19-2000MB", "material": "Aluminium", "finish": "Matte Black",
+             "bar_length": 2000},
+            # 3000 mm — S/S 304
+            {"code": "SB19-3000A", "material": "S/S 304", "finish": "Antique Brass",
+             "bar_length": 3000},
+            {"code": "SB19-3000B", "material": "S/S 304", "finish": "Bright Polished",
+             "bar_length": 3000},
+            {"code": "SB19-3000N", "material": "S/S 304", "finish": "Brushed",
+             "bar_length": 3000},
+            # 3000 mm — Aluminium
+            {"code": "SBA19-3000MB", "material": "Aluminium", "finish": "Matte Black",
+             "bar_length": 3000},
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Square connectors (5 entries)
+    # ------------------------------------------------------------------
+    "square_wall_flange": {
+        "name": "Square Wall Flange",
+        "profile_shape": "square",
+        "component_type": "connector",
+        "connector_role": "wall_flange",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": 90,
+        "hole_size": None,
+        "dimensions": {"width": 26, "height": 28},
+        "product_codes": [
+            {"code": "KA-201-19", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "KA-291-19", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "square_glass_mount_straight": {
+        "name": "Square Glass Mount (straight through)",
+        "profile_shape": "square",
+        "component_type": "connector",
+        "connector_role": "glass_mount_straight",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": None,
+        "hole_size": 12,
+        "dimensions": {"width": 51, "height": 28},
+        "product_codes": [
+            {"code": "KA-202-19", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "KA-292-19", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "square_glass_mount_offset": {
+        "name": "Square Glass Mount",
+        "profile_shape": "square",
+        "component_type": "connector",
+        "connector_role": "glass_mount_offset",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": None,
+        "hole_size": 12,
+        "dimensions": {"width": 50, "height": 28},
+        "product_codes": [
+            {"code": "KA-203-19", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "KA-293-19", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "square_wall_mount_45": {
+        "name": "Square Wall Mount 45deg",
+        "profile_shape": "square",
+        "component_type": "connector",
+        "connector_role": "wall_mount_45",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": 45,
+        "hole_size": None,
+        "dimensions": {"width": 26, "height": 26, "length": 74},
+        "product_codes": [
+            {"code": "KA-207-19", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "KA-297-19", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    "square_tee_coupler": {
+        "name": "Square Tee-Coupler",
+        "profile_shape": "square",
+        "component_type": "connector",
+        "connector_role": "tee_coupler",
+        "bar_diameter": 19,
+        "bore": 19.6,
+        "angle_adjustable": False,
+        "angle_range": None,
+        "angle_fixed": 90,
+        "hole_size": None,
+        "dimensions": {"width": 62},
+        "product_codes": [
+            {"code": "KA-208-19", "material": "S/S 304", "finish": "Bright Polished"},
+            {"code": "KA-298-19", "material": "S/S 304", "finish": "Matte Black"},
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Square bars (1 entry, 8 product codes)
+    # ------------------------------------------------------------------
+    "square_19_bar": {
+        "name": "19mm Square Support Bar",
+        "profile_shape": "square",
+        "component_type": "bar",
+        "bar_diameter": 19,
+        "wall_thickness": 1.5,
+        "bar_lengths": [1000, 1500, 2000, 3000],
+        "dimensions": {"outer_size": 19, "inner_size": 16},
+        "product_codes": [
+            # 1000 mm
+            {"code": "ST19-1000B", "material": "S/S 304", "finish": "Bright Polished",
+             "bar_length": 1000},
+            {"code": "STA19-1000MB", "material": "Aluminium", "finish": "Matte Black",
+             "bar_length": 1000},
+            # 1500 mm
+            {"code": "ST19-1500B", "material": "S/S 304", "finish": "Bright Polished",
+             "bar_length": 1500},
+            {"code": "STA19-1500MB", "material": "Aluminium", "finish": "Matte Black",
+             "bar_length": 1500},
+            # 2000 mm
+            {"code": "ST19-2000B", "material": "S/S 304", "finish": "Bright Polished",
+             "bar_length": 2000},
+            {"code": "STA19-2000MB", "material": "Aluminium", "finish": "Matte Black",
+             "bar_length": 2000},
+            # 3000 mm
+            {"code": "ST19-3000B", "material": "S/S 304", "finish": "Bright Polished",
+             "bar_length": 3000},
+            {"code": "STA19-3000MB", "material": "Aluminium", "finish": "Matte Black",
+             "bar_length": 3000},
+        ],
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -1973,6 +2349,56 @@ def lookupHandleProductCode(code):
         tuple: (handle_key, product_code_dict) or (None, None)
     """
     for key, spec in CATALOGUE_HANDLE_SPECS.items():
+        for pc in spec["product_codes"]:
+            if pc["code"] == code:
+                return key, pc
+    return None, None
+
+
+def getStabilisersByProfile(profile_shape):
+    """
+    Return catalogue stabiliser keys matching a profile shape.
+
+    Args:
+        profile_shape: "round" or "square"
+
+    Returns:
+        list[str]: Matching keys from CATALOGUE_STABILISER_SPECS
+    """
+    return [
+        key for key, spec in CATALOGUE_STABILISER_SPECS.items()
+        if spec["profile_shape"] == profile_shape
+    ]
+
+
+def getStabilisersByRole(connector_role):
+    """
+    Return catalogue stabiliser keys matching a connector role.
+
+    Args:
+        connector_role: e.g. "wall_flange", "tee_coupler", "glass_mount_straight"
+
+    Returns:
+        list[str]: Matching keys from CATALOGUE_STABILISER_SPECS (connectors only)
+    """
+    return [
+        key for key, spec in CATALOGUE_STABILISER_SPECS.items()
+        if spec["component_type"] == "connector"
+        and spec.get("connector_role") == connector_role
+    ]
+
+
+def lookupStabiliserProductCode(code):
+    """
+    Find the catalogue entry and variant for a stabiliser product code.
+
+    Args:
+        code: Product code string (e.g. "KA-101-19", "SB19-2000B")
+
+    Returns:
+        tuple: (stabiliser_key, product_code_dict) or (None, None)
+    """
+    for key, spec in CATALOGUE_STABILISER_SPECS.items():
         for pc in spec["product_codes"]:
             if pc["code"] == code:
                 return key, pc

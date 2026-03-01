@@ -55,7 +55,7 @@ def test_basic_creation():
         assert vs.SlideDirection == "Right"
         assert vs.OverlapWidth.Value == 50
         assert vs.RollerType == "Standard"
-        assert vs.HandleType == "Bar"
+        assert vs.HandleType == "flush_handle_with_plate"
         assert vs.HardwareFinish == "Chrome"
         assert vs.ShowHardware is True
         print("  OK: VarSet default properties correct")
@@ -150,9 +150,10 @@ def test_handle_types():
     print("Test 4: Handle types")
     print("=" * 70)
 
-    for handle_type in ["None", "Knob", "Bar", "Pull"]:
+    for handle_type in ["None", "mushroom_knob_b2b", "pull_handle_round", "flush_handle_with_plate"]:
         try:
-            door = createSlidingDoor(f"Handle_{handle_type}")
+            safe_name = handle_type.replace("_", "")
+            door = createSlidingDoor(f"Handle_{safe_name}")
             vs = _get_varset(door)
             vs.HandleType = handle_type
             App.ActiveDocument.recompute()

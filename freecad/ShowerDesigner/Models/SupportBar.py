@@ -35,11 +35,11 @@ def createSupportBarShape(bar_type, length, diameter):
         return Part.makeCylinder(radius, length, App.Vector(0, 0, 0), App.Vector(0, 0, 1))
     elif bar_type == "Diagonal":
         # 45-degree from horizontal (X-Z plane)
-        direction = App.Vector(1, 0, 1).normalize()
+        direction = App.Vector(1, 1, 0).normalize()
         return Part.makeCylinder(radius, length, App.Vector(0, 0, 0), direction)
     else:
         # Horizontal: X-axis aligned
-        return Part.makeCylinder(radius, length, App.Vector(0, 0, 0), App.Vector(1, 0, 0))
+        return Part.makeCylinder(radius, length, App.Vector(0, 0, 0), App.Vector(0, 1, 0))
 
 
 class SupportBar:
@@ -77,7 +77,7 @@ class SupportBar:
             "Diameter",
             "Support Bar",
             "Diameter of the bar (12-25mm)"
-        ).Diameter = 16
+        ).Diameter = 19
 
         obj.addProperty(
             "App::PropertyEnumeration",

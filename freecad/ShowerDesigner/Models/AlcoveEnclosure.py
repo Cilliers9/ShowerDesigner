@@ -14,6 +14,7 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HARDWARE_FINISHES,
     SLIDER_SYSTEM_SPECS,
 )
+from freecad.ShowerDesigner.Data.PanelConstraints import validatePanelToPanelGap
 
 
 class AlcoveEnclosureAssembly(AssemblyController):
@@ -287,6 +288,16 @@ class AlcoveEnclosureAssembly(AssemblyController):
                 panel.Placement = App.Placement(
                     App.Vector(door_width - overlap, 0, 0), App.Rotation()
                 )
+
+        # --- Validate panel-to-panel gap (fixed panel ↔ door) ---
+        # In inline layouts the panels are adjacent; the gap is determined
+        # by the overlap/clearance values.  When overlap == 0 the nominal
+        # gap is 0 (butted), otherwise validate the effective gap.
+        if overlap == 0 and clearance == 0:
+            gap = thickness  # butt joint, gap equals glass thickness
+            valid, msg = validatePanelToPanelGap(gap)
+            if not valid:
+                App.Console.PrintWarning(f"AlcoveEnclosure: {msg}\n")
 
     def _getNestedVarSet(self, part_obj):
         """Get VarSet from a nested assembly."""

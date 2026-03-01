@@ -48,6 +48,11 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     validateSliderSystem,
     lookupSliderProductCode,
     BEVEL_CLAMP_SPECS,
+    CATALOGUE_STABILISER_FINISHES,
+    CATALOGUE_STABILISER_SPECS,
+    getStabilisersByProfile,
+    getStabilisersByRole,
+    lookupStabiliserProductCode,
 )
 
 from freecad.ShowerDesigner.Data.SealSpecs import (
@@ -93,10 +98,13 @@ def test_bifold_hinge_specs():
 
 
 def test_handle_specs_have_required_keys():
+    """HANDLE_SPECS now stores minimal catalogue references (model_file + catalogue_key)."""
     for key, spec in HANDLE_SPECS.items():
-        assert "diameter" in spec or "lengths" in spec, f"{key} missing dimensions"
-        assert "mounting_type" in spec
-        assert "ada_compliant" in spec
+        assert "model_file" in spec, f"{key} missing model_file"
+        assert "catalogue_key" in spec, f"{key} missing catalogue_key"
+        assert spec["catalogue_key"] == key, (
+            f"{key} catalogue_key mismatch: {spec['catalogue_key']}"
+        )
 
 
 def test_clamp_specs_have_required_keys():
@@ -489,17 +497,20 @@ def test_validateHandlePlacement_ada_too_high():
 
 def test_selectSeal_bottom():
     result = selectSeal("bottom", 8, 5)
-    assert result == "door_sweep"
+    # Now returns catalogue key when a catalogue seal spans the gap
+    assert result == "wipe_seal_bubble"
 
 
 def test_selectSeal_side():
     result = selectSeal("side", 8, 5)
-    assert result == "vertical_seal"
+    # Now returns catalogue key when a catalogue seal spans the gap
+    assert result == "centre_lip"
 
 
 def test_selectSeal_magnetic():
     result = selectSeal("magnetic", 8, 5)
-    assert result == "magnetic_seal"
+    # Now returns catalogue key when a catalogue seal spans the gap
+    assert result == "90_180_magnetic"
 
 
 # -----------------------------------------------------------------------
@@ -804,6 +815,139 @@ def test_lookupSliderProductCode_unknown():
     key, pc = lookupSliderProductCode("NONEXISTENT-999")
     assert key is None
     assert pc is None
+
+
+# -----------------------------------------------------------------------
+# Catalogue stabiliser specs tests
+# -----------------------------------------------------------------------
+
+def test_catalogue_stabiliser_finishes_not_empty():
+    assert len(CATALOGUE_STABILISER_FINISHES) >= 6
+    assert "Bright Chrome" in CATALOGUE_STABILISER_FINISHES
+    assert "Matte Black" in CATALOGUE_STABILISER_FINISHES
+    assert "Brushed" in CATALOGUE_STABILISER_FINISHES
+
+
+def test_catalogue_stabiliser_specs_count():
+    assert len(CATALOGUE_STABILISER_SPECS) == 18
+
+
+def test_catalogue_stabiliser_specs_structure():
+    required_keys = {"name", "profile_shape", "component_type", "bar_diameter",
+                     "dimensions", "product_codes"}
+    valid_profiles = {"round", "square"}
+    valid_types = {"connector", "bar"}
+    for key, spec in CATALOGUE_STABILISER_SPECS.items():
+        for rk in required_keys:
+            assert rk in spec, f"{key} missing '{rk}'"
+        assert spec["profile_shape"] in valid_profiles, (
+            f"{key} has invalid profile_shape '{spec['profile_shape']}'"
+        )
+        assert spec["component_type"] in valid_types, (
+            f"{key} has invalid component_type '{spec['component_type']}'"
+        )
+        assert spec["bar_diameter"] == 19, f"{key} bar_diameter != 19"
+        assert len(spec["product_codes"]) > 0, f"{key} has no product codes"
+        for pc in spec["product_codes"]:
+            assert "code" in pc and "material" in pc and "finish" in pc
+
+
+def test_catalogue_stabiliser_connectors_have_role():
+    for key, spec in CATALOGUE_STABILISER_SPECS.items():
+        if spec["component_type"] == "connector":
+            assert "connector_role" in spec, f"{key} connector missing connector_role"
+            assert "bore" in spec, f"{key} connector missing bore"
+            assert "angle_adjustable" in spec, f"{key} connector missing angle_adjustable"
+
+
+def test_catalogue_stabiliser_bars_have_lengths():
+    for key, spec in CATALOGUE_STABILISER_SPECS.items():
+        if spec["component_type"] == "bar":
+            assert "bar_lengths" in spec, f"{key} bar missing bar_lengths"
+            assert len(spec["bar_lengths"]) >= 2, f"{key} should have multiple bar lengths"
+            for pc in spec["product_codes"]:
+                assert "bar_length" in pc, f"{key}/{pc['code']} missing bar_length"
+                assert pc["bar_length"] in spec["bar_lengths"], (
+                    f"{key}/{pc['code']} bar_length {pc['bar_length']} not in {spec['bar_lengths']}"
+                )
+
+
+def test_catalogue_stabiliser_product_codes_unique():
+    seen = {}
+    for key, spec in CATALOGUE_STABILISER_SPECS.items():
+        for pc in spec["product_codes"]:
+            code = pc["code"]
+            assert code not in seen, (
+                f"Duplicate product code '{code}' in '{key}' and '{seen[code]}'"
+            )
+            seen[code] = key
+
+
+def test_catalogue_stabiliser_round_count():
+    round_keys = [k for k, s in CATALOGUE_STABILISER_SPECS.items()
+                  if s["profile_shape"] == "round"]
+    assert len(round_keys) == 12  # 11 connectors + 1 bar
+
+
+def test_catalogue_stabiliser_square_count():
+    square_keys = [k for k, s in CATALOGUE_STABILISER_SPECS.items()
+                   if s["profile_shape"] == "square"]
+    assert len(square_keys) == 6  # 5 connectors + 1 bar
+
+
+def test_getStabilisersByProfile_round():
+    result = getStabilisersByProfile("round")
+    assert len(result) == 12
+    assert "round_wall_flange" in result
+    assert "round_19_bar" in result
+
+
+def test_getStabilisersByProfile_square():
+    result = getStabilisersByProfile("square")
+    assert len(result) == 6
+    assert "square_wall_flange" in result
+    assert "square_19_bar" in result
+
+
+def test_getStabilisersByRole_wall_flange():
+    result = getStabilisersByRole("wall_flange")
+    assert len(result) == 2
+    assert "round_wall_flange" in result
+    assert "square_wall_flange" in result
+
+
+def test_getStabilisersByRole_tee_coupler():
+    result = getStabilisersByRole("tee_coupler")
+    assert len(result) == 2
+    assert "round_tee_coupler" in result
+    assert "square_tee_coupler" in result
+
+
+def test_lookupStabiliserProductCode_known():
+    key, pc = lookupStabiliserProductCode("KA-101-19")
+    assert key == "round_wall_flange"
+    assert pc["material"] == "Brass"
+    assert pc["finish"] == "Bright Chrome"
+
+
+def test_lookupStabiliserProductCode_bar():
+    key, pc = lookupStabiliserProductCode("SB19-2000B")
+    assert key == "round_19_bar"
+    assert pc["bar_length"] == 2000
+    assert pc["finish"] == "Bright Polished"
+
+
+def test_lookupStabiliserProductCode_unknown():
+    key, pc = lookupStabiliserProductCode("NONEXISTENT-999")
+    assert key is None
+    assert pc is None
+
+
+def test_support_bar_specs_default_diameter_19():
+    for key, spec in SUPPORT_BAR_SPECS.items():
+        assert spec["default_diameter"] == 19, (
+            f"SUPPORT_BAR_SPECS['{key}'] default_diameter should be 19, got {spec['default_diameter']}"
+        )
 
 
 # -----------------------------------------------------------------------

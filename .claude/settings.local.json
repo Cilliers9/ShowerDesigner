@@ -18,7 +18,8 @@
       "Bash(pdftotext:*)",
       "mcp__freecad__set_view_angle",
       "mcp__freecad__fit_all",
-      "mcp__freecad__get_console_output"
+      "mcp__freecad__get_console_output",
+      "Bash(echo No PDF tools found:*)"
     ]
   }
 }

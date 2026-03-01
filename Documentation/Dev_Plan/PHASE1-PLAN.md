@@ -14,7 +14,7 @@ This phase focuses on improving the parametric models to create production-ready
 |---------|------|--------|------------|
 | 1.1 | GlassPanel class | ✓ Complete | 100% |
 | 1.2 | Glass Properties Database | ✓ Complete | 100% |
-| 1.3 | Panel Spacing & Constraints | ◐ In Progress | 60% |
+| 1.3 | Panel Spacing & Constraints | ✓ Complete | 100% |
 | 1.4 | Fixed Panel Implementation | ✓ Complete | 100% |
 | 2.1 | Hinged Door System | ✓ Complete | 100% |
 | 2.2 | Sliding Door System | ◐ In Progress | 95% |
@@ -25,12 +25,12 @@ This phase focuses on improving the parametric models to create production-ready
 | 3.4 | Seals and Gaskets (Seal Selection Rules) | ✓ Complete | 100% |
 | 3.5 | Clamp Catalog | ✓ Complete | 100% |
 | 3.6 | Seal Deduction System | ◐ In Progress | 90% |
-| 4.1 | Update CornerEnclosure | ◐ In Progress | 65% |
+| 4.1 | Update CornerEnclosure | ◐ In Progress | 90% |
 | 4.2 | Update AlcoveEnclosure | ◐ In Progress | 50% |
 | 4.3 | Update WalkInEnclosure | ◐ In Progress | 50% |
 | 4.4 | Update CustomEnclosure | ◐ In Progress | 50% |
 
-**Overall Phase 1 Completion: ~86%**
+**Overall Phase 1 Completion: ~90%**
 
 ### Architecture Note
 All models have been refactored from standalone `Part::FeaturePython` to an `App::Part` assembly architecture.
@@ -604,7 +604,7 @@ enclosure constraint data also live in this file (see Task 3.6).
 
 ### 4. Enhanced Enclosure Models
 
-#### 4.1 Update CornerEnclosure -- ◐ IN PROGRESS (65%)
+#### 4.1 Update CornerEnclosure -- ◐ IN PROGRESS (90%)
 **Priority:** High
 **Estimated Effort:** Medium
 **Dependencies:** 1.1, 2.1, 3.6
@@ -618,11 +618,14 @@ enclosure constraint data also live in this file (see Task 3.6).
 - Bug fix: fixed panel placement vector corrected (removed erroneous thickness Y-offset)
 - Bug fix: door width now subtracts glass thickness from depth for correct glass-to-glass fit
 - Corner layout research: `Resources/Documents/Possible corner enclosure layout - Sheet1.csv`
+- Left/right door side variants via `DoorSide` enum (Left, Right)
+- Three-panel layout: `ShowReturnPanel` + `ReturnPanelWidth` -- optional FixedPanel on opposite side from door, dynamically created/removed via `_ensureReturnPanel()` / `_removeNestedAssembly()`
+- Support bar: `ShowSupportBar`, `SupportBarType`, `SupportBarHeight`, `SupportBarDiameter` -- horizontal bar across fixed panel using `SupportBarChild` proxy, following WalkInEnclosure pattern
+- Hardware finish propagation via `_updateAllHardwareFinish()`
+- Door type switching: `_ensureLayout()` rebuilds door panel when `DoorType` changes (same pattern as AlcoveEnclosure)
 
 **Remaining:**
-- Additional door configuration options (left/right variants)
-- Three-panel layout option
-- Hardware property refinement
+- Visual testing and placement refinement for return panel positioning
 
 ---
 

@@ -12,6 +12,7 @@ import FreeCAD as App
 import Part
 from freecad.ShowerDesigner.Models.AssemblyBase import AssemblyController
 from freecad.ShowerDesigner.Data.HardwareSpecs import HARDWARE_FINISHES
+from freecad.ShowerDesigner.Data.PanelConstraints import validatePanelToPanelGap
 
 
 class CustomEnclosureAssembly(AssemblyController):
@@ -144,6 +145,14 @@ class CustomEnclosureAssembly(AssemblyController):
                 p2.Placement = App.Placement(
                     App.Vector(0, 0, 0), App.Rotation()
                 )
+
+        # --- Validate panel-to-panel gap (Panel1 ↔ Panel2) ---
+        if panel_count >= 2:
+            # Panels meet at a corner; gap = glass thickness
+            gap = thickness
+            valid, msg = validatePanelToPanelGap(gap)
+            if not valid:
+                App.Console.PrintWarning(f"CustomEnclosure: {msg}\n")
 
         # Additional panels (3+) are positioned manually by user
 

@@ -52,7 +52,7 @@ def test_basic_creation():
         assert vs.SwingDirection == "Inward"
         assert vs.HingeSide == "Left"
         assert vs.HingeCount == 2
-        assert vs.HandleType == "Bar"
+        assert vs.HandleType == "mushroom_knob_b2b"
         print("  OK: VarSet default properties correct")
 
         hinges = _get_children_by_prefix(door, "Hinge")
@@ -105,9 +105,10 @@ def test_handle_types():
     print("Test 3: Handle types")
     print("=" * 70)
 
-    for handle_type in ["None", "Knob", "Bar", "Pull"]:
+    for handle_type in ["None", "mushroom_knob_b2b", "pull_handle_round", "flush_handle_with_plate"]:
         try:
-            door = createHingedDoor(f"Handle_{handle_type}")
+            safe_name = handle_type.replace("_", "")
+            door = createHingedDoor(f"Handle_{safe_name}")
             vs = _get_varset(door)
             vs.HandleType = handle_type
             App.ActiveDocument.recompute()

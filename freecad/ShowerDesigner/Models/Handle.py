@@ -5,9 +5,16 @@
 Standalone handle hardware model for shower enclosures.
 
 Provides a Handle Part::FeaturePython object and a shared
-createHandleShape() function that replaces the 3× copy-pasted
-handle branching logic in HingedDoor, BiFoldDoor, and SlidingDoor.
+createHandleShape() function that loads handle geometry from
+pre-exported .brep files in the Handle/ directory (one per model).
+
+The .brep files are generated once from their source .FCStd files using
+the export_handle_breps() utility below.  They are committed to version
+control so that runtime loading does not require opening any FreeCAD
+document.
 """
+
+import os
 
 import FreeCAD as App
 import Part
@@ -17,17 +24,53 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HARDWARE_FINISHES,
 )
 
+# Directory containing handle model files (.brep and .FCStd)
+_HANDLE_MODEL_DIR = os.path.join(os.path.dirname(__file__), "Handle")
+
+# Cache loaded shapes to avoid re-reading .brep files on every recompute
+_shape_cache = {}
+
+
+def _loadHandleShape(model_file):
+    """Load and cache a handle shape from a .brep file.
+
+    The .brep filename is derived from the model_file spec key by replacing
+    the .FCStd extension with .brep.  Loading via Part.Shape.read() is
+    fast and does not open a FreeCAD document, so it never disturbs
+    App.ActiveDocument.
+    """
+    brep_file = os.path.splitext(model_file)[0] + ".brep"
+
+    if brep_file in _shape_cache:
+        return _shape_cache[brep_file].copy()
+
+    filepath = os.path.join(_HANDLE_MODEL_DIR, brep_file)
+    if not os.path.isfile(filepath):
+        App.Console.PrintError(
+            f"Handle .brep model not found: {filepath}\n"
+            f"Run Handle.export_handle_breps() once to generate it.\n"
+        )
+        return None
+
+    shape = Part.Shape()
+    shape.read(filepath)
+    if shape.isNull():
+        App.Console.PrintError(f"Failed to read shape from {filepath}\n")
+        return None
+
+    _shape_cache[brep_file] = shape.copy()
+    return shape.copy()
+
 
 def createHandleShape(handle_type, length=None, position=None):
     """
     Create a handle shape at the given position.
 
-    This is the shared geometry function imported by door models.
-    Each model computes its own position and passes it here.
+    Loads geometry from pre-exported .brep files in the Handle/ directory.
 
     Args:
-        handle_type: "Knob", "Bar", or "Pull"
-        length: Length for Bar/Pull types (mm). Uses first spec length if None.
+        handle_type: Key from HANDLE_SPECS (e.g. "mushroom_knob_b2b")
+        length: Unused, kept for API compatibility.
         position: App.Vector for handle center. Defaults to origin.
 
     Returns:
@@ -36,43 +79,79 @@ def createHandleShape(handle_type, length=None, position=None):
     if handle_type == "None" or handle_type not in HANDLE_SPECS:
         return None
 
-    if position is None:
-        position = App.Vector(0, 0, 0)
-
     spec = HANDLE_SPECS[handle_type]
+    model_file = spec["model_file"]
+    shape = _loadHandleShape(model_file)
 
-    if handle_type == "Knob":
-        radius = spec["diameter"] / 2  # 20mm
-        depth = spec["depth"]          # 15mm
-        return Part.makeCylinder(
-            radius, depth,
-            App.Vector(position.x, position.y, position.z),
-            App.Vector(0, 1, 0)
-        )
+    if shape is None:
+        return None
 
-    elif handle_type == "Bar":
-        if length is None:
-            length = spec["lengths"][0]
-        radius = spec["diameter"] / 2  # 12mm
-        start = App.Vector(
-            position.x,
-            position.y,
-            position.z - length / 2
-        )
-        return Part.makeCylinder(radius, length, start, App.Vector(0, 0, 1))
+    if position is not None:
+        shape.translate(position)
 
-    elif handle_type == "Pull":
-        if length is None:
-            length = spec["lengths"][0]
-        radius = spec["diameter"] / 2  # 10mm
-        start = App.Vector(
-            position.x,
-            position.y,
-            position.z - length / 2
-        )
-        return Part.makeCylinder(radius, length, start, App.Vector(0, 0, 1))
+    return shape
 
-    return None
+
+def export_handle_breps():
+    """
+    One-time utility: export all handle .FCStd models to .brep files.
+
+    Call this from the FreeCAD Python console whenever the source
+    .FCStd files are updated.  The generated .brep files should then
+    be committed to version control.
+
+    Example:
+        from freecad.ShowerDesigner.Models.Handle import export_handle_breps
+        export_handle_breps()
+    """
+    previous_doc = App.ActiveDocument
+    exported = []
+
+    for key, spec in HANDLE_SPECS.items():
+        model_file = spec["model_file"]
+        fcstd_path = os.path.join(_HANDLE_MODEL_DIR, model_file)
+        brep_path = os.path.splitext(fcstd_path)[0] + ".brep"
+
+        if not os.path.isfile(fcstd_path):
+            App.Console.PrintWarning(f"Source not found, skipping: {fcstd_path}\n")
+            continue
+
+        try:
+            doc = App.openDocument(fcstd_path, hidden=True)
+
+            best_shape = None
+            for obj in doc.Objects:
+                if obj.TypeId == "PartDesign::Body":
+                    if hasattr(obj, "Shape") and not obj.Shape.isNull() and obj.Shape.Solids:
+                        best_shape = obj.Shape.copy()
+                        break
+
+            if best_shape is None:
+                for obj in doc.Objects:
+                    if (hasattr(obj, "Shape") and not obj.Shape.isNull()
+                            and obj.Shape.Solids
+                            and obj.TypeId not in ("App::Line", "App::Plane", "App::Point")):
+                        if best_shape is None or len(obj.Shape.Solids) > len(best_shape.Solids):
+                            best_shape = obj.Shape.copy()
+
+            App.closeDocument(doc.Name)
+            if previous_doc is not None:
+                try:
+                    App.setActiveDocument(previous_doc.Name)
+                except Exception:
+                    pass
+
+            if best_shape is not None and best_shape.Solids:
+                best_shape.exportBrep(brep_path)
+                App.Console.PrintMessage(f"Exported: {brep_path}\n")
+                exported.append(brep_path)
+            else:
+                App.Console.PrintError(f"No solid found in {fcstd_path}\n")
+
+        except Exception as e:
+            App.Console.PrintError(f"Error exporting {model_file}: {e}\n")
+
+    return exported
 
 
 class Handle:
@@ -80,8 +159,8 @@ class Handle:
     Parametric standalone handle hardware object.
 
     Properties:
-        HandleType: Enum — Knob, Bar, Pull, Towel_Bar
-        HandleLength: Length for bar-type handles
+        HandleType: Enum — mushroom_knob_b2b, pull_handle_round, flush_handle_with_plate
+        HandleLength: Length (kept for compatibility)
         Finish: Hardware finish
     """
 
@@ -94,8 +173,8 @@ class Handle:
             "Handle",
             "Type of handle"
         )
-        obj.HandleType = [k for k in HANDLE_SPECS.keys()]
-        obj.HandleType = "Bar"
+        obj.HandleType = list(HANDLE_SPECS.keys())
+        obj.HandleType = "mushroom_knob_b2b"
 
         obj.addProperty(
             "App::PropertyLength",

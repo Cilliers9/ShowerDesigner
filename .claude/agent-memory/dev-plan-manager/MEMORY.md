@@ -34,54 +34,62 @@ Completed tasks have "What was implemented:" sections; in-progress have "Remaini
 - BiFoldDoor added: SillPlate, _calculateGlassDeductions(), GlassWidth/GlassHeight calculated props
 - SlidingDoor: per-system glass deductions (duplo/edge_slider/city_slider), slide-direction offsets
 
-## Implementation Status (2026-02-24 review)
-Overall: ~87% complete (adjusted from plan's 84%).
-Uncommitted work: +402 lines across 7 files (seal deduction system).
+## Implementation Status (2026-03-01 review)
+Overall: ~86% complete.
 
-### HardwareSpecs.py Contents (~2530 lines)
+### Complete Tasks
+1.1 GlassPanel, 1.2 GlassSpecs, 1.4 FixedPanel, 2.1 HingedDoor, 2.3 BiFoldDoor,
+3.1 Hinge Catalog, 3.2 Handle Library, 3.3 SupportBar, 3.4 Seals, 3.5 Clamp Catalog
+
+### Near-Complete
+2.2 SlidingDoor (95%), 3.6 SealDeduction (90% -- enclosure propagation pending)
+
+### In Progress
+1.3 PanelConstraints (60%), 4.1 CornerEnclosure (65%), 4.2-4.4 Enclosures (50% each)
+
+### Not Started
+- Models/Seal.py (3D seal geometry)
+- Documentation and examples
+- Code quality (Black, Ruff, tooltips)
+
+## Existing Commands (Commands/__init__.py)
+- Enclosures: Corner, Alcove, WalkIn, Custom (all functional)
+- Components: GlassPanel, FixedPanel, HingedDoor, SlidingDoor, BiFoldDoor, Hinge, Clamp, SupportBar
+- Tools: Measure (placeholder), CutList (placeholder), Export (placeholder)
+
+## Phase 2 Hints (from PHASE1-PLAN.md "Future Enhancements")
+- Door animation (open/close with constraints)
+- Collision detection between panels
+- Stress analysis for large panels
+- Custom hardware import (STEP files)
+- Material cost estimation
+- Installation sequence generator
+
+## HardwareSpecs.py Contents (~96KB, ~2530 lines)
 - Hinges: HINGE_SPECS(3), BEVEL_HINGE_SPECS(10), BIFOLD_HINGE_SPECS, MONZA_BIFOLD_HINGE_SPECS(2)
 - Handles: HANDLE_SPECS(3), CATALOGUE_HANDLE_SPECS(18)
 - Clamps: CLAMP_SPECS(7), BEVEL_CLAMP_SPECS(13)
 - Sliders: SLIDER_SYSTEM_SPECS(3 systems), TRACK/ROLLER/GUIDE specs
 - 15+ validation/helper functions
 
-### SealSpecs.py (new dedicated file)
-- SEAL_SPECS(3 generic), CATALOGUE_SEAL_SPECS(18 types, 6 categories)
-- DOOR_SEAL_DEDUCTIONS, CORNER_DOOR_CONSTRAINTS
-- Helper functions for seal selection, deductions, door constraints
-
-### Missing: Models/Seal.py (3D seal geometry not created)
-
 ## Key Dependencies
 - Task 1.1 (GlassPanel) is foundational
-- Task 3.5 (Clamp Catalog) depends on 1.4 (Fixed Panel)
-- Task 2.3 (BiFoldDoor) depends on 1.1 and 2.1
+- Task 3.6 (Seal Deduction) depends on 3.4, 2.1, 2.2, 2.3, 1.4
+- Enclosure tasks (4.x) depend on panels + doors + hardware
 
 ## File Locations
 - Dev Plan: `Documentation/Dev_Plan/PHASE1-PLAN.md`
 - Assembly Plan: `Documentation/Dev_Plan/ASSEMBLY-PLAN.MD`
 - Implementation docs: `Documentation/Dev_Plan/TASK_X.Y_IMPLEMENTATION.md`
 - Catalogue reviews: `Resources/Documents/`
-- Corner layout research: `Resources/Documents/Possible corner enclosure layout - Sheet1.csv`
 
 ## User Preferences for Plan Updates
-- User prefers conservative status estimates (e.g., enclosures at 50%, not 100%)
-- User accepts large batch edits for section rewrites but may reject small individual edits
+- User prefers conservative status estimates
 - Do larger, comprehensive edits rather than many small ones
 
-## Remaining Work (prioritized)
-1. Commit seal deduction work (7 modified files)
-2. Seal 3D model (Models/Seal.py) -- not started
-3. Panel gap validation tied to seal fitment (Task 1.3 remaining)
-4. Enclosure enhancements (4.1-4.4) -- CornerEnclosure ~65%, others ~50%
-5. Catalogue-level support bar specs (Task 3.3)
-6. AlcoveEnclosure: fixed side panel, return panel, track refinement
-7. WalkInEnclosure: multi-panel configs, ceiling support
-8. Documentation and examples
-9. Code quality (Black formatting, Ruff, tooltips)
-
 ## Plan Update Log
-- 2026-02-24: Added Task 3.6 (Seal Deduction System) to PHASE1-PLAN.md. Updated
-  status percentages for 2.2 (90->95%), 3.4 (60->80%), 4.1 (50->65%). Updated
-  Task descriptions for 1.4, 2.1, 2.2, 2.3, 3.4, 4.1 to reflect seal integration.
-  Overall completion updated from 84% to 87%. No Project_Summary.md exists.
+- 2026-03-01: Task 3.4 marked COMPLETE (per-location seal selection, commit 668f024)
+- 2026-03-01: Task 3.6 status table corrected from 100% to 90% (was premature)
+- 2026-03-01: Updated MIN_WALL_FLOOR_GAP/MIN_WALL_CLEARANCE from 6mm to 2mm in Task 1.3
+- 2026-02-24: Added Task 3.6, updated status percentages, overall 84->87%
+- 2026-02-27: Full project review for Phase 2 planning

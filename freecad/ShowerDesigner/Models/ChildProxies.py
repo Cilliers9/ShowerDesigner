@@ -23,6 +23,7 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     MONZA_BIFOLD_HINGE_SPECS,
     SLIDER_SYSTEM_SPECS,
     FLOOR_GUIDE_SPECS,
+    GLASS_SHELF_SPECS,
 )
 
 
@@ -677,6 +678,75 @@ class SliderFloorGuideChild:
             App.Vector(0, 9, 5)
         )
         obj.Shape = shape.cut(cutout)
+
+    def onChanged(self, obj, prop):
+        pass
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+# ======================================================================
+# Glass Shelf
+# ======================================================================
+
+class GlassShelfChild:
+    """Proxy for a corner glass shelf child inside an assembly."""
+
+    EDGE_TYPES = ["Wall", "Glass"]
+
+    def __init__(self, obj):
+        obj.Proxy = self
+        obj.addProperty(
+            "App::PropertyLength", "Width", "Dimensions", "Shelf width"
+        ).Width = GLASS_SHELF_SPECS["default_width"]
+        obj.addProperty(
+            "App::PropertyLength", "Depth", "Dimensions", "Shelf depth"
+        ).Depth = GLASS_SHELF_SPECS["default_depth"]
+        obj.addProperty(
+            "App::PropertyLength", "Thickness", "Dimensions", "Glass thickness"
+        ).Thickness = GLASS_SHELF_SPECS["default_thickness"]
+        obj.addProperty(
+            "App::PropertyEnumeration", "Edge1Type", "Clearance",
+            "Surface type along edge 1 (X axis)"
+        )
+        obj.Edge1Type = self.EDGE_TYPES
+        obj.Edge1Type = "Wall"
+        obj.addProperty(
+            "App::PropertyEnumeration", "Edge2Type", "Clearance",
+            "Surface type along edge 2 (Y axis)"
+        )
+        obj.Edge2Type = self.EDGE_TYPES
+        obj.Edge2Type = "Wall"
+        obj.addProperty(
+            "App::PropertyLength", "PanelThickness", "Clearance",
+            "Thickness of adjacent glass panel(s)"
+        ).PanelThickness = GLASS_SHELF_SPECS["default_thickness"]
+        obj.addProperty(
+            "App::PropertyEnumeration", "GlassType", "Glass", "Glass type"
+        )
+        obj.GlassType = ["Clear", "Frosted", "Bronze", "Grey", "Reeded", "Low-Iron"]
+        obj.GlassType = "Clear"
+
+    def _clearanceForEdge(self, edgeType, panelThickness):
+        if edgeType == "Glass":
+            return panelThickness + GLASS_SHELF_SPECS["glass_clearance"]
+        return GLASS_SHELF_SPECS["wall_clearance"]
+
+    def execute(self, obj):
+        w = obj.Width.Value
+        d = obj.Depth.Value
+        t = obj.Thickness.Value
+        if w <= 0 or d <= 0 or t <= 0:
+            return
+        pt = obj.PanelThickness.Value
+        c1 = self._clearanceForEdge(obj.Edge1Type, pt)
+        c2 = self._clearanceForEdge(obj.Edge2Type, pt)
+        from freecad.ShowerDesigner.Models.GlassShelf import createGlassShelfShape
+        obj.Shape = createGlassShelfShape(w, d, t, clearance_edge1=c1, clearance_edge2=c2)
 
     def onChanged(self, obj, prop):
         pass

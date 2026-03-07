@@ -6,7 +6,7 @@ This phase transforms ShowerDesigner from a parametric modeling tool into a prod
 system. The focus is on output tools (cut lists, export, measurement), user-facing task panels for
 guided configuration, and 3D seal visualization — everything needed to go from design to fabrication.
 
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-03-07
 
 ---
 
@@ -14,20 +14,20 @@ guided configuration, and 3D seal visualization — everything needed to go from
 
 | Section | Area | Status | Completion |
 |---------|------|--------|------------|
-| 1.1 | Cut List / Bill of Materials | ○ Not Started | 0% |
+| 1.1 | Cut List / Bill of Materials | ◐ In Progress | 40% |
 | 1.2 | STEP/STL Batch Export | ○ Not Started | 0% |
 | 1.3 | Measurement & Dimensioning | ○ Not Started | 0% |
 | 2.1 | Enclosure Creation Wizard | ○ Not Started | 0% |
 | 2.2 | Hardware Selection Panel | ○ Not Started | 0% |
 | 2.3 | Property Validation & Error Display | ○ Not Started | 0% |
-| 2.4 | Custom Icons | ○ Not Started | 0% |
+| 2.4 | Custom Icons | ◐ In Progress | 20% |
 | 3.1 | Seal 3D Visualization | ○ Not Started | 0% |
 | 3.2 | Cost Estimation | ○ Not Started | 0% |
 
-**Overall Phase 2 Completion: 0%**
+**Overall Phase 2 Completion: ~5%**
 
 ### Prerequisites
-Phase 1 should be substantially complete before starting Phase 2. Key dependencies:
+Phase 1 is ~91% complete. Key dependencies for remaining Phase 2 tasks:
 - Enclosure assemblies (4.1–4.4) must work end-to-end for cut list extraction
 - Seal deduction system (3.6) should be finalized for seal visualization
 - Hardware specs catalogue should be stable for BOM generation
@@ -43,7 +43,7 @@ These replace the three placeholder commands already registered in `Commands/__i
 
 ---
 
-#### 1.1 Cut List / Bill of Materials
+#### 1.1 Cut List / Bill of Materials -- ◐ IN PROGRESS (40%)
 **Priority:** High
 **Estimated Effort:** High
 **Dependencies:** Phase 1 enclosures (4.1–4.4), HardwareSpecs
@@ -53,35 +53,23 @@ These replace the three placeholder commands already registered in `Commands/__i
 - Generate a structured BOM with product codes from the catalogue
 - Output as in-app table, CSV, and clipboard-ready format
 
-**Implementation Details:**
+**What was implemented:**
 
 **File:** `freecad/ShowerDesigner/Data/CutList.py` (pure Python, no FreeCAD imports)
+- `CutListItem` dataclass with category, component, description, product_code, dimensions, quantity, unit, notes
+- `aggregateItems()` -- groups identical items and sums quantities
+- `toCSV()` -- CSV string output
 
-```python
-@dataclass
-class CutListItem:
-    category: str          # "Glass", "Hardware", "Seal"
-    component: str         # "Fixed Panel", "Door Panel", etc.
-    description: str       # "Clear Tempered 10mm"
-    product_code: str      # From catalogue specs
-    width: float           # mm (glass only)
-    height: float          # mm (glass only)
-    quantity: int
-    unit: str              # "pc", "mm", "m"
-    notes: str             # "Edge: Bright Polish", etc.
+**File:** `freecad/ShowerDesigner/Models/CutListExtractor.py`
+- Full tree-walker that recursively extracts components from `App::Part` assemblies
+- Identifies glass children, hardware children (hinges, handles, clamps, support bars)
+- Reads dimensions from controller VarSet properties
+- Maps hardware to catalogue entries via spec keys
 
-class CutListGenerator:
-    """Walks an enclosure assembly tree and extracts all components."""
+**File:** `freecad/ShowerDesigner/Tests/test_cut_list.py`
+- Existing test coverage for cut list generation
 
-    def generate(self, assembly_obj) -> list[CutListItem]:
-        """Extract BOM from an App::Part enclosure assembly."""
-
-    def toCSV(self, items: list[CutListItem]) -> str:
-        """Format as CSV string."""
-
-    def toTable(self, items: list[CutListItem]) -> list[list[str]]:
-        """Format as row/column table for Qt display."""
-```
+**Remaining:**
 
 **File:** `freecad/ShowerDesigner/Commands/CutListCommand.py`
 
@@ -89,19 +77,18 @@ class CutListGenerator:
 class CutListCommand:
     def Activated(self):
         # Get selected enclosure or active assembly
-        # Generate cut list via CutListGenerator
+        # Generate cut list via CutListExtractor
         # Show in a Qt dialog with copy/export buttons
 
     def IsActive(self):
         # Active when an enclosure or panel assembly is selected
 ```
 
-**Data extraction strategy:**
-- Walk `App::Part` children recursively
-- Identify glass children by checking proxy class (`GlassPanelChild`, etc.)
-- Read dimensions from the controller's VarSet properties
-- Map hardware to catalogue entries via spec keys stored in properties
-- Aggregate quantities (e.g., 4× identical clamps → single line with qty=4)
+- Qt dialog for in-app table display with copy/export buttons
+- Clipboard-ready format output
+- Seal items extraction (not yet handled by extractor)
+- End-to-end testing with all enclosure types
+- Integration with the CutList toolbar command (replace placeholder)
 
 **Output columns:**
 | # | Category | Component | Description | Product Code | W×H (mm) | Qty | Unit | Notes |
@@ -384,7 +371,7 @@ class AssemblyValidator:
 
 ---
 
-#### 2.4 Custom Icons
+#### 2.4 Custom Icons -- ◐ IN PROGRESS (20%)
 **Priority:** Low
 **Estimated Effort:** Low
 **Dependencies:** None
@@ -393,15 +380,18 @@ class AssemblyValidator:
 - Create distinct SVG icons for each component command
 - Replace generic `Logo` icon usage
 
+**What was implemented:**
+- SVG icons already created: `BiFoldDoor.svg`, `FixedPanel.svg`, `HingedDoor.svg`, `SlidingDoor.svg` (in `Resources/Icons/`)
+
 **Icon List:**
 
 | Command | Current Icon | New Icon Description |
 |---------|-------------|---------------------|
 | GlassPanel | Logo | Single glass panel outline |
-| FixedPanel | Logo | Panel with clamp brackets |
-| HingedDoor | Logo | Panel with hinge symbol |
-| SlidingDoor | Logo | Panel with arrow/track |
-| BiFoldDoor | Logo | Two folded panels |
+| FixedPanel | ✓ Has icon | Keep existing |
+| HingedDoor | ✓ Has icon | Keep existing |
+| SlidingDoor | ✓ Has icon | Keep existing |
+| BiFoldDoor | ✓ Has icon | Keep existing |
 | CornerEnclosure | ✓ Has icon | Keep existing |
 | AlcoveEnclosure | ✓ Has icon | Keep existing |
 | WalkInEnclosure | ✓ Has icon | Keep existing |

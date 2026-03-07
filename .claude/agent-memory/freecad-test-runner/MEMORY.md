@@ -10,8 +10,11 @@
   They are designed to be `exec()`'d inside FreeCAD's Python console.
 - Use `mcp__freecad__execute_python` to run them. Assign `_result_` to get structured
   output back; do NOT rely on stdout for pass/fail detection.
-- Always set a generous `timeout_ms` (30 000–60 000) because `doc.recompute()` can be slow
-  over XML-RPC.
+- The MCP server has a hard ~32s timeout regardless of the `timeout_ms` you pass.
+  If a test takes longer, split it across multiple `execute_python` calls sharing the
+  same open document (use `App.getDocument("Name")` in subsequent calls).
+- CornerEnclosure creation + recompute takes ~12s. Each subsequent property-change
+  + recompute takes ~7-8s. AlcoveEnclosure is much faster (~0.5s per recompute).
 
 ## Execution Patterns That Work
 1. Wrap each logical test block in its own `try/except` and append to a `results` list.
@@ -63,6 +66,8 @@ The cylinder-BB 26-gon artefact notes below are historical only.
 | Tests/test_sliding_door.py | SlidingDoor assembly. STALE (see below). |
 | Tests/test_bifold_door.py | BiFoldDoor assembly. Hinge child labels are WallHinge1/FoldHinge1, not "Hinge". |
 | Tests/test_cut_list.py | CutList data layer. Pure Python — run with standard pytest. |
+| Tests/test_corner_enclosure.py | CornerEnclosure: creation, DoorSide, DoorType switching, return panels, support bar, dimension propagation. Created 2026-03-01. |
+| Tests/test_glass_shelf.py | GlassShelf shape builder, standalone model, data specs, CornerEnclosure & AlcoveEnclosure shelf integration. All 9 tests pass (2026-03-06). |
 
 ## Handle Model Loading — Critical Pattern (2026-02-25)
 - `Handle.py` now loads geometry from pre-exported `.brep` files via `Part.Shape.read()`.
@@ -154,6 +159,29 @@ Clamp box: makeBox(40, 20, 40).  Exact volume = 32000.  6 Plane faces, 12 edges.
 - **Fix**: Close all documents at the start of each MCP call and open a fresh one.
   Run at most 1-2 assembly creations per call.
 - Pure python tests (test_cut_list, test_hardware_specs) are fine with standard pytest via bash.
+
+## CornerEnclosure — Key Design Notes (2026-03-01)
+- `assemblyExecute` in CornerEnclosure.py sets `fixed_vs.WallMountEdge` on lines 334–345
+  **outside** the `if fixed_vs:` guard (lines 324–333). If `_getNestedVarSet` ever returns
+  None, this raises AttributeError. Currently safe because FixedPanelAssembly always creates
+  a VarSet, but it is a latent bug.
+- `_getChild` on nested App::Part assemblies (FixedPanel, DoorPanel) uses `self._manifest`
+  which is keyed by role name, NOT by label. Use `_get_nested_part_by_label` (label prefix)
+  in tests, not `_getChild`.
+- Return panel layout values in ReturnPanelLayout enum: `"None"`, `"Wall Side"`,
+  `"Corner Side"`, `"Both Sides"` — include spaces. Do NOT use `"Both"` or `"WallSide"`.
+- door_wall_span formula: `(depth - thickness)` when `door_right`, else `(width - thickness)`.
+- door_width = door_wall_span - WallReturnWidth - CornerReturnWidth.
+
+## Last Full Run – 2026-03-06 (glass shelf tests)
+- test_glass_shelf.py: 9/9 tests PASS
+  - Shape builder (basic, no-fillet, custom step): PASS
+  - Standalone model (create, property changes): PASS
+  - Data specs (GLASS_SHELF_SPECS, SHELF_CLAMP_MAPPING): PASS
+  - CornerEnclosure integration (enable, position change, disable): PASS
+  - AlcoveEnclosure integration (enable, disable): PASS
+- Note: must split CornerEnclosure tests across MCP calls due to ~32s server timeout.
+  AlcoveEnclosure is fast enough to run enable+disable in a single call.
 
 ## Last Full Run – 2026-03-01 (post-CornerEnclosure changes)
 All workbench models verified working. Summary:

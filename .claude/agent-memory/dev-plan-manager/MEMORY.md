@@ -34,21 +34,32 @@ Completed tasks have "What was implemented:" sections; in-progress have "Remaini
 - BiFoldDoor added: SillPlate, _calculateGlassDeductions(), GlassWidth/GlassHeight calculated props
 - SlidingDoor: per-system glass deductions (duplo/edge_slider/city_slider), slide-direction offsets
 
-## Implementation Status (2026-03-01 review)
-Overall: ~86% complete.
+## Glass Shelf System (2026-03-07)
+- `Models/GlassShelf.py`: Standalone Part::FeaturePython, pentagonal profile with step notches
+- `createGlassShelfShape()`: Reusable shape builder (XY plane, Z extrusion)
+- Clearance logic: wall=5mm, glass=PanelThickness+2mm (from GLASS_SHELF_SPECS)
+- CornerEnclosure integration: 4 shelf positions, dynamic filtering by layout
+- `_getShelfCornerInfo()`: Returns origin, rotation, edge lengths, surface types per position
+- Shelf clamp rotation pattern: Clamp1=Rotation(rot, 0, -90), Clamp2=Rotation(-90+rot, 0, -90)
+- G2G clamps get 8mm perpendicular offset; clamp Z = shelf height + thickness
+- Data: GLASS_SHELF_SPECS + SHELF_CLAMP_MAPPING in HardwareSpecs.py
+
+## Implementation Status (2026-03-07 review)
+Overall: ~91% complete.
 
 ### Complete Tasks
 1.1 GlassPanel, 1.2 GlassSpecs, 1.4 FixedPanel, 2.1 HingedDoor, 2.3 BiFoldDoor,
 3.1 Hinge Catalog, 3.2 Handle Library, 3.3 SupportBar, 3.4 Seals, 3.5 Clamp Catalog
 
 ### Near-Complete
-2.2 SlidingDoor (95%), 3.6 SealDeduction (90% -- enclosure propagation pending)
+2.2 SlidingDoor (95%), 3.6 SealDeduction (90%), 4.1 CornerEnclosure (95%),
+4.2 AlcoveEnclosure (95%)
 
 ### In Progress
-1.3 PanelConstraints (60%), 4.1 CornerEnclosure (65%), 4.2-4.4 Enclosures (50% each)
+4.3 WalkInEnclosure (70%), 4.4 CustomEnclosure (60%)
 
 ### Not Started
-- Models/Seal.py (3D seal geometry)
+- Models/Seal.py (3D seal geometry -- deferred to Phase 2)
 - Documentation and examples
 - Code quality (Black, Ruff, tooltips)
 
@@ -57,39 +68,41 @@ Overall: ~86% complete.
 - Components: GlassPanel, FixedPanel, HingedDoor, SlidingDoor, BiFoldDoor, Hinge, Clamp, SupportBar
 - Tools: Measure (placeholder), CutList (placeholder), Export (placeholder)
 
-## Phase 2 Hints (from PHASE1-PLAN.md "Future Enhancements")
-- Door animation (open/close with constraints)
-- Collision detection between panels
-- Stress analysis for large panels
-- Custom hardware import (STEP files)
-- Material cost estimation
-- Installation sequence generator
-
 ## HardwareSpecs.py Contents (~96KB, ~2530 lines)
 - Hinges: HINGE_SPECS(3), BEVEL_HINGE_SPECS(10), BIFOLD_HINGE_SPECS, MONZA_BIFOLD_HINGE_SPECS(2)
 - Handles: HANDLE_SPECS(3), CATALOGUE_HANDLE_SPECS(18)
 - Clamps: CLAMP_SPECS(7), BEVEL_CLAMP_SPECS(13)
 - Sliders: SLIDER_SYSTEM_SPECS(3 systems), TRACK/ROLLER/GUIDE specs
+- Shelves: GLASS_SHELF_SPECS, SHELF_CLAMP_MAPPING
 - 15+ validation/helper functions
 
 ## Key Dependencies
 - Task 1.1 (GlassPanel) is foundational
 - Task 3.6 (Seal Deduction) depends on 3.4, 2.1, 2.2, 2.3, 1.4
 - Enclosure tasks (4.x) depend on panels + doors + hardware
+- Glass shelf uses ClampChild from ChildProxies + SHELF_CLAMP_MAPPING from HardwareSpecs
 
 ## File Locations
 - Dev Plan: `Documentation/Dev_Plan/PHASE1-PLAN.md`
+- Phase 2 Plan: `Documentation/Dev_Plan/PHASE2-PLAN.md`
 - Assembly Plan: `Documentation/Dev_Plan/ASSEMBLY-PLAN.MD`
 - Implementation docs: `Documentation/Dev_Plan/TASK_X.Y_IMPLEMENTATION.md`
 - Catalogue reviews: `Resources/Documents/`
+
+## Common Pitfalls
+- Status table % at top of PHASE1-PLAN.md can drift from section heading % -- always update both
+- PHASE2-PLAN.md references Phase 1 completion % in prerequisites -- must be kept in sync
+- "Additional completed work" section at bottom of PHASE1-PLAN.md tracks unplanned additions
 
 ## User Preferences for Plan Updates
 - User prefers conservative status estimates
 - Do larger, comprehensive edits rather than many small ones
 
 ## Plan Update Log
+- 2026-03-07: Glass shelf system documented in 4.1, added to "Additional completed work"
+- 2026-03-07: Fixed AlcoveEnclosure section heading (was 75%, corrected to 95%)
+- 2026-03-07: Updated PHASE2-PLAN.md prerequisites from ~88% to ~91%
 - 2026-03-01: Task 3.4 marked COMPLETE (per-location seal selection, commit 668f024)
 - 2026-03-01: Task 3.6 status table corrected from 100% to 90% (was premature)
-- 2026-03-01: Updated MIN_WALL_FLOOR_GAP/MIN_WALL_CLEARANCE from 6mm to 2mm in Task 1.3
-- 2026-02-24: Added Task 3.6, updated status percentages, overall 84->87%
+- 2026-02-24: Added Task 3.6, updated status percentages
 - 2026-02-27: Full project review for Phase 2 planning

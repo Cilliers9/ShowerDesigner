@@ -2445,6 +2445,24 @@ def validateSliderSystem(system_key, door_width, door_weight, glass_thickness):
     return True, f"{spec['name']} configuration OK"
 
 
+# ---------------------------------------------------------------------------
+# Glass shelf specifications
+# ---------------------------------------------------------------------------
+GLASS_SHELF_SPECS = {
+    "default_height_from_floor": 1700,
+    "default_width": 400,
+    "default_depth": 200,
+    "default_thickness": 8,
+    "step": 50,
+    "clamp_inset": 50,
+    "wall_clearance": 5,
+    "glass_clearance": 2,
+}
+
+SHELF_CLAMP_MAPPING = {
+    "wall": "L_Clamp",
+    "glass": "90DEG_G2G_Clamp",
+}
 
 
 def lookupSliderProductCode(code):

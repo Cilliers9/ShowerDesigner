@@ -35,6 +35,7 @@ class ShowerDesignerWorkbench(Gui.Workbench):
             'ShowerDesigner_Hinge',
             'ShowerDesigner_Clamp',
             'ShowerDesigner_SupportBar',
+            'ShowerDesigner_GlassShelf',
         ]
 
         tool_commands = [

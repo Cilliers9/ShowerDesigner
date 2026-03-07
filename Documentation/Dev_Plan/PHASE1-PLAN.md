@@ -4,7 +4,7 @@
 
 This phase focuses on improving the parametric models to create production-ready shower enclosure designs with proper glass panel systems, door mechanisms, and hardware integration.
 
-**Last Updated:** 2026-03-01
+**Last Updated:** 2026-03-07
 
 ---
 
@@ -25,12 +25,12 @@ This phase focuses on improving the parametric models to create production-ready
 | 3.4 | Seals and Gaskets (Seal Selection Rules) | ✓ Complete | 100% |
 | 3.5 | Clamp Catalog | ✓ Complete | 100% |
 | 3.6 | Seal Deduction System | ◐ In Progress | 90% |
-| 4.1 | Update CornerEnclosure | ◐ In Progress | 90% |
-| 4.2 | Update AlcoveEnclosure | ◐ In Progress | 50% |
-| 4.3 | Update WalkInEnclosure | ◐ In Progress | 50% |
-| 4.4 | Update CustomEnclosure | ◐ In Progress | 50% |
+| 4.1 | Update CornerEnclosure | ◐ In Progress | 95% |
+| 4.2 | Update AlcoveEnclosure | ◐ In Progress | 95% |
+| 4.3 | Update WalkInEnclosure | ◐ In Progress | 70% |
+| 4.4 | Update CustomEnclosure | ◐ In Progress | 60% |
 
-**Overall Phase 1 Completion: ~90%**
+**Overall Phase 1 Completion: ~91%**
 
 ### Architecture Note
 All models have been refactored from standalone `Part::FeaturePython` to an `App::Part` assembly architecture.
@@ -538,7 +538,8 @@ enclosure constraint data also live in this file (see Task 3.6).
 
 ---
 
-#### 3.6 Seal Deduction System -- ◐ IN PROGRESS (85%)
+#### 3.6 Seal Deduction System -- ◐ IN PROGRESS (90%)
+> **Note:** CornerEnclosure and AlcoveEnclosure have full seal deduction integration. WalkIn and Custom still need propagation.
 **Priority:** High
 **Estimated Effort:** Medium
 **Dependencies:** 3.4, 2.1, 2.2, 2.3, 1.4
@@ -596,7 +597,6 @@ enclosure constraint data also live in this file (see Task 3.6).
 - Minor refinements to child proxy classes supporting the seal deduction flow
 
 **Remaining:**
-- AlcoveEnclosure seal/constraint integration (same pattern as CornerEnclosure)
 - WalkInEnclosure and CustomEnclosure seal deduction propagation
 - Seal deduction validation (warn if deduction exceeds panel width)
 
@@ -604,32 +604,61 @@ enclosure constraint data also live in this file (see Task 3.6).
 
 ### 4. Enhanced Enclosure Models
 
-#### 4.1 Update CornerEnclosure -- ◐ IN PROGRESS (90%)
+#### 4.1 Update CornerEnclosure -- ◐ IN PROGRESS (95%)
 **Priority:** High
 **Estimated Effort:** Medium
 **Dependencies:** 1.1, 2.1, 3.6
 
+> **Scope expansion:** The originally planned `ShowReturnPanel` / `ReturnPanelWidth` approach was replaced
+> by a more flexible `InlinePanelLayout` system supporting four layout modes. This exceeds the original
+> scope but provides a more capable design.
+
 **What was implemented:**
 - `class CornerEnclosureAssembly(AssemblyController)` -- App::Part assembly
-- Contains nested App::Part children: BackPanel (FixedPanel) + SidePanel (FixedPanel, HingedDoor, or SlidingDoor)
-- VarSet with DoorType selection, per-panel dimensions
-- Door constraint enforcement via `_applyDoorConstraints()` -- dynamically filters nested door's MountingType and DoorSeal enums based on whether door closes against return panel or wall (uses `CORNER_DOOR_CONSTRAINTS` from SealSpecs)
+- Contains nested App::Part children: BackPanel (FixedPanel) + SidePanel (HingedDoor or FixedPanel)
+- VarSet with DoorType selection (`HingedDoor`, `FixedPanel`), per-panel dimensions
+- **InlinePanelLayout system** -- `InlinePanelLayout` enum with four modes: "None", "Wall Side", "Corner Side", "Both Sides"
+  - `WallInlineWidth` and `CornerInlineWidth` properties for per-side inline panel sizing
+  - Replaces the simpler `ShowReturnPanel` / `ReturnPanelWidth` concept
+  - Dynamically creates/removes inline FixedPanel children via `_ensureLayout()`
+- Glass-to-glass clamp enforcement on corner inline panels
+- Inline panel + hinge side interaction: locks door mounting type to Glass Mounted/Pivot when inline panel is on hinge side
+- Inline panel + closing seal interaction: intercepts closing side, overrides `ClosingAgainst` target
+- Door constraint enforcement via `_applyDoorConstraints()` -- dynamically filters nested door's MountingType and DoorSeal enums based on whether door closes against inline panel or wall (uses `CORNER_DOOR_CONSTRAINTS` from SealSpecs)
 - Fixed panel seal deduction propagation -- when door uses magnet seal, FixedPanel's `SealDeduction` is set via `getReturnPanelMagnetDeduction(glass_thickness)`
 - Bug fix: fixed panel placement vector corrected (removed erroneous thickness Y-offset)
 - Bug fix: door width now subtracts glass thickness from depth for correct glass-to-glass fit
 - Corner layout research: `Resources/Documents/Possible corner enclosure layout - Sheet1.csv`
 - Left/right door side variants via `DoorSide` enum (Left, Right)
-- Three-panel layout: `ShowReturnPanel` + `ReturnPanelWidth` -- optional FixedPanel on opposite side from door, dynamically created/removed via `_ensureReturnPanel()` / `_removeNestedAssembly()`
 - Support bar: `ShowSupportBar`, `SupportBarType`, `SupportBarHeight`, `SupportBarDiameter` -- horizontal bar across fixed panel using `SupportBarChild` proxy, following WalkInEnclosure pattern
 - Hardware finish propagation via `_updateAllHardwareFinish()`
-- Door type switching: `_ensureLayout()` rebuilds door panel when `DoorType` changes (same pattern as AlcoveEnclosure)
+- Door type switching: `_ensureLayout()` rebuilds door panel when `DoorType` changes
+- **Glass shelf system:** `GlassShelf` model (`Models/GlassShelf.py`) -- standalone `Part::FeaturePython` with pentagonal profile, step notches at diagonal ends, wall/glass clearances, and `GlassType` property
+  - `createGlassShelfShape()` -- reusable shape builder (pentagon in XY plane, extruded along Z)
+  - Properties: Width, Depth, Thickness, HeightFromFloor, Edge1Type/Edge2Type (Wall/Glass), PanelThickness, GlassType
+  - Clearance logic: wall edges get 5mm clearance, glass edges get `PanelThickness + 2mm`
+  - Defaults from `GLASS_SHELF_SPECS`: 400x200mm, 8mm thick, 1700mm from floor, 50mm step notches
+- **Shelf integration in CornerEnclosure:** VarSet properties `ShowGlassShelf`, `ShelfPosition` (4 positions, dynamically filtered by layout), `ShelfHeightFromFloor`, `ShelfWidth`, `ShelfDepth`
+  - `_getShelfCornerInfo()` -- calculates origin, rotation, edge lengths, and surface types for each of the 4 corner positions based on door side and inline panel layout
+  - `_updateGlassShelf()` -- creates/updates `GlassShelfChild` and two `ShelfClamp` children
+  - Position filtering: positions occupied by inline panels are removed from the `ShelfPosition` enum
+- **Shelf clamp placement:** Two `ShelfClamp` children per shelf (via `ClampChild`), auto-positioned with `clamp_inset` (50mm) from corner, rotation-aware placement using shelf corner info
+  - Clamp1 (edge 1): `App.Rotation(rot, 0, -90)` -- rotated to face glass edge
+  - Clamp2 (edge 2): `App.Rotation(-90 + rot, 0, -90)` -- rotated 90 degrees for perpendicular edge
+  - Clamp Z offset by glass shelf thickness to sit on top of shelf
+  - Clamp type auto-selected via `SHELF_CLAMP_MAPPING`: wall edges get `L_Clamp`, glass edges get `90DEG_G2G_Clamp`
+  - Glass-to-glass clamps get 8mm perpendicular offset from edge
+- **Data specs** in `HardwareSpecs.py`:
+  - `GLASS_SHELF_SPECS` -- default dimensions, step size, clamp inset, wall/glass clearances
+  - `SHELF_CLAMP_MAPPING` -- maps surface type ("wall"/"glass") to clamp type
 
 **Remaining:**
-- Visual testing and placement refinement for return panel positioning
+- Visual testing and placement refinement for inline panel positioning
+- SlidingDoor support as DoorType option (currently only HingedDoor and FixedPanel)
 
 ---
 
-#### 4.2 Update AlcoveEnclosure -- ◐ IN PROGRESS (50%)
+#### 4.2 Update AlcoveEnclosure -- ◐ IN PROGRESS (95%)
 **Priority:** High
 **Estimated Effort:** Medium
 **Dependencies:** 1.1, 2.1, 2.2
@@ -638,15 +667,28 @@ enclosure constraint data also live in this file (see Task 3.6).
 - `class AlcoveEnclosureAssembly(AssemblyController)` -- App::Part assembly
 - Contains nested App::Part Door child (HingedDoor, SlidingDoor, or BiFoldDoor)
 - VarSet with DoorType, Width, Height
+- Full door type switching: SlidingDoor, HingedDoor, BiFoldDoor
+- Inline layouts: FixedPanel+HingedDoor, FixedPanel+SlidingDoor via `_createInlineLayout()`
+- 3-panel layouts: FixedPanel+HingedDoor+FixedPanel, FixedPanel+SlidingDoor+FixedPanel
+- `_ensureLayout()` for rebuilding nested children when DoorType changes
+- Slider overlap/clearance from `SLIDER_SYSTEM_SPECS` integrated
+- `PanelSide` (Left/Right) positioning for inline fixed panel
+- Panel-to-panel gap validation
+- Seal deduction propagation: `_propagateSealDeduction()` sets/clears `SealDeduction` on fixed panels based on magnet seal state, `_isMagnetSeal()` helper
+- Hardware finish propagation: `HardwareFinish` forwarded to all nested door and panel VarSets in all code paths (single door, inline, 3-panel)
+- Door constraint filtering: `_filterEnum()` + hinge-side-aware `MountingType` constraints:
+  - Single door (wall-to-wall): Wall Mounted/Pivot
+  - Inline (hinge on panel side): Glass Mounted/Pivot, ClosingAgainst = Wall
+  - Inline (hinge on wall side): Wall Mounted/Pivot, ClosingAgainst = Inline Panel
+  - 3-panel (panels on both sides): Glass Mounted/Pivot, ClosingAgainst = Inline Panel
 
 **Remaining:**
-- Fixed side panel support
-- Return panel option
-- Proper track placement refinement for sliders
+- Visual testing and placement refinement for inline panel positioning
+- Track placement visual refinement for slider inline layouts
 
 ---
 
-#### 4.3 Update WalkInEnclosure -- ◐ IN PROGRESS (50%)
+#### 4.3 Update WalkInEnclosure -- ◐ IN PROGRESS (70%)
 **Priority:** High
 **Estimated Effort:** Medium
 **Dependencies:** 1.1, 3.3
@@ -655,28 +697,34 @@ enclosure constraint data also live in this file (see Task 3.6).
 - `class WalkInEnclosureAssembly(AssemblyController)` -- App::Part assembly
 - Contains nested App::Part Panel (FixedPanel assembly)
 - VarSet with Width, Height, support bar options
+- Support bar with configurable `SupportBarType`, `SupportBarHeight`, and `SupportBarDiameter` properties
+- Hardware finish propagation to nested children
+- Single fixed panel with full property forwarding
 
 **Remaining:**
 - Multiple panel configurations (Double-L, Double-Parallel)
 - Ceiling-mounted support option
-- Support bar height configuration
+- Seal deduction propagation
 
 ---
 
-#### 4.4 Update CustomEnclosure -- ◐ IN PROGRESS (50%)
+#### 4.4 Update CustomEnclosure -- ◐ IN PROGRESS (60%)
 **Priority:** Low
 **Estimated Effort:** High
 **Dependencies:** All above
 
 **What was implemented:**
 - `class CustomEnclosureAssembly(AssemblyController)` -- App::Part assembly
-- Dynamic panel/door addition via `addPanel()` method
+- Dynamic panel count via `_syncPanelCount()` -- panels added/removed to match `PanelCount` property
+- 2-panel default at 90 degrees
+- Panel-to-panel gap validation
 - VarSet with configurable panel roles
 
 **Remaining:**
+- Door addition (currently fixed panels only, no door types)
 - Free-form panel placement UI
-- Mix of door types in single enclosure
 - Advanced hardware placement logic
+- Seal deduction propagation
 
 ---
 
@@ -704,9 +752,12 @@ enclosure constraint data also live in this file (see Task 3.6).
 ### Sprint 4 (Week 7-8): Finalization -- ◐ IN PROGRESS
 1. ✓ Implement BiFoldDoor (2.3) -- with Monza hinges + glass deductions + SillPlate
 2. ✓ Add Seals system (3.4) -- data specs (18 types) + per-location seal selection with catalogue names on all models
-3. ◐ Seal Deduction System (3.6) -- data layer + door integration complete, enclosure propagation in progress
-4. ◐ Update CustomEnclosure (4.4) -- assembly refactored, features remain
-5. ○ Documentation and examples -- not started
+3. ◐ Seal Deduction System (3.6) -- data layer + door integration complete, CornerEnclosure propagation done, Alcove/WalkIn/Custom pending
+4. ◐ CornerEnclosure (4.1) -- InlinePanelLayout system implemented (scope expansion), 95% complete
+5. ◐ AlcoveEnclosure (4.2) -- door type switching + inline layouts + seal deduction + hardware finish + door constraints done, visual testing pending
+6. ◐ WalkInEnclosure (4.3) -- support bar fully configurable, multi-panel configs pending
+7. ◐ CustomEnclosure (4.4) -- dynamic panel count done, door types + free-form placement pending
+8. ○ Documentation and examples -- not started
 
 ### Additional completed work (not originally planned):
 - ✓ Assembly architecture refactor (all models migrated to App::Part pattern)
@@ -724,6 +775,9 @@ enclosure constraint data also live in this file (see Task 3.6).
 - ◐ `DOOR_SEAL_DEDUCTIONS` + `CORNER_DOOR_CONSTRAINTS` -- Seal deduction and enclosure constraint system
 - ◐ Glass deduction methods added to HingedDoor, BiFoldDoor, SlidingDoor, FixedPanel
 - ◐ CornerEnclosure door constraint filtering and fixed panel seal deduction propagation
+- ✓ `Models/GlassShelf.py` -- Standalone pentagonal glass shelf model with clearance logic
+- ✓ `GLASS_SHELF_SPECS` + `SHELF_CLAMP_MAPPING` -- Glass shelf data specs in HardwareSpecs.py
+- ✓ CornerEnclosure glass shelf integration with position-aware clamp placement
 
 ---
 

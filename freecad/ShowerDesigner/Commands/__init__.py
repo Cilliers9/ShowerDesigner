@@ -330,6 +330,24 @@ class CutListCommand:
         return App.ActiveDocument is not None
 
 
+class GlassShelfCommand:
+    """Create a standalone glass shelf"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Glass Shelf',
+            'ToolTip': 'Create a corner glass shelf'
+        }
+
+    def Activated(self):
+        from freecad.ShowerDesigner.Models.GlassShelf import createGlassShelf
+        createGlassShelf()
+
+    def IsActive(self):
+        return True
+
+
 # Register component commands
 Gui.addCommand('ShowerDesigner_GlassPanel', GlassPanelCommand())
 Gui.addCommand('ShowerDesigner_FixedPanel', FixedPanelCommand())
@@ -339,6 +357,7 @@ Gui.addCommand('ShowerDesigner_BiFoldDoor', BiFoldDoorCommand())
 Gui.addCommand('ShowerDesigner_Hinge', HingeCommand())
 Gui.addCommand('ShowerDesigner_Clamp', ClampCommand())
 Gui.addCommand('ShowerDesigner_SupportBar', SupportBarCommand())
+Gui.addCommand('ShowerDesigner_GlassShelf', GlassShelfCommand())
 Gui.addCommand('ShowerDesigner_Measure',
                PlaceholderCommand('Measure', 'Measurement tools'))
 Gui.addCommand('ShowerDesigner_CutList', CutListCommand())

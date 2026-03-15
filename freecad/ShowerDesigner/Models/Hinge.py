@@ -6,8 +6,14 @@ Standalone hinge hardware model for shower enclosures.
 
 Provides a Hinge Part::FeaturePython object and a shared
 createHingeShape() function used by HingedDoor, BiFoldDoor, etc.
+
+Hinge models with .FCStd source files are loaded from pre-exported .brep
+files in the Hinge/ directory (same pattern as Handle.py).  Run
+export_hinge_breps() from the FreeCAD console to regenerate them.
 """
 
+
+import os
 
 import FreeCAD as App
 import Part
@@ -18,6 +24,45 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     HARDWARE_FINISHES,
     MONZA_BIFOLD_HINGE_SPECS,
 )
+
+# Directory containing hinge model files (.brep and .FCStd)
+_HINGE_MODEL_DIR = os.path.join(os.path.dirname(__file__), "Hinge")
+
+# Cache loaded shapes to avoid re-reading .brep files on every recompute
+_shape_cache = {}
+
+# Mapping: bevel hinge type key → .FCStd source filename
+_HINGE_MODEL_FILES = {
+    "bevel_180_glass_to_glass": "G2GHinge180.FCStd",
+}
+
+
+def _loadHingeShape(model_file):
+    """Load and cache a hinge shape from a .brep file.
+
+    The .brep filename is derived from model_file by replacing .FCStd with .brep.
+    """
+    brep_file = os.path.splitext(model_file)[0] + ".brep"
+
+    if brep_file in _shape_cache:
+        return _shape_cache[brep_file].copy()
+
+    filepath = os.path.join(_HINGE_MODEL_DIR, brep_file)
+    if not os.path.isfile(filepath):
+        App.Console.PrintWarning(
+            f"Hinge .brep model not found: {filepath}\n"
+            f"Run Hinge.export_hinge_breps() to generate it. Falling back to CSG.\n"
+        )
+        return None
+
+    shape = Part.Shape()
+    shape.read(filepath)
+    if shape.isNull():
+        App.Console.PrintError(f"Failed to read shape from {filepath}\n")
+        return None
+
+    _shape_cache[brep_file] = shape.copy()
+    return shape.copy()
 
 
 def createHingeShape(width, depth, height):
@@ -407,8 +452,9 @@ def createBevelHingeShape(hinge_type, glass_thickness=8):
     """
     Create a 3D shape for a Bevel-range hinge.
 
-    Dispatches to the appropriate builder based on the hinge's mounting_type.
-    Falls back to a simple box if CSG operations fail.
+    If a .brep model file exists for this hinge type, loads it directly.
+    Otherwise dispatches to the appropriate CSG builder.
+    Falls back to a simple box if all else fails.
 
     Args:
         hinge_type: Key into BEVEL_HINGE_SPECS
@@ -422,6 +468,14 @@ def createBevelHingeShape(hinge_type, glass_thickness=8):
         App.Console.PrintError(f"Unknown Bevel hinge type: {hinge_type}\n")
         return Part.makeBox(65, 20, 90)
 
+    # Try loading from .brep model file first
+    model_file = _HINGE_MODEL_FILES.get(hinge_type)
+    if model_file:
+        shape = _loadHingeShape(model_file)
+        if shape is not None:
+            return shape
+
+    # Fall back to CSG builder
     dims = spec["dimensions"]
     mounting = spec["mounting_type"]
     sub_type = spec["name"]
@@ -575,3 +629,69 @@ def createHinge(name="Hinge"):
     doc.recompute()
     App.Console.PrintMessage(f"Hinge '{name}' created\n")
     return obj
+
+
+def export_hinge_breps():
+    """
+    One-time utility: export hinge .FCStd models to .brep files.
+
+    Call this from the FreeCAD Python console whenever the source
+    .FCStd files are updated.  The generated .brep files should then
+    be committed to version control.
+
+    Example:
+        from freecad.ShowerDesigner.Models.Hinge import export_hinge_breps
+        export_hinge_breps()
+    """
+    previous_doc = App.ActiveDocument
+    exported = []
+
+    for key, model_file in _HINGE_MODEL_FILES.items():
+        fcstd_path = os.path.join(_HINGE_MODEL_DIR, model_file)
+        brep_path = os.path.splitext(fcstd_path)[0] + ".brep"
+
+        if not os.path.isfile(fcstd_path):
+            App.Console.PrintWarning(f"Source not found, skipping: {fcstd_path}\n")
+            continue
+
+        try:
+            doc = App.openDocument(fcstd_path, hidden=True)
+
+            best_shape = None
+            for obj in doc.Objects:
+                if obj.TypeId == "PartDesign::Body":
+                    if hasattr(obj, "Shape") and not obj.Shape.isNull() and obj.Shape.Solids:
+                        best_shape = obj.Shape.copy()
+                        break
+
+            if best_shape is None:
+                for obj in doc.Objects:
+                    if (hasattr(obj, "Shape") and not obj.Shape.isNull()
+                            and obj.Shape.Solids
+                            and obj.TypeId not in ("App::Line", "App::Plane", "App::Point")):
+                        if best_shape is None or len(obj.Shape.Solids) > len(best_shape.Solids):
+                            best_shape = obj.Shape.copy()
+
+            App.closeDocument(doc.Name)
+            if previous_doc is not None:
+                try:
+                    App.setActiveDocument(previous_doc.Name)
+                except Exception:
+                    pass
+
+            if best_shape is not None and best_shape.Solids:
+                best_shape.exportBrep(brep_path)
+                App.Console.PrintMessage(f"Exported: {brep_path}\n")
+                exported.append(key)
+            else:
+                App.Console.PrintWarning(f"No solid found in {fcstd_path}\n")
+
+        except Exception as e:
+            App.Console.PrintError(f"Failed to export {key}: {e}\n")
+
+    # Clear cache so next load picks up new files
+    _shape_cache.clear()
+
+    App.Console.PrintMessage(
+        f"Hinge BREP export complete: {len(exported)} of {len(_HINGE_MODEL_FILES)}\n"
+    )

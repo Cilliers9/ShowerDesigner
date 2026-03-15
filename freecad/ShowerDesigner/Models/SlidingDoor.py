@@ -117,6 +117,14 @@ class SlidingDoorAssembly(AssemblyController):
             "App::PropertyLength", "OverlapWidth", "Door Configuration",
             "Overlap width for bypass doors"
         ).OverlapWidth = 50
+        vs.addProperty(
+            "App::PropertyLength", "TrackWidthOverride", "Door Configuration",
+            "Override track width (0 = auto from door width)"
+        ).TrackWidthOverride = 0
+        vs.addProperty(
+            "App::PropertyFloat", "TrackXOffset", "Door Configuration",
+            "X offset for track start position (mm)"
+        ).TrackXOffset = 0
 
         # Slider system
         vs.addProperty(
@@ -429,10 +437,14 @@ class SlidingDoorAssembly(AssemblyController):
         track_length = _calculateTrackLength(vs)
         child.SliderSystem = system_key
         child.TrackLength = track_length
-        if vs.SlideDirection == "Right":
-            track_x = 0
+        track_x_offset = vs.TrackXOffset if hasattr(vs, "TrackXOffset") else 0
+        has_override = hasattr(vs, "TrackWidthOverride") and vs.TrackWidthOverride.Value > 0
+        if has_override:
+            track_x = track_x_offset
+        elif vs.SlideDirection == "Right":
+            track_x = track_x_offset
         else:
-            track_x = -track_length/2
+            track_x = -track_length/2 + track_x_offset
 
         # Tube support bracket at fixed panel junction
         if hasattr(child, "TubeSupportX"):
@@ -686,6 +698,10 @@ class SlidingDoorAssembly(AssemblyController):
 
 def _calculateTrackLength(vs):
     """Calculate total track length based on panel configuration."""
+    override = vs.TrackWidthOverride.Value if hasattr(vs, "TrackWidthOverride") else 0
+    if override > 0:
+        return override
+
     width = vs.Width.Value
     panel_count = max(1, min(2, vs.PanelCount))
     clearance = 0

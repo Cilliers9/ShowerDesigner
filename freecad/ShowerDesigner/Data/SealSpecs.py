@@ -697,6 +697,65 @@ SLIDING_DOOR_SEAL_OPTIONS = ["No Seal", "Magnet Seal", "Bubble Seal"]
 CLOSING_AGAINST_OPTIONS = ["Inline Panel", "Return Panel", "Wall"]
 
 
+# ---------------------------------------------------------------------------
+# Display name → catalogue key mapping (for BOM product-code lookup)
+# ---------------------------------------------------------------------------
+
+_SEAL_DISPLAY_TO_KEY = {
+    "Centre Lip Seal": "centre_lip",
+    "180 Soft Lip Seal": "180_soft_lip",
+    "180 Long Lip Seal": "180_long_lip",
+    "90 Soft Lip Seal": "90_soft_lip",
+    "135 Soft Lip Seal": "135_soft_lip",
+    "Bubble Seal": "bubble_seal",
+    "Wipe Seal With Bubble": "wipe_seal_bubble",
+    "Drip & Wipe Seal": "drip_wipe_seal",
+    "Hard Lip Seal": "180_hard_lip",
+    "180 Hard Lip Seal": "180_hard_lip",
+    "135 Hard Lip Seal": "135_hard_lip",
+    "90 Hard Lip Seal": "90_hard_lip",
+    "90/180 Magnet Seal": "90_180_magnetic",
+    "135 Magnet Seal": "135_magnetic",
+    "180 Flat Magnet Seal": "180_flat_magnetic",
+}
+
+
+def getSealProductCodeForThickness(display_name, glass_thickness):
+    """
+    Look up the best product code for a seal given its display name and glass thickness.
+
+    Args:
+        display_name: Seal display name (e.g. "Bubble Seal", "180 Soft Lip Seal")
+        glass_thickness: Glass thickness in mm (e.g. 8, 10)
+
+    Returns:
+        str: Product code string, or "" if no match found
+    """
+    cat_key = _SEAL_DISPLAY_TO_KEY.get(display_name)
+    if not cat_key or cat_key not in CATALOGUE_SEAL_SPECS:
+        return ""
+
+    spec = CATALOGUE_SEAL_SPECS[cat_key]
+    codes = spec.get("product_codes", [])
+    if not codes:
+        return ""
+
+    # Find best match: product code whose glass_thickness range includes ours
+    thickness_str = str(int(glass_thickness))
+    for pc in codes:
+        gt = pc.get("glass_thickness", "")
+        # Glass thickness can be "6-8", "8-10", "10-12", or just "8"
+        if "-" in gt:
+            lo, hi = gt.split("-")
+            if int(lo) <= glass_thickness <= int(hi):
+                return pc["code"]
+        elif gt == thickness_str:
+            return pc["code"]
+
+    # Fallback: return first code
+    return codes[0]["code"]
+
+
 def getReturnPanelMagnetDeduction(glass_thickness):
     """
     Return the width deduction (mm) for a fixed/return panel when the

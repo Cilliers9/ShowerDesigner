@@ -22,6 +22,7 @@ from freecad.ShowerDesigner.Data.CutList import (
     toConsoleTable,
     toTable,
 )
+from freecad.ShowerDesigner.Data.SealSpecs import getSealProductCodeForThickness
 
 
 # ======================================================================
@@ -201,6 +202,34 @@ class TestToTable:
         ]
         rows = toTable(items)
         assert len(rows) == 3  # header + 2 data
+
+
+class TestSealProductCodeLookup:
+    """Test seal display name → product code lookup."""
+
+    def test_bubble_seal_8mm(self):
+        code = getSealProductCodeForThickness("Bubble Seal", 8)
+        assert code == "TSS-004-8"
+
+    def test_180_soft_lip_10mm(self):
+        code = getSealProductCodeForThickness("180 Soft Lip Seal", 10)
+        assert code == "TSS-003-10"
+
+    def test_magnet_seal_8mm(self):
+        code = getSealProductCodeForThickness("90/180 Magnet Seal", 8)
+        assert code != ""
+
+    def test_no_seal_returns_empty(self):
+        code = getSealProductCodeForThickness("No Seal", 8)
+        assert code == ""
+
+    def test_unknown_seal_returns_empty(self):
+        code = getSealProductCodeForThickness("Imaginary Seal", 10)
+        assert code == ""
+
+    def test_drip_wipe_seal(self):
+        code = getSealProductCodeForThickness("Drip & Wipe Seal", 8)
+        assert code != ""
 
 
 class TestToConsoleTable:
@@ -425,6 +454,101 @@ class TestCutListExtractorIntegration:
         finally:
             self._closeDoc(doc)
 
+    def test_extract_seals_from_varset(self):
+        """VarSet with seal properties → Seal BOM items."""
+        from freecad.ShowerDesigner.Models.CutListExtractor import CutListExtractor
+
+        doc = self._makeDoc()
+        try:
+            part = doc.addObject("App::Part", "FixedPanel")
+            vs = doc.addObject("App::VarSet", "VarSet")
+            vs.addProperty(
+                "App::PropertyLength", "Width", "Dimensions", "Panel width"
+            )
+            vs.Width = 900
+            vs.addProperty(
+                "App::PropertyLength", "Height", "Dimensions", "Panel height"
+            )
+            vs.Height = 2000
+            vs.addProperty(
+                "App::PropertyLength", "Thickness", "Dimensions", "Glass thickness"
+            )
+            vs.Thickness = 8
+            vs.addProperty(
+                "App::PropertyEnumeration", "WallSeal", "Seal", "Wall seal"
+            )
+            vs.WallSeal = ["No Seal", "Bubble Seal", "Centre Lip Seal"]
+            vs.WallSeal = "Bubble Seal"
+            vs.addProperty(
+                "App::PropertyEnumeration", "FloorSeal", "Seal", "Floor seal"
+            )
+            vs.FloorSeal = ["No Seal", "Bubble Seal"]
+            vs.FloorSeal = "No Seal"
+            part.addObject(vs)
+            doc.recompute()
+
+            extractor = CutListExtractor()
+            items = extractor.extract(part)
+
+            seal_items = [i for i in items if i.category == "Seal"]
+            assert len(seal_items) == 1  # Only WallSeal (FloorSeal is "No Seal")
+            assert seal_items[0].description == "Bubble Seal"
+            assert seal_items[0].width == 2000  # Wall seal → height
+            assert seal_items[0].product_code == "TSS-004-8"
+            assert "Wall" in seal_items[0].notes
+        finally:
+            self._closeDoc(doc)
+
+    def test_extract_seals_door_varset(self):
+        """VarSet with door seal properties → multiple Seal BOM items."""
+        from freecad.ShowerDesigner.Models.CutListExtractor import CutListExtractor
+
+        doc = self._makeDoc()
+        try:
+            part = doc.addObject("App::Part", "HingedDoor")
+            vs = doc.addObject("App::VarSet", "VarSet")
+            vs.addProperty("App::PropertyLength", "Width", "Dimensions", "")
+            vs.Width = 800
+            vs.addProperty("App::PropertyLength", "Height", "Dimensions", "")
+            vs.Height = 2000
+            vs.addProperty("App::PropertyLength", "Thickness", "Dimensions", "")
+            vs.Thickness = 10
+            vs.addProperty(
+                "App::PropertyEnumeration", "HingeSideSeal", "Seal", ""
+            )
+            vs.HingeSideSeal = ["No Seal", "180 Soft Lip Seal"]
+            vs.HingeSideSeal = "180 Soft Lip Seal"
+            vs.addProperty(
+                "App::PropertyEnumeration", "FloorSeal", "Seal", ""
+            )
+            vs.FloorSeal = ["No Seal", "Drip & Wipe Seal"]
+            vs.FloorSeal = "Drip & Wipe Seal"
+            vs.addProperty(
+                "App::PropertyEnumeration", "ClosingSeal", "Seal", ""
+            )
+            vs.ClosingSeal = ["No Seal", "90/180 Magnet Seal"]
+            vs.ClosingSeal = "90/180 Magnet Seal"
+            part.addObject(vs)
+            doc.recompute()
+
+            extractor = CutListExtractor()
+            items = extractor.extract(part)
+
+            seal_items = [i for i in items if i.category == "Seal"]
+            assert len(seal_items) == 3
+            descriptions = {s.description for s in seal_items}
+            assert "180 Soft Lip Seal" in descriptions
+            assert "Drip & Wipe Seal" in descriptions
+            assert "90/180 Magnet Seal" in descriptions
+
+            # Check dimensions: floor seal → width, others → height
+            floor = [s for s in seal_items if "Floor" in s.notes][0]
+            assert floor.width == 800
+            hinge = [s for s in seal_items if "Hinge Side" in s.notes][0]
+            assert hinge.width == 2000
+        finally:
+            self._closeDoc(doc)
+
     def test_full_assembly_multiple_children(self):
         """Assembly with glass + hinge + handle → 3 BOM items."""
         from freecad.ShowerDesigner.Models.ChildProxies import (
@@ -492,6 +616,7 @@ def run_all_tests():
     test_classes = [
         TestCutListItem,
         TestAggregateItems,
+        TestSealProductCodeLookup,
         TestToCSV,
         TestToTable,
         TestToConsoleTable,

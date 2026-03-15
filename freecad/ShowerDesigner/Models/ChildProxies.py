@@ -535,12 +535,12 @@ class SliderTrackChild:
             # Flange at start (extends backward from X=0)
             f1 = Part.makeBox(
                 flange_proj, track_w+5, track_h+5,
-                App.Vector(-flange_proj, -2.5, -2.5)
+                App.Vector(0, -2.5, -2.5)
             )
             # Flange at end (extends forward from X=length)
             f2 = Part.makeBox(
                 flange_proj, track_w+5, track_h+5,
-                App.Vector(length, -2.5, -2.5)
+                App.Vector(length-flange_proj, -2.5, -2.5)
             )
             shape = shape.fuse(f1).fuse(f2)
             obj.Shape = shape.removeSplitter()

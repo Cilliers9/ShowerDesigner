@@ -102,6 +102,20 @@ class AlcoveEnclosureAssembly(AssemblyController):
         )
         vs.PanelSide = ["Left", "Right"]
         vs.PanelSide = "Left"
+        vs.addProperty(
+            "App::PropertyEnumeration", "HingeSide", "Door Configuration",
+            "Which side the door hinges are on"
+        )
+        vs.HingeSide = ["Left", "Right"]
+        vs.HingeSide = "Left"
+
+        # Slider configuration
+        vs.addProperty(
+            "App::PropertyEnumeration", "SliderSystem", "Door Configuration",
+            "Catalogue slider system"
+        )
+        vs.SliderSystem = list(SLIDER_SYSTEM_SPECS.keys())
+        vs.SliderSystem = "edge_slider"
 
         # 3-panel layout options
         vs.addProperty(
@@ -247,31 +261,33 @@ class AlcoveEnclosureAssembly(AssemblyController):
         shelf_d = vs.ShelfDepth.Value
         rot = info["rotation"]
         origin = info["origin"]
-        z = vs.ShelfHeightFromFloor.Value
+        z = vs.ShelfHeightFromFloor.Value + thickness
         rad = math.radians(rot)
 
         # Clamp 1 on edge 1 (along X), positioned edge_length - inset from corner
         clamp1 = self._getChild(part_obj, "ShelfClamp1")
         if clamp1:
             clamp1.ClampType = SHELF_CLAMP_MAPPING[info["edge1_surface"]]
-            lx, ly = shelf_w - clamp_inset, 0
+            g2g_offset = 8 if info["edge1_surface"] == "glass" else 0
+            lx, ly = shelf_w - clamp_inset, g2g_offset
             wx = origin.x + lx * math.cos(rad) - ly * math.sin(rad)
             wy = origin.y + lx * math.sin(rad) + ly * math.cos(rad)
             clamp1.Placement = App.Placement(
                 App.Vector(wx, wy, z),
-                App.Rotation(App.Vector(0, 0, 1), rot),
+                App.Rotation(0 + rot, 0, -90),
             )
 
         # Clamp 2 on edge 2 (along Y), positioned edge_length - inset from corner
         clamp2 = self._getChild(part_obj, "ShelfClamp2")
         if clamp2:
             clamp2.ClampType = SHELF_CLAMP_MAPPING[info["edge2_surface"]]
-            lx, ly = 0, shelf_d - clamp_inset
+            g2g_offset = 8 if info["edge2_surface"] == "glass" else 0
+            lx, ly = g2g_offset, shelf_d - clamp_inset
             wx = origin.x + lx * math.cos(rad) - ly * math.sin(rad)
             wy = origin.y + lx * math.sin(rad) + ly * math.cos(rad)
             clamp2.Placement = App.Placement(
                 App.Vector(wx, wy, z),
-                App.Rotation(App.Vector(0, 0, 1), rot),
+                App.Rotation(-90 + rot, 0, -90),
             )
 
     # ------------------------------------------------------------------
@@ -403,6 +419,10 @@ class AlcoveEnclosureAssembly(AssemblyController):
             if role in self._manifest:
                 self._removeNestedAssembly(part_obj, role)
 
+        # Default door width to half enclosure for sliding + panel layouts
+        if wanted in ("FixedPanel+SlidingDoor", "FixedPanel+SlidingDoor+FixedPanel"):
+            vs.DoorWidth = vs.Width.Value / 2
+
         # Rebuild
         self._createDoor(part_obj, vs)
 
@@ -442,6 +462,10 @@ class AlcoveEnclosureAssembly(AssemblyController):
                         door_vs.GlassType = vs.GlassType
                     if hasattr(door_vs, "HardwareFinish"):
                         door_vs.HardwareFinish = vs.HardwareFinish
+                    if hasattr(door_vs, "HingeSide"):
+                        door_vs.HingeSide = vs.HingeSide
+                    if hasattr(door_vs, "SliderSystem"):
+                        door_vs.SliderSystem = vs.SliderSystem
                     if hasattr(door_vs, "ClosingAgainst"):
                         door_vs.ClosingAgainst = "Wall"
                     # Both sides are walls for single door
@@ -519,6 +543,19 @@ class AlcoveEnclosureAssembly(AssemblyController):
                     door_vs.GlassType = vs.GlassType
                 if hasattr(door_vs, "HardwareFinish"):
                     door_vs.HardwareFinish = vs.HardwareFinish
+                if hasattr(door_vs, "HingeSide"):
+                    door_vs.HingeSide = vs.HingeSide
+                if hasattr(door_vs, "SlideDirection"):
+                    door_vs.SlideDirection = panel_side
+                if hasattr(door_vs, "SliderSystem"):
+                    door_vs.SliderSystem = vs.SliderSystem
+                if hasattr(door_vs, "TrackWidthOverride"):
+                    door_vs.TrackWidthOverride = width
+                if hasattr(door_vs, "TrackXOffset"):
+                    if panel_side == "Left":
+                        door_vs.TrackXOffset = -(panel_width - overlap)
+                    else:
+                        door_vs.TrackXOffset = 0
 
                 # HingedDoor constraint logic
                 if hasattr(door_vs, "HingeSide"):
@@ -528,6 +565,13 @@ class AlcoveEnclosureAssembly(AssemblyController):
                             self._filterEnum(
                                 door_vs, "MountingType",
                                 ["Glass Mounted", "Pivot"],
+                            )
+                        # Limit hinge models to 180° G2G when panel
+                        # is on hinge side (5mm gap, not 10mm)
+                        if hasattr(door_vs, "HingeModel"):
+                            self._filterEnum(
+                                door_vs, "HingeModel",
+                                ["bevel_180_glass_to_glass"],
                             )
                         if hasattr(door_vs, "ClosingAgainst"):
                             door_vs.ClosingAgainst = "Wall"
@@ -540,8 +584,12 @@ class AlcoveEnclosureAssembly(AssemblyController):
                         if hasattr(door_vs, "ClosingAgainst"):
                             door_vs.ClosingAgainst = "Inline Panel"
                 elif hasattr(door_vs, "ClosingAgainst"):
-                    # SlidingDoor / BiFoldDoor — always closes toward panel
-                    door_vs.ClosingAgainst = "Inline Panel"
+                    # SlidingDoor closes against wall (panel is behind)
+                    if hasattr(door_vs, "SlideDirection"):
+                        door_vs.ClosingAgainst = "Wall"
+                    else:
+                        # BiFoldDoor — closes toward panel
+                        door_vs.ClosingAgainst = "Inline Panel"
 
                 is_magnet = self._isMagnetSeal(door_vs)
 
@@ -552,16 +600,19 @@ class AlcoveEnclosureAssembly(AssemblyController):
                 panel_vs.Width = panel_width
                 panel_vs.Height = height
                 panel_vs.Thickness = thickness
+                if hasattr(panel_vs, "WallMountEdge"):
+                    panel_vs.WallMountEdge = panel_side
                 if hasattr(panel_vs, "GlassType"):
                     panel_vs.GlassType = vs.GlassType
                 if hasattr(panel_vs, "HardwareFinish"):
                     panel_vs.HardwareFinish = vs.HardwareFinish
-            self._propagateSealDeduction(panel, thickness, is_magnet)
+            # No panel seal deduction — door deductions alone create the gap
+            self._propagateSealDeduction(panel, thickness, False)
 
         # --- Position based on PanelSide ---
         # For sliding: fixed panel in front (Y=0), door behind (Y=clearance).
         # Panel overlaps the door edge by `overlap` mm.
-        door_y = clearance
+        door_y = clearance + thickness if clearance > 0 else 0
         if panel_side == "Left":
             if panel:
                 panel.Placement = App.Placement(
@@ -592,7 +643,17 @@ class AlcoveEnclosureAssembly(AssemblyController):
         """Update LeftPanel + Door + RightPanel layout."""
         left_w = vs.LeftPanelWidth.Value
         right_w = vs.RightPanelWidth.Value
-        door_width = width - left_w - right_w
+
+        # Get overlap from slider specs for sliding door layouts
+        overlap = 0
+        door = self._getChild(part_obj, "Door")
+        if door:
+            door_vs = self._getNestedVarSet(door)
+            if door_vs and hasattr(door_vs, "SliderSystem"):
+                spec = SLIDER_SYSTEM_SPECS.get(door_vs.SliderSystem, {})
+                overlap = spec.get("fixed_door_overlap", 0)
+
+        door_width = width - left_w - right_w + overlap * 2
 
         if door_width <= 0:
             App.Console.PrintError(
@@ -603,7 +664,6 @@ class AlcoveEnclosureAssembly(AssemblyController):
 
         # --- Update door (first, to read seal state for panel deductions) ---
         is_magnet = False
-        door = self._getChild(part_obj, "Door")
         if door:
             door_vs = self._getNestedVarSet(door)
             if door_vs:
@@ -614,8 +674,19 @@ class AlcoveEnclosureAssembly(AssemblyController):
                     door_vs.GlassType = vs.GlassType
                 if hasattr(door_vs, "HardwareFinish"):
                     door_vs.HardwareFinish = vs.HardwareFinish
+                if hasattr(door_vs, "HingeSide"):
+                    door_vs.HingeSide = vs.HingeSide
+                if hasattr(door_vs, "SliderSystem"):
+                    door_vs.SliderSystem = vs.SliderSystem
+                if hasattr(door_vs, "TrackWidthOverride"):
+                    door_vs.TrackWidthOverride = width
+                if hasattr(door_vs, "TrackXOffset"):
+                    door_vs.TrackXOffset = -(left_w - overlap)
                 if hasattr(door_vs, "ClosingAgainst"):
                     door_vs.ClosingAgainst = "Inline Panel"
+                # Center sliding door: no closing seal needed
+                if hasattr(door_vs, "SlideDirection") and hasattr(door_vs, "ClosingSeal"):
+                    door_vs.ClosingSeal = "No Seal"
                 # Both sides are panels → Glass Mounted/Pivot
                 if hasattr(door_vs, "MountingType"):
                     self._filterEnum(
@@ -631,11 +702,14 @@ class AlcoveEnclosureAssembly(AssemblyController):
                 left_vs.Width = left_w
                 left_vs.Height = height
                 left_vs.Thickness = thickness
+                if hasattr(left_vs, "WallMountEdge"):
+                    left_vs.WallMountEdge = "Left"
                 if hasattr(left_vs, "GlassType"):
                     left_vs.GlassType = vs.GlassType
                 if hasattr(left_vs, "HardwareFinish"):
                     left_vs.HardwareFinish = vs.HardwareFinish
-            self._propagateSealDeduction(left, thickness, is_magnet)
+            # No panel seal deduction — door deductions alone create the gap
+            self._propagateSealDeduction(left, thickness, False)
 
         # --- Update right panel ---
         right = self._getChild(part_obj, "RightPanel")
@@ -645,24 +719,37 @@ class AlcoveEnclosureAssembly(AssemblyController):
                 right_vs.Width = right_w
                 right_vs.Height = height
                 right_vs.Thickness = thickness
+                if hasattr(right_vs, "WallMountEdge"):
+                    right_vs.WallMountEdge = "Right"
                 if hasattr(right_vs, "GlassType"):
                     right_vs.GlassType = vs.GlassType
                 if hasattr(right_vs, "HardwareFinish"):
                     right_vs.HardwareFinish = vs.HardwareFinish
-            self._propagateSealDeduction(right, thickness, is_magnet)
+            # No panel seal deduction — door deductions alone create the gap
+            self._propagateSealDeduction(right, thickness, False)
 
         # --- Position ---
+        # For sliding doors, offset in Y by clearance + glass thickness
+        door_y = 0
+        if door and vs.DoorType in self._THREE_PANEL_TYPES:
+            door_vs = self._getNestedVarSet(door)
+            if door_vs and hasattr(door_vs, "SliderSystem"):
+                spec = SLIDER_SYSTEM_SPECS.get(door_vs.SliderSystem, {})
+                clearance = spec.get("fixed_door_clearance", 0)
+                if clearance > 0:
+                    door_y = clearance + thickness
+
         if left:
             left.Placement = App.Placement(
                 App.Vector(0, 0, 0), App.Rotation()
             )
         if door:
             door.Placement = App.Placement(
-                App.Vector(left_w, 0, 0), App.Rotation()
+                App.Vector(left_w - overlap, door_y, 0), App.Rotation()
             )
         if right:
             right.Placement = App.Placement(
-                App.Vector(left_w + door_width, 0, 0), App.Rotation()
+                App.Vector(width - right_w, 0, 0), App.Rotation()
             )
 
     def _getNestedVarSet(self, part_obj):

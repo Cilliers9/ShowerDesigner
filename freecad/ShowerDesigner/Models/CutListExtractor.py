@@ -13,6 +13,10 @@ from __future__ import annotations
 import FreeCAD as App
 
 from freecad.ShowerDesigner.Data.CutList import CutListItem
+from freecad.ShowerDesigner.Data.SealSpecs import (
+    CATALOGUE_SEAL_SPECS,
+    getSealProductCodeForThickness,
+)
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     BEVEL_HINGE_SPECS,
     CATALOGUE_HANDLE_SPECS,
@@ -27,6 +31,19 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
 
 # Proxy class names that are visualization-only (no BOM entry)
 _SKIP_PROXIES = {"SwingArcChild", "GhostChild"}
+
+# Seal properties found on VarSets → (location label, length dimension)
+# length dimension: "height" or "width" on the VarSet
+_SEAL_PROPERTIES = {
+    "WallSeal": ("Wall", "height"),
+    "FloorSeal": ("Floor", "width"),
+    "PanelSeal": ("Panel", "height"),
+    "HingeSideSeal": ("Hinge Side", "height"),
+    "ClosingSeal": ("Closing", "height"),
+    "BackSeal": ("Back", "height"),
+    "WallHingeSeal": ("Wall Hinge", "height"),
+    "FoldHingeSeal": ("Fold Hinge", "height"),
+}
 
 
 class CutListExtractor:
@@ -57,12 +74,14 @@ class CutListExtractor:
         """Walk an App::Part container's Group."""
         items: list[CutListItem] = []
         group = getattr(part_obj, "Group", [])
+        varset = None
 
         for child in group:
             child_type = child.TypeId if hasattr(child, "TypeId") else ""
 
-            # Skip VarSets and controller objects
+            # Capture VarSet for seal extraction
             if child_type == "App::VarSet":
+                varset = child
                 continue
             if hasattr(child, "Label") and child.Label.startswith("_Controller"):
                 continue
@@ -77,6 +96,10 @@ class CutListExtractor:
                 item = self._extractChild(child, component_name)
                 if item is not None:
                     items.append(item)
+
+        # Extract seals from VarSet
+        if varset is not None:
+            items.extend(self._extractSeals(varset, component_name))
 
         return items
 
@@ -338,3 +361,42 @@ class CutListExtractor:
             quantity=1,
             unit="pc",
         )
+
+    def _extractSeals(
+        self, varset, component_name: str
+    ) -> list[CutListItem]:
+        """Extract seal BOM items from a VarSet's seal properties."""
+        items: list[CutListItem] = []
+
+        thickness = (
+            varset.Thickness.Value if hasattr(varset, "Thickness") else 0
+        )
+        width = varset.Width.Value if hasattr(varset, "Width") else 0
+        height = varset.Height.Value if hasattr(varset, "Height") else 0
+
+        for prop_name, (location, length_dim) in _SEAL_PROPERTIES.items():
+            if not hasattr(varset, prop_name):
+                continue
+            seal_name = getattr(varset, prop_name)
+            if seal_name == "No Seal":
+                continue
+
+            length = height if length_dim == "height" else width
+            product_code = getSealProductCodeForThickness(
+                seal_name, thickness
+            )
+
+            items.append(
+                CutListItem(
+                    category="Seal",
+                    component=component_name,
+                    description=seal_name,
+                    product_code=product_code,
+                    width=length,
+                    quantity=1,
+                    unit="pc",
+                    notes=f"{location}, {length:.0f}mm cut length",
+                )
+            )
+
+        return items

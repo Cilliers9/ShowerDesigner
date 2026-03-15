@@ -473,6 +473,15 @@ class AlcoveEnclosureAssembly(AssemblyController):
                         self._filterEnum(
                             door_vs, "MountingType", ["Wall Mounted", "Pivot"]
                         )
+                    # Default to half-plate 90° wall-to-glass hinge
+                    if hasattr(door_vs, "HingeModel"):
+                        from freecad.ShowerDesigner.Data.HardwareSpecs import (
+                            getHingeModelsForVariant,
+                        )
+                        wall_models = getHingeModelsForVariant("Wall Mounted")
+                        self._filterEnum(door_vs, "HingeModel", wall_models)
+                        if "bevel_90_wall_to_glass_half" in wall_models:
+                            door_vs.HingeModel = "bevel_90_wall_to_glass_half"
 
         # --- Glass shelf ---
         # Back corners are always safe.  Front corners are only allowed
@@ -566,8 +575,7 @@ class AlcoveEnclosureAssembly(AssemblyController):
                                 door_vs, "MountingType",
                                 ["Glass Mounted", "Pivot"],
                             )
-                        # Limit hinge models to 180° G2G when panel
-                        # is on hinge side (5mm gap, not 10mm)
+                        # 180° G2G is the only option when hinging on glass
                         if hasattr(door_vs, "HingeModel"):
                             self._filterEnum(
                                 door_vs, "HingeModel",
@@ -581,6 +589,15 @@ class AlcoveEnclosureAssembly(AssemblyController):
                                 door_vs, "MountingType",
                                 ["Wall Mounted", "Pivot"],
                             )
+                        # Default to half-plate 90° wall-to-glass hinge
+                        if hasattr(door_vs, "HingeModel"):
+                            from freecad.ShowerDesigner.Data.HardwareSpecs import (
+                                getHingeModelsForVariant,
+                            )
+                            wall_models = getHingeModelsForVariant("Wall Mounted")
+                            self._filterEnum(door_vs, "HingeModel", wall_models)
+                            if "bevel_90_wall_to_glass_half" in wall_models:
+                                door_vs.HingeModel = "bevel_90_wall_to_glass_half"
                         if hasattr(door_vs, "ClosingAgainst"):
                             door_vs.ClosingAgainst = "Inline Panel"
                 elif hasattr(door_vs, "ClosingAgainst"):
@@ -687,10 +704,15 @@ class AlcoveEnclosureAssembly(AssemblyController):
                 # Center sliding door: no closing seal needed
                 if hasattr(door_vs, "SlideDirection") and hasattr(door_vs, "ClosingSeal"):
                     door_vs.ClosingSeal = "No Seal"
-                # Both sides are panels → Glass Mounted/Pivot
+                # Both sides are panels → Glass Mounted/Pivot, 180° G2G hinge
                 if hasattr(door_vs, "MountingType"):
                     self._filterEnum(
                         door_vs, "MountingType", ["Glass Mounted", "Pivot"]
+                    )
+                if hasattr(door_vs, "HingeModel"):
+                    self._filterEnum(
+                        door_vs, "HingeModel",
+                        ["bevel_180_glass_to_glass"],
                     )
                 is_magnet = self._isMagnetSeal(door_vs)
 

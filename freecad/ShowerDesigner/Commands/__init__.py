@@ -272,8 +272,8 @@ class CutListCommand:
         from freecad.ShowerDesigner.Data.CutList import (
             aggregateItems,
             toConsoleTable,
-            toCSV,
         )
+        from freecad.ShowerDesigner.Gui.CutListDialog import CutListDialog
         from freecad.ShowerDesigner.Models.CutListExtractor import CutListExtractor
 
         doc = App.ActiveDocument
@@ -306,24 +306,16 @@ class CutListCommand:
 
         aggregated = aggregateItems(all_items)
 
-        # Print to console
+        # Also print to console for quick reference
         App.Console.PrintMessage("\n=== Cut List / Bill of Materials ===\n")
         App.Console.PrintMessage(toConsoleTable(aggregated))
         App.Console.PrintMessage(
             f"Total items: {sum(i.quantity for i in aggregated)}\n\n"
         )
 
-        # Copy CSV to clipboard
-        csv_text = toCSV(aggregated)
-        try:
-            from PySide import QtWidgets  # type: ignore[import-untyped]
-            clipboard = QtWidgets.QApplication.clipboard()
-            clipboard.setText(csv_text)
-            App.Console.PrintMessage("CSV copied to clipboard.\n")
-        except Exception:
-            App.Console.PrintMessage(
-                "Could not copy to clipboard. CSV output:\n" + csv_text
-            )
+        # Show dialog
+        dlg = CutListDialog(aggregated, Gui.getMainWindow())
+        dlg.exec_()
 
     def IsActive(self):
         import FreeCAD as App

@@ -9,6 +9,7 @@ Configurations:
   - Single: one panel along the X axis
   - Double-L: two panels at 90° (L-shape)
   - Double-Parallel: two facing panels with a walkway gap
+  - Double-Inline: two panels inline along the X axis with a walk-in gap
 """
 
 import math
@@ -41,8 +42,6 @@ def _setupGlassVP(obj):
     setupViewProvider(obj)
 
 
-_SUPPORT_BAR_INSET = 75  # mm from free corner edge of fixed panel
-
 
 class WalkInEnclosureAssembly(AssemblyController):
     """
@@ -67,7 +66,7 @@ class WalkInEnclosureAssembly(AssemblyController):
             "App::PropertyEnumeration", "PanelConfiguration", "Layout",
             "Panel arrangement"
         )
-        vs.PanelConfiguration = ["Single", "Double-L", "Double-Parallel"]
+        vs.PanelConfiguration = ["Single", "Double-L", "Double-Parallel", "Double-Inline"]
         vs.PanelConfiguration = "Single"
         vs.addProperty(
             "App::PropertyEnumeration", "LJointSide", "Layout",
@@ -87,7 +86,7 @@ class WalkInEnclosureAssembly(AssemblyController):
         ).Height = 2000
         vs.addProperty(
             "App::PropertyLength", "Depth", "Dimensions",
-            "Depth for Double-L arm or Double-Parallel gap"
+            "Depth for Double-L arm, Double-Parallel gap, or Double-Inline walk-in gap"
         ).Depth = 900
         vs.addProperty(
             "App::PropertyLength", "GlassThickness", "Glass",
@@ -115,11 +114,15 @@ class WalkInEnclosureAssembly(AssemblyController):
         vs.addProperty(
             "App::PropertyLength", "SupportBarHeight", "Support Bar",
             "Height of support bar from floor"
-        ).SupportBarHeight = 1900
+        ).SupportBarHeight = 2000
         vs.addProperty(
             "App::PropertyLength", "SupportBarDiameter", "Support Bar",
             "Diameter of support bar"
-        ).SupportBarDiameter = 16
+        ).SupportBarDiameter = 19
+        vs.addProperty(
+            "App::PropertyLength", "SupportBarInset", "Support Bar",
+            "Distance from free panel edge for perpendicular bar (Double-L)"
+        ).SupportBarInset = 75
 
         # Glass shelf
         vs.addProperty(
@@ -310,6 +313,26 @@ class WalkInEnclosureAssembly(AssemblyController):
                     App.Rotation(App.Vector(0, 0, 1), 0),
                 )
 
+        elif config == "Double-Inline":
+            # Two panels inline along X with a walk-in gap (Depth) between them
+            panel1 = self._getChild(part_obj, "Panel1")
+            panel2 = self._getChild(part_obj, "Panel2")
+            if panel1:
+                self._propagateToPanel(panel1, vs, width)
+                panel1.Placement = App.Placement(
+                    App.Vector(0, 0, 0),
+                    App.Rotation(App.Vector(0, 0, 1), 0),
+                )
+            if panel2:
+                self._propagateToPanel(panel2, vs, width)
+                panel2_vs = self._getNestedVarSet(panel2)
+                if panel2_vs and hasattr(panel2_vs, "WallMountEdge"):
+                    panel2_vs.WallMountEdge = "Right"
+                panel2.Placement = App.Placement(
+                    App.Vector(width + depth, 0, 0),
+                    App.Rotation(App.Vector(0, 0, 1), 0),
+                )
+
         # Support bars
         if vs.ShowSupportBar:
             self._updateSupportBars(
@@ -348,12 +371,12 @@ class WalkInEnclosureAssembly(AssemblyController):
     def _updateSupportBars(self, part_obj, vs, config, width, depth, height,
                            thickness, l_side="Left"):
         bar_height = vs.SupportBarHeight.Value
+        inset = vs.SupportBarInset.Value
 
         if config == "Double-L":
             # Single perpendicular bar on Panel 1 only (like CornerEnclosure).
             # Sits at top edge of glass, inset 75 mm from the free corner,
             # runs perpendicular to Panel 1 toward the back wall.
-            inset = _SUPPORT_BAR_INSET
             bar1 = self._ensureSupportBar(part_obj, vs, "SupportBar")
             if bar1:
                 bar1.BarType = vs.SupportBarType
@@ -376,14 +399,14 @@ class WalkInEnclosureAssembly(AssemblyController):
                 self._removeChild(part_obj, "SupportBar2")
 
         else:
-            # Single / Double-Parallel: horizontal bar along panel top
+            # Single / Double-Parallel / Double-Inline: horizontal bar along panel top
             bar1 = self._ensureSupportBar(part_obj, vs, "SupportBar")
             if bar1:
                 bar1.BarType = vs.SupportBarType
                 bar1.Length = width
                 bar1.Diameter = vs.SupportBarDiameter.Value
                 bar1.Placement = App.Placement(
-                    App.Vector(0, thickness / 2, bar_height),
+                    App.Vector(width - inset, thickness / 2, bar_height),
                     App.Rotation(App.Vector(0, 0, 1), 0),
                 )
 
@@ -398,7 +421,18 @@ class WalkInEnclosureAssembly(AssemblyController):
                     bar2.Length = width
                     bar2.Diameter = vs.SupportBarDiameter.Value
                     bar2.Placement = App.Placement(
-                        App.Vector(0, depth + thickness / 2, bar_height),
+                        App.Vector(width - inset, depth + thickness / 2, bar_height),
+                        App.Rotation(App.Vector(0, 0, 1), 0),
+                    )
+
+            elif config == "Double-Inline":
+                bar2 = self._ensureSupportBar(part_obj, vs, "SupportBar2")
+                if bar2:
+                    bar2.BarType = vs.SupportBarType
+                    bar2.Length = width
+                    bar2.Diameter = vs.SupportBarDiameter.Value
+                    bar2.Placement = App.Placement(
+                        App.Vector(width + depth + inset, thickness / 2, bar_height),
                         App.Rotation(App.Vector(0, 0, 1), 0),
                     )
 
@@ -463,6 +497,17 @@ class WalkInEnclosureAssembly(AssemblyController):
             Wall  |  Walkway   |  Wall
               (0,0)+----------+(W,0)
                   Panel1 (glass)
+
+        Double-Inline layout::
+
+                    Back Wall
+              (0,D)+--------------------------+(2W+G,D)
+                  |                            |
+            Left  |                            |  Right
+            Wall  |                            |  Wall
+                  |                            |
+              (0,0)+---+(W,0)  (W+G,0)+-------+(2W+G,0)
+                  Panel1       Gap     Panel2
         """
         if config == "Single":
             mapping = {
@@ -526,7 +571,7 @@ class WalkInEnclosureAssembly(AssemblyController):
                 }
             allowed = ["Position 1", "Position 2", "Position 3"]
 
-        else:  # Double-Parallel
+        elif config == "Double-Parallel":
             mapping = {
                 "Position 1": {
                     "origin": App.Vector(0, 0, 0),
@@ -554,6 +599,24 @@ class WalkInEnclosureAssembly(AssemblyController):
                 },
             }
             allowed = ["Position 1", "Position 2", "Position 3", "Position 4"]
+
+        else:  # Double-Inline
+            total_w = 2 * width + depth  # width + gap + width
+            mapping = {
+                "Position 1": {
+                    "origin": App.Vector(0, 0, 0),
+                    "rotation": 0,
+                    "edge1_surface": "glass",   # panel1 at y=0
+                    "edge2_surface": "wall",    # left wall at x=0
+                },
+                "Position 2": {
+                    "origin": App.Vector(total_w, 0, 0),
+                    "rotation": 90,
+                    "edge1_surface": "wall",    # right wall at x=2W+G
+                    "edge2_surface": "glass",   # panel2 at y=0
+                },
+            }
+            allowed = ["Position 1", "Position 2"]
 
         info = mapping.get(position, mapping[allowed[0]])
         info["allowed"] = allowed

@@ -1547,6 +1547,40 @@ CLAMP_SPECS = {
             {"code": "GC-497", "material": "S/S 304", "finish": "Matte Black"},
         ],
     },
+    "AQ_Shelf_G2W_Clamp": {
+        "load_capacity_kg": 25,
+        "glass_thickness_range": [6, 8],
+        "default_mounting": "Wall",
+        "dimensions": {
+            "base_size": 40,
+            "base_thickness": 29,
+            "glass_gap": 8,
+            "cutout_depth": 32,
+            "glass_offset": 12,
+        },
+        "bounding_box": {"width": 40, "depth": 44, "height": 29},
+        "product_codes": [
+            {"code": "018-2-FGS-S", "material": "Brass", "finish": "Chrome"},
+            {"code": "018-2-FGS-B", "material": "Brass", "finish": "Matte Black"},
+        ],
+    },
+    "AQ_Shelf_G2G_Clamp": {
+        "load_capacity_kg": 25,
+        "glass_thickness_range": [6, 8],
+        "default_mounting": "Wall",
+        "dimensions": {
+            "base_size": 40,
+            "base_thickness": 29,
+            "glass_gap": 8,
+            "cutout_depth": 32,
+            "glass_offset": 12,
+        },
+        "bounding_box": {"width": 40, "depth": 62, "height": 29},
+        "product_codes": [
+            {"code": "018-1-FGS-S", "material": "Brass", "finish": "Chrome"},
+            {"code": "018-1-FGS-B", "material": "Brass", "finish": "Matte Black"},
+        ],
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -2460,10 +2494,19 @@ GLASS_SHELF_SPECS = {
     "glass_clearance": 2,
 }
 
-SHELF_CLAMP_MAPPING = {
-    "wall": "L_Clamp",
-    "glass": "90DEG_G2G_Clamp",
+SHELF_CLAMP_STYLES = {
+    "Default": {
+        "wall": "L_Clamp",
+        "glass": "90DEG_G2G_Clamp",
+    },
+    "AQ": {
+        "wall": "AQ_Shelf_G2W_Clamp",
+        "glass": "AQ_Shelf_G2G_Clamp",
+    },
 }
+
+# Backward-compatible alias — defaults to "Default" style
+SHELF_CLAMP_MAPPING = SHELF_CLAMP_STYLES["Default"]
 
 
 def lookupSliderProductCode(code):

@@ -17,12 +17,56 @@ Supported clamp shapes:
     90DEG_Tee_Clamp — Glass-to-glass T-junction clamp (3 panels)
 """
 
+import os
+
 import FreeCAD as App
 import Part
 from freecad.ShowerDesigner.Data.HardwareSpecs import (
     CLAMP_SPECS,
     HARDWARE_FINISHES,
 )
+
+# Directory containing shelf clamp .brep model files
+_SHELF_CLAMP_DIR = os.path.join(os.path.dirname(__file__), "Shelf")
+
+# Cache loaded .brep shapes to avoid re-reading on every recompute
+_shelf_clamp_cache = {}
+
+# Mapping: clamp spec key → .brep filename
+_SHELF_CLAMP_BREP_FILES = {
+    "AQ_Shelf_G2W_Clamp": "AQ_G2W.brep",
+    "AQ_Shelf_G2G_Clamp": "AQ_G2G.brep",
+}
+
+
+def _loadShelfClampShape(clamp_type):
+    """Load and cache a shelf clamp shape from a .brep file.
+
+    Returns Part.Shape or None if the file is missing.
+    """
+    brep_file = _SHELF_CLAMP_BREP_FILES.get(clamp_type)
+    if brep_file is None:
+        return None
+
+    if brep_file in _shelf_clamp_cache:
+        return _shelf_clamp_cache[brep_file].copy()
+
+    filepath = os.path.join(_SHELF_CLAMP_DIR, brep_file)
+    if not os.path.isfile(filepath):
+        App.Console.PrintWarning(
+            f"Shelf clamp .brep model not found: {filepath}\n"
+            f"Falling back to bounding-box placeholder.\n"
+        )
+        return None
+
+    shape = Part.Shape()
+    shape.read(filepath)
+    if shape.isNull():
+        App.Console.PrintError(f"Failed to read shape from {filepath}\n")
+        return None
+
+    _shelf_clamp_cache[brep_file] = shape.copy()
+    return shape.copy()
 
 
 # ---------------------------------------------------------------------------
@@ -289,6 +333,11 @@ def createClampShape(clamp_type="L_Clamp"):
     builder = _SHAPE_BUILDERS.get(clamp_type)
     if builder is not None:
         return builder(spec["dimensions"])
+
+    # Try loading from .brep model file (e.g. AQ shelf clamps)
+    brep_shape = _loadShelfClampShape(clamp_type)
+    if brep_shape is not None:
+        return brep_shape
 
     # Placeholder box for types without custom geometry
     return _buildPlaceholderBox(spec)

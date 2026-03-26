@@ -340,6 +340,253 @@ class GlassShelfCommand:
         return True
 
 
+class MeasureCommand:
+    """Toggle 3D dimension annotations on enclosures."""
+
+    _DIM_GROUP_LABEL = "Dimensions"
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Measure',
+            'ToolTip': 'Toggle 3D dimension annotations on enclosures',
+        }
+
+    def Activated(self):
+        import FreeCAD as App
+
+        doc = App.ActiveDocument
+        if doc is None:
+            App.Console.PrintError("Measure: No active document.\n")
+            return
+
+        # Collect targets: selection or all top-level App::Part objects
+        sel = Gui.Selection.getSelection()
+        targets = []
+        if sel:
+            targets = list(sel)
+        else:
+            for obj in doc.Objects:
+                if obj.TypeId == "App::Part" and getattr(obj, "InList", None) == []:
+                    targets.append(obj)
+
+        if not targets:
+            App.Console.PrintMessage("Measure: No assemblies found in document.\n")
+            return
+
+        # Toggle logic: exists+visible → hide; exists+hidden → delete+regenerate; absent → create
+        existing_groups = []
+        for part_obj in targets:
+            grp = self._findDimGroup(part_obj)
+            if grp is not None:
+                existing_groups.append((part_obj, grp))
+
+        if existing_groups:
+            # Check if any are visible
+            any_visible = False
+            for _part_obj, grp in existing_groups:
+                if App.GuiUp and grp.ViewObject.Visibility:
+                    any_visible = True
+                    break
+
+            if any_visible:
+                # Hide all
+                for _part_obj, grp in existing_groups:
+                    if App.GuiUp:
+                        grp.ViewObject.Visibility = False
+                App.Console.PrintMessage("Measure: Dimensions hidden.\n")
+                return
+            else:
+                # Delete and regenerate
+                for part_obj, grp in existing_groups:
+                    self._removeDimGroup(doc, part_obj, grp)
+
+        # Create fresh dimensions
+        self._createDimensions(doc, targets)
+
+    def _findDimGroup(self, part_obj):
+        """Find an existing Dimensions group inside an App::Part."""
+        for child in getattr(part_obj, "Group", []):
+            if (
+                child.TypeId == "App::DocumentObjectGroup"
+                and child.Label == self._DIM_GROUP_LABEL
+            ):
+                return child
+        return None
+
+    def _removeDimGroup(self, doc, part_obj, grp):
+        """Remove a Dimensions group and all its children."""
+        for child in list(grp.Group):
+            grp.removeObject(child)
+            doc.removeObject(child.Name)
+        part_obj.removeObject(grp)
+        doc.removeObject(grp.Name)
+
+    def _createDimensions(self, doc, targets):
+        """Run DimensionExtractor and create Draft dimension objects."""
+        import FreeCAD as App
+
+        try:
+            import Draft
+        except ImportError:
+            App.Console.PrintError(
+                "Measure: Draft workbench not available.\n"
+            )
+            return
+
+        from freecad.ShowerDesigner.Data.DimensionSpecs import DIM_COLORS
+        from freecad.ShowerDesigner.Models.DimensionExtractor import DimensionExtractor
+
+        extractor = DimensionExtractor()
+        total = 0
+
+        for part_obj in targets:
+            items = extractor.extract(part_obj)
+            if not items:
+                continue
+
+            # Create group inside the App::Part
+            grp = doc.addObject("App::DocumentObjectGroup", self._DIM_GROUP_LABEL)
+            grp.Label = self._DIM_GROUP_LABEL
+            part_obj.addObject(grp)
+
+            for item in items:
+                p1 = App.Vector(*item.p1)
+                p2 = App.Vector(*item.p2)
+                off_dir = App.Vector(*item.offset_direction)
+                midpoint = (p1 + p2) * 0.5
+                dim_line_pt = midpoint + off_dir * item.offset_distance
+
+                dim = Draft.make_linear_dimension(p1, p2, dim_line_pt)
+                dim.Label = item.label
+                grp.addObject(dim)
+
+                # Style by category
+                if App.GuiUp and hasattr(dim, "ViewObject"):
+                    vobj = dim.ViewObject
+                    color = DIM_COLORS.get(item.category, (0.0, 0.0, 0.0))
+                    if hasattr(vobj, "LineColor"):
+                        vobj.LineColor = color
+                    if hasattr(vobj, "TextColor"):
+                        vobj.TextColor = color
+                    if hasattr(vobj, "FontSize"):
+                        vobj.FontSize = 60
+                    if hasattr(vobj, "ArrowSize"):
+                        vobj.ArrowSize = 15
+
+                total += 1
+
+        doc.recompute()
+        App.Console.PrintMessage(
+            f"Measure: Created {total} dimension annotations.\n"
+        )
+
+    def IsActive(self):
+        import FreeCAD as App
+        return App.ActiveDocument is not None
+
+
+class ExportCommand:
+    """Export enclosure parts as STEP, STL, 3MF, IGES, or OBJ"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Export',
+            'ToolTip': 'Export parts to STEP / STL / 3MF / IGES / OBJ',
+        }
+
+    def Activated(self):
+        import FreeCAD as App
+
+        from freecad.ShowerDesigner.Gui.ExportDialog import ExportDialog
+
+        doc = App.ActiveDocument
+        if doc is None:
+            App.Console.PrintError("Export: No active document.\n")
+            return
+
+        # Collect from selection, or fall back to all top-level App::Part objects
+        sel = Gui.Selection.getSelection()
+        targets = []
+        if sel:
+            targets = list(sel)
+        else:
+            for obj in doc.Objects:
+                if obj.TypeId == "App::Part" and getattr(obj, "InList", None) == []:
+                    targets.append(obj)
+
+        if not targets:
+            App.Console.PrintMessage("Export: No assemblies found in document.\n")
+            return
+
+        dlg = ExportDialog(targets, Gui.getMainWindow())
+        dlg.exec_()
+
+    def IsActive(self):
+        import FreeCAD as App
+        return App.ActiveDocument is not None
+
+
+class GlassOrderCommand:
+    """Generate TechDraw glass order drawings from selected assemblies"""
+
+    def GetResources(self):
+        return {
+            'Pixmap': asIcon('Logo'),
+            'MenuText': 'Glass Order Drawings',
+            'ToolTip': 'Generate per-panel TechDraw drawings for glass ordering',
+        }
+
+    def Activated(self):
+        import FreeCAD as App
+
+        from freecad.ShowerDesigner.Models.GlassOrderDrawing import (
+            GlassOrderDrawingGenerator,
+        )
+
+        doc = App.ActiveDocument
+        if doc is None:
+            App.Console.PrintError("Glass Order Drawings: No active document.\n")
+            return
+
+        # Collect from selection, or fall back to all top-level App::Part objects
+        sel = Gui.Selection.getSelection()
+        targets = []
+        if sel:
+            targets = list(sel)
+        else:
+            for obj in doc.Objects:
+                if obj.TypeId == "App::Part" and getattr(obj, "InList", None) == []:
+                    targets.append(obj)
+
+        if not targets:
+            App.Console.PrintMessage(
+                "Glass Order Drawings: No assemblies found in document.\n"
+            )
+            return
+
+        generator = GlassOrderDrawingGenerator()
+        total_pages = 0
+        for obj in targets:
+            pages = generator.generate(obj)
+            total_pages += len(pages)
+
+        if total_pages > 0:
+            doc.recompute()
+            App.Console.PrintMessage(
+                f"Glass Order Drawings: Created {total_pages} drawing page(s).\n"
+            )
+        else:
+            App.Console.PrintMessage(
+                "Glass Order Drawings: No glass panels found.\n"
+            )
+
+    def IsActive(self):
+        import FreeCAD as App
+        return App.ActiveDocument is not None
+
+
 # Register component commands
 Gui.addCommand('ShowerDesigner_GlassPanel', GlassPanelCommand())
 Gui.addCommand('ShowerDesigner_FixedPanel', FixedPanelCommand())
@@ -350,8 +597,7 @@ Gui.addCommand('ShowerDesigner_Hinge', HingeCommand())
 Gui.addCommand('ShowerDesigner_Clamp', ClampCommand())
 Gui.addCommand('ShowerDesigner_SupportBar', SupportBarCommand())
 Gui.addCommand('ShowerDesigner_GlassShelf', GlassShelfCommand())
-Gui.addCommand('ShowerDesigner_Measure',
-               PlaceholderCommand('Measure', 'Measurement tools'))
+Gui.addCommand('ShowerDesigner_Measure', MeasureCommand())
 Gui.addCommand('ShowerDesigner_CutList', CutListCommand())
-Gui.addCommand('ShowerDesigner_Export',
-               PlaceholderCommand('Export', 'Export design'))
+Gui.addCommand('ShowerDesigner_Export', ExportCommand())
+Gui.addCommand('ShowerDesigner_GlassOrder', GlassOrderCommand())

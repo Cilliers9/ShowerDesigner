@@ -16,6 +16,7 @@ from freecad.ShowerDesigner.Data.HardwareSpecs import (
     SLIDER_SYSTEM_SPECS,
     GLASS_SHELF_SPECS,
     SHELF_CLAMP_MAPPING,
+    SHELF_CLAMP_STYLES,
 )
 from freecad.ShowerDesigner.Data.PanelConstraints import validatePanelToPanelGap
 from freecad.ShowerDesigner.Data.SealSpecs import getReturnPanelMagnetDeduction
@@ -150,6 +151,12 @@ class AlcoveEnclosureAssembly(AssemblyController):
             "App::PropertyLength", "ShelfDepth", "Glass Shelf",
             "Shelf extent along edge 2"
         ).ShelfDepth = GLASS_SHELF_SPECS["default_depth"]
+        vs.addProperty(
+            "App::PropertyEnumeration", "ShelfClampStyle", "Glass Shelf",
+            "Clamp style for shelf mounting"
+        )
+        vs.ShelfClampStyle = list(SHELF_CLAMP_STYLES.keys())
+        vs.ShelfClampStyle = "Default"
 
         # Hardware display
         vs.addProperty(
@@ -256,6 +263,7 @@ class AlcoveEnclosureAssembly(AssemblyController):
             lambda obj: _setupHardwareVP(obj, vs.HardwareFinish),
         )
 
+        clamp_mapping = SHELF_CLAMP_STYLES.get(vs.ShelfClampStyle, SHELF_CLAMP_MAPPING)
         clamp_inset = GLASS_SHELF_SPECS["clamp_inset"]
         shelf_w = vs.ShelfWidth.Value
         shelf_d = vs.ShelfDepth.Value
@@ -267,7 +275,7 @@ class AlcoveEnclosureAssembly(AssemblyController):
         # Clamp 1 on edge 1 (along X), positioned edge_length - inset from corner
         clamp1 = self._getChild(part_obj, "ShelfClamp1")
         if clamp1:
-            clamp1.ClampType = SHELF_CLAMP_MAPPING[info["edge1_surface"]]
+            clamp1.ClampType = clamp_mapping[info["edge1_surface"]]
             g2g_offset = 8 if info["edge1_surface"] == "glass" else 0
             lx, ly = shelf_w - clamp_inset, g2g_offset
             wx = origin.x + lx * math.cos(rad) - ly * math.sin(rad)
@@ -280,7 +288,7 @@ class AlcoveEnclosureAssembly(AssemblyController):
         # Clamp 2 on edge 2 (along Y), positioned edge_length - inset from corner
         clamp2 = self._getChild(part_obj, "ShelfClamp2")
         if clamp2:
-            clamp2.ClampType = SHELF_CLAMP_MAPPING[info["edge2_surface"]]
+            clamp2.ClampType = clamp_mapping[info["edge2_surface"]]
             g2g_offset = 8 if info["edge2_surface"] == "glass" else 0
             lx, ly = g2g_offset, shelf_d - clamp_inset
             wx = origin.x + lx * math.cos(rad) - ly * math.sin(rad)

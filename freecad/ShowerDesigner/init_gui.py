@@ -41,6 +41,7 @@ class ShowerDesignerWorkbench(Gui.Workbench):
         tool_commands = [
             'ShowerDesigner_Measure',
             'ShowerDesigner_CutList',
+            'ShowerDesigner_GlassOrder',
             'ShowerDesigner_Export'
         ]
 

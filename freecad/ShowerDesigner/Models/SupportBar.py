@@ -70,7 +70,7 @@ class SupportBar:
             "Length",
             "Support Bar",
             "Length of the bar"
-        ).Length = 500
+        ).Length = 1000
 
         obj.addProperty(
             "App::PropertyLength",

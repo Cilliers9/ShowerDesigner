@@ -36,6 +36,12 @@ _HINGE_MODEL_FILES = {
     "bevel_180_glass_to_glass": "G2GHinge180.FCStd",
 }
 
+# Origin corrections baked into .brep during export (mm).
+# Applied via transformGeometry so vertex data is moved, not just a Location flag.
+_HINGE_MODEL_OFFSETS = {
+    "bevel_180_glass_to_glass": App.Vector(-2, 0, 0),
+}
+
 
 def _loadHingeShape(model_file):
     """Load and cache a hinge shape from a .brep file.
@@ -680,6 +686,12 @@ def export_hinge_breps():
                     pass
 
             if best_shape is not None and best_shape.Solids:
+                # Apply origin correction via transformGeometry (moves vertices)
+                offset = _HINGE_MODEL_OFFSETS.get(key)
+                if offset:
+                    mat = App.Matrix()
+                    mat.move(offset)
+                    best_shape = best_shape.transformGeometry(mat)
                 best_shape.exportBrep(brep_path)
                 App.Console.PrintMessage(f"Exported: {brep_path}\n")
                 exported.append(key)

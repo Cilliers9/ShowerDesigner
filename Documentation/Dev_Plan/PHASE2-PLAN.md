@@ -6,7 +6,7 @@ This phase transforms ShowerDesigner from a parametric modeling tool into a prod
 system. The focus is on output tools (cut lists, export, measurement), user-facing task panels for
 guided configuration, and 3D seal visualization — everything needed to go from design to fabrication.
 
-**Last Updated:** 2026-03-07
+**Last Updated:** 2026-03-18
 
 ---
 
@@ -14,23 +14,24 @@ guided configuration, and 3D seal visualization — everything needed to go from
 
 | Section | Area | Status | Completion |
 |---------|------|--------|------------|
-| 1.1 | Cut List / Bill of Materials | ◐ In Progress | 40% |
-| 1.2 | STEP/STL Batch Export | ○ Not Started | 0% |
-| 1.3 | Measurement & Dimensioning | ○ Not Started | 0% |
+| 1.1 | Cut List / Bill of Materials | ◐ In Progress | 85% |
+| 1.2 | STEP/STL Batch Export | ◐ In Progress | 75% |
+| 1.3 | Glass Order Drawings (TechDraw) | ○ Not Started | 0% |
+| 1.4 | Measurement & Dimensioning | ◐ In Progress | 50% |
 | 2.1 | Enclosure Creation Wizard | ○ Not Started | 0% |
 | 2.2 | Hardware Selection Panel | ○ Not Started | 0% |
 | 2.3 | Property Validation & Error Display | ○ Not Started | 0% |
-| 2.4 | Custom Icons | ◐ In Progress | 20% |
+| 2.4 | Custom Icons | ◐ In Progress | 55% |
 | 3.1 | Seal 3D Visualization | ○ Not Started | 0% |
 | 3.2 | Cost Estimation | ○ Not Started | 0% |
 
-**Overall Phase 2 Completion: ~5%**
+**Overall Phase 2 Completion: ~30%**
 
 ### Prerequisites
-Phase 1 is ~91% complete. Key dependencies for remaining Phase 2 tasks:
-- Enclosure assemblies (4.1–4.4) must work end-to-end for cut list extraction
+Phase 1 is ~95% complete. Key dependencies for remaining Phase 2 tasks:
+- Enclosure assemblies (4.1–4.4) are working end-to-end — cut list extraction operational
 - Seal deduction system (3.6) should be finalized for seal visualization
-- Hardware specs catalogue should be stable for BOM generation
+- Hardware specs catalogue is stable — BOM generation operational
 
 ---
 
@@ -38,12 +39,12 @@ Phase 1 is ~91% complete. Key dependencies for remaining Phase 2 tasks:
 
 ### 1. Production Output Tools
 
-These replace the three placeholder commands already registered in `Commands/__init__.py`
-(`ShowerDesigner_Measure`, `ShowerDesigner_CutList`, `ShowerDesigner_Export`).
+These three commands (`ShowerDesigner_Measure`, `ShowerDesigner_CutList`, `ShowerDesigner_Export`)
+are now implemented in `Commands/__init__.py` with working functionality.
 
 ---
 
-#### 1.1 Cut List / Bill of Materials -- ◐ IN PROGRESS (40%)
+#### 1.1 Cut List / Bill of Materials -- ◐ IN PROGRESS (85%)
 **Priority:** High
 **Estimated Effort:** High
 **Dependencies:** Phase 1 enclosures (4.1–4.4), HardwareSpecs
@@ -65,30 +66,25 @@ These replace the three placeholder commands already registered in `Commands/__i
 - Identifies glass children, hardware children (hinges, handles, clamps, support bars)
 - Reads dimensions from controller VarSet properties
 - Maps hardware to catalogue entries via spec keys
+- Seal BOM extraction added (commit 88827a0)
+
+**File:** `freecad/ShowerDesigner/Gui/CutListDialog.py`
+- Sortable QTableWidget with all BOM columns
+- Copy-to-clipboard functionality
+- CSV export with file picker
+
+**File:** `freecad/ShowerDesigner/Commands/__init__.py` (CutListCommand)
+- Collects selected or all top-level assemblies
+- Runs `CutListExtractor`, aggregates items
+- Prints console table summary
+- Launches `CutListDialog` for interactive use
 
 **File:** `freecad/ShowerDesigner/Tests/test_cut_list.py`
-- Existing test coverage for cut list generation
+- Test coverage for cut list generation
 
 **Remaining:**
-
-**File:** `freecad/ShowerDesigner/Commands/CutListCommand.py`
-
-```python
-class CutListCommand:
-    def Activated(self):
-        # Get selected enclosure or active assembly
-        # Generate cut list via CutListExtractor
-        # Show in a Qt dialog with copy/export buttons
-
-    def IsActive(self):
-        # Active when an enclosure or panel assembly is selected
-```
-
-- Qt dialog for in-app table display with copy/export buttons
-- Clipboard-ready format output
-- Seal items extraction (not yet handled by extractor)
-- End-to-end testing with all enclosure types
-- Integration with the CutList toolbar command (replace placeholder)
+- End-to-end testing with all enclosure types (WalkIn multi-panel, Custom)
+- Verify seal items fully covered for all enclosure/door combinations
 
 **Output columns:**
 | # | Category | Component | Description | Product Code | W×H (mm) | Qty | Unit | Notes |
@@ -102,7 +98,7 @@ class CutListCommand:
 
 ---
 
-#### 1.2 STEP/STL Batch Export
+#### 1.2 STEP/STL Batch Export -- ◐ IN PROGRESS (75%)
 **Priority:** Medium
 **Estimated Effort:** Medium
 **Dependencies:** None (uses FreeCAD built-in export)
@@ -112,22 +108,19 @@ class CutListCommand:
 - Apply consistent naming conventions for manufacturing
 - Support batch export (all panels as separate files)
 
-**Implementation Details:**
+**What was implemented:**
 
-**File:** `freecad/ShowerDesigner/Commands/ExportCommand.py`
+**File:** `freecad/ShowerDesigner/Gui/ExportDialog.py`
+- Format selection: STEP, STL, 3MF, IGES, OBJ
+- Output directory picker with custom prefix option
+- Batch part table with checkboxes (select all/none)
+- `exportShape()` handles per-format FreeCAD export calls
+- `collectExportables()` walks assembly tree to find exportable parts
+- Auto-naming with `{Enclosure}_{Component}_{WxHxT}` convention
 
-```python
-class ExportCommand:
-    def Activated(self):
-        # Show export dialog with options:
-        #   - Format: STEP / STL / 3MF
-        #   - Scope: Selected object / Entire enclosure / Individual parts
-        #   - Naming: Auto (enclosure_component_WxH) / Custom prefix
-        #   - Output directory picker
-
-    def IsActive(self):
-        # Active when any ShowerDesigner object is selected
-```
+**File:** `freecad/ShowerDesigner/Commands/__init__.py` (ExportCommand)
+- Collects export targets from selection or active document
+- Launches `ExportDialog` for interactive use
 
 **Naming convention:**
 ```
@@ -136,21 +129,151 @@ Example: CornerEnclosure_FixedPanel_800x2000x10.step
 Example: CornerEnclosure_HingedDoor_700x2000x8.step
 ```
 
-**Batch export flow:**
-1. Walk assembly tree to find all geometric children
-2. For each child with a `Shape`: export to chosen format
-3. Optionally export fused assembly as single file
-4. Generate manifest file listing all exported parts
+**Remaining:**
+- Manifest file generation listing all exported parts
+- Testing/validation that exports work correctly for all formats
+- Fused assembly single-file export option
 
 **Testing:**
 - Export single panel → verify STEP opens in external CAD
 - Batch export enclosure → verify all parts present
 - Verify naming convention applied correctly
-- Test with each supported format (STEP, STL, 3MF)
+- Test with each supported format (STEP, STL, 3MF, IGES, OBJ)
 
 ---
 
-#### 1.3 Measurement & Dimensioning
+#### 1.3 Glass Order Drawings (TechDraw)
+**Priority:** High
+**Estimated Effort:** High
+**Dependencies:** Phase 1 enclosures (4.1–4.4), HardwareSpecs, Hinge/Clamp/Handle models
+
+**Objectives:**
+- Generate per-panel technical drawings for glass ordering/fabrication
+- Show panel outline with all cutouts, notches, and holes dimensioned
+- Use existing SVG templates from `Resources/Documents/Drawing templates/`
+- Output as multi-page TechDraw document with assembly overview + individual panel sheets
+- Export as PDF for glass supplier handoff
+
+**Available Templates:**
+
+| Template | Purpose |
+|----------|---------|
+| `A4_Portrait_Assembly.svg` | Assembly overview page (all panels in context) |
+| `A4_Portrait_Panel.svg` | Fixed panel sheet (outline + clamp notch positions) |
+| `A4_Portrait_Door.svg` | Door panel sheet (outline + hinge cutouts + handle hole) |
+| `A4_Portrait_Hinge.svg` | Hinge cutout detail sheet (enlarged cutout dims) |
+| `A4_Portrait_Blank.svg` | Blank template for additional detail views |
+
+All templates are A4 portrait with standard title blocks (`freecad:editable` fields for title,
+identification_number, date_of_issue, scale, part_material, creator, etc.).
+
+**Reference:** `Resources/Documents/Drawing templates/Example of Corner documentation.pdf`
+— Example output showing corner enclosure with return panel, inline panel, and door panel.
+
+**Per-Panel Drawing Content:**
+
+**Fixed Panels (return, inline):**
+- Panel outline with width × height dimensions
+- Clamp/bracket notch positions with offset dimensions from edges
+- Notch detail view (20mm notch with R10 radius from `Notch.png`)
+- Hole details for glass to glass Clamp/bracket (20mm hole located 20mm from edge or 20mm + glass thickness from edge)
+- Glass thickness, type, edge finish in title block
+- Hinge cut out if glass to glass hinge on door next to it. (Hinge panel needs to use `A4_Portrait_Hinge.svg`)
+
+**Door Panels:**
+- Panel outline with width × height dimensions
+- Hinge cutout positions with offset dimensions from top/bottom edges
+- Hinge cutout detail view (37×63mm cutout with R8 radius from `HingeCutOut.png`)
+- Handle hole position with offset dimensions from edge
+- Glass thickness, type, edge finish in title block
+
+**Assembly Overview Page:**
+- All panels shown in assembled position (top-down or front view)
+- Overall enclosure dimensions (width, depth, height)
+- Panel identification labels matching individual sheet numbers
+
+**Implementation Details:**
+
+**File:** `freecad/ShowerDesigner/Models/GlassOrderDrawing.py`
+
+```python
+class GlassOrderDrawingGenerator:
+    """Generates TechDraw pages for glass ordering from an enclosure assembly."""
+
+    TEMPLATE_DIR = "Resources/Documents/Drawing templates/"
+    TEMPLATES = {
+        "assembly": "A4_Portrait_Assembly.svg",
+        "panel": "A4_Portrait_Panel.svg",
+        "door": "A4_Portrait_Door.svg",
+        "hinge_detail": "A4_Portrait_Hinge.svg",
+        "blank": "A4_Portrait_Blank.svg",
+    }
+
+    def generate(self, assembly_obj) -> list[TechDraw.Page]:
+        """Generate full drawing set for an enclosure assembly."""
+        # 1. Create assembly overview page
+        # 2. For each panel child:
+        #    - Select template (Panel vs Door)
+        #    - Create TechDraw page with front view projection
+        #    - Add dimension annotations (panel W×H)
+        #    - Add cutout/notch detail views with dimensions
+        #    - Fill title block fields from assembly properties
+        # 3. Add hinge detail pages if door panels present
+
+    def _createPanelPage(self, panel_obj, template: str) -> TechDraw.Page:
+        """Create a single panel drawing page."""
+
+    def _addCutoutDimensions(self, page, panel_obj):
+        """Add hinge cutout, notch, and hole dimensions to a page."""
+
+    def _addHardwarePositions(self, page, panel_obj):
+        """Dimension hardware positions relative to panel edges."""
+
+    def _fillTitleBlock(self, page, panel_obj, sheet_num: int):
+        """Populate title block editable fields."""
+```
+
+**File:** `freecad/ShowerDesigner/Commands/__init__.py` (GlassOrderCommand)
+
+```python
+class GlassOrderCommand:
+    def Activated(self):
+        # Get selected enclosure assembly
+        # Run GlassOrderDrawingGenerator.generate()
+        # Optionally export all pages as single PDF
+
+    def IsActive(self):
+        # Active when an enclosure assembly is selected
+```
+
+**Title Block Field Mapping:**
+| Template Field | Source |
+|---------------|--------|
+| `title` | Panel label (e.g., "Return Panel", "Door Panel") |
+| `identification_number` | Auto-generated (e.g., "CE-001-RP") |
+| `part_material` | Glass type + thickness (e.g., "10mm Tempered Clear") |
+| `scale` | Auto-calculated to fit panel on page |
+| `date_of_issue` | Current date |
+| `creator` | From FreeCAD preferences or assembly property |
+| `sheet_number` | Page N of total |
+
+**Cutout/Notch Specifications (from hardware models):**
+- **Hinge cutout**: 37mm × 63mm with R8 corner radius (from `HingeCutOut.png`)
+- **Clamp notch**: 20mm × 20mm with R10 corner radius (from `Notch.png`)
+- **Handle hole**: Diameter and position from handle spec in `HardwareSpecs.py`
+- Dimensions sourced from hardware model specs, not hardcoded
+
+**Testing:**
+- Generate drawing set for each enclosure type (Corner, Alcove, WalkIn)
+- Verify cutout positions match hardware positions in 3D model
+- Verify dimensions are accurate and readable
+- Export as PDF and verify all pages present
+- Test with different hinge/clamp/handle combinations
+- Verify title block fields populated correctly
+
+---
+
+#### 1.4 Measurement & Dimensioning -- ◐ IN PROGRESS (50%)
 **Priority:** Medium
 **Estimated Effort:** High
 **Dependencies:** None
@@ -160,37 +283,39 @@ Example: CornerEnclosure_HingedDoor_700x2000x8.step
 - Show overall enclosure dimensions, glass sizes, hardware positions
 - Generate 2D projection views for installation drawings (TechDraw integration)
 
-**Implementation Details:**
+**What was implemented (Phase 1.4a — 3D Dimension Annotations):**
 
-**File:** `freecad/ShowerDesigner/Commands/MeasureCommand.py`
+**File:** `freecad/ShowerDesigner/Data/DimensionSpecs.py` (pure Python, no FreeCAD imports)
+- `DimensionItem` dataclass with label, value, unit, category
+- Offset constants for dimension line positioning
+- Color categories for visual grouping (overall, panel, hardware)
 
-```python
-class MeasureCommand:
-    def Activated(self):
-        # Options:
-        #   1. "Show Dimensions" - Add 3D dimension annotations
-        #   2. "Installation Drawing" - Generate TechDraw sheet
+**File:** `freecad/ShowerDesigner/Models/DimensionExtractor.py`
+- Full assembly tree walker for extracting dimensions
+- Overall dimensions (Width/Height/Depth) from VarSet properties
+- Panel dimensions (GlassChild width/height)
+- Hardware positions (Hinge, Handle, SupportBar locations)
+- Returns structured list of `DimensionItem` objects
 
-    def IsActive(self):
-        # Active when an enclosure is selected
-```
+**File:** `freecad/ShowerDesigner/Commands/__init__.py` (MeasureCommand)
+- Toggle-based: creates or removes "Dimensions" group
+- Uses `DimensionExtractor` to gather all measurements
+- Creates Draft dimension annotations in 3D view
 
-**3D Dimension Annotations:**
-- Overall width, height, depth of enclosure
-- Individual glass panel dimensions (W × H)
-- Gap measurements (panel-to-panel, panel-to-wall)
-- Hardware positions (hinge heights, handle height, support bar position)
-- Use `Draft.makeDimension()` or custom annotation objects
+**File:** `freecad/ShowerDesigner/Tests/test_dimensions.py`
+- Pure data tests for `DimensionItem` and constants
 
-**TechDraw Integration:**
-- Create a TechDraw page with standard views (front, side, top)
+**Remaining (Phase 1.4b — TechDraw Integration):**
+- TechDraw page with standard views (front, side, top)
 - Auto-place dimensions on the drawing
-- Include title block with enclosure specs (glass type, thickness, hardware)
-- Export as PDF for installer handoff
+- Title block with enclosure specs (glass type, thickness, hardware)
+- PDF export for installer handoff
+- Live dimension update when parameters change
+- Testing with real assemblies across all enclosure types
 
 **Phases:**
-- **1.3a**: 3D dimension annotations (simpler, immediate value)
-- **1.3b**: TechDraw installation drawings (more complex, deferred if needed)
+- **1.4a**: 3D dimension annotations — ✓ Implemented
+- **1.4b**: TechDraw installation drawings — Not started
 
 **Testing:**
 - Add dimensions to each enclosure type
@@ -371,7 +496,7 @@ class AssemblyValidator:
 
 ---
 
-#### 2.4 Custom Icons -- ◐ IN PROGRESS (20%)
+#### 2.4 Custom Icons -- ◐ IN PROGRESS (55%)
 **Priority:** Low
 **Estimated Effort:** Low
 **Dependencies:** None
@@ -381,7 +506,7 @@ class AssemblyValidator:
 - Replace generic `Logo` icon usage
 
 **What was implemented:**
-- SVG icons already created: `BiFoldDoor.svg`, `FixedPanel.svg`, `HingedDoor.svg`, `SlidingDoor.svg` (in `Resources/Icons/`)
+- 9 dedicated SVG icons in `Resources/icons/`: AlcoveEnclosure, BiFoldDoor, CornerEnclosure, CustomEnclosure, FixedPanel, HingedDoor, SlidingDoor, WalkInEnclosure, Logo
 
 **Icon List:**
 
@@ -546,6 +671,7 @@ class CostBreakdown:
 - [ ] Cut list generation works for all enclosure types
 - [ ] CSV export produces valid, importable files
 - [ ] STEP export works for individual parts and full assemblies
+- [ ] Glass order drawings generate per-panel TechDraw sheets with cutout/notch/hole dimensions
 - [ ] Enclosure creation wizard guides user through full setup
 - [ ] Seal 3D visualization shows correct profiles on glass edges
 - [ ] Property validation catches common configuration errors
@@ -568,39 +694,45 @@ class CostBreakdown:
 ```
 freecad/ShowerDesigner/
   Data/
-    CutList.py              # BOM generation (pure Python)
-    CostEstimation.py       # Cost calculator (pure Python)
-    default_prices.json     # Default price list
+    CutList.py              # ✓ BOM generation (pure Python)
+    DimensionSpecs.py       # ✓ Dimension data layer (pure Python)
+    CostEstimation.py       # ○ Cost calculator (pure Python) — not started
+    default_prices.json     # ○ Default price list — not started
   Models/
-    Seal.py                 # Seal 3D geometry + child proxy
+    CutListExtractor.py     # ✓ Assembly tree walker for BOM extraction
+    DimensionExtractor.py   # ✓ Assembly tree walker for measurements
+    GlassOrderDrawing.py    # ○ TechDraw glass order drawing generator — not started
+    Seal.py                 # ○ Seal 3D geometry + child proxy — not started
   Gui/
-    EnclosureWizard.py      # Multi-step creation wizard
-    HardwareSelector.py     # Hardware browsing panel
-    CutListDialog.py        # BOM display dialog
-    ExportDialog.py         # Export options dialog
-  Commands/
-    CutListCommand.py       # Cut list command (replaces placeholder)
-    ExportCommand.py        # Export command (replaces placeholder)
-    MeasureCommand.py       # Measure command (replaces placeholder)
-  Validation.py             # Assembly validation rules
-  Resources/icons/          # SVG icons for all commands
+    CutListDialog.py        # ✓ BOM display dialog
+    ExportDialog.py         # ✓ Export options dialog
+    EnclosureWizard.py      # ○ Multi-step creation wizard — not started
+    HardwareSelector.py     # ○ Hardware browsing panel — not started
+  Commands/__init__.py      # ✓ CutList, Export, Measure commands (integrated)
+  Validation.py             # ○ Assembly validation rules — not started
+  Resources/icons/          # ◐ 9 of ~17 commands have dedicated icons
+  Resources/Documents/Drawing templates/  # ✓ SVG templates for TechDraw glass order drawings
+  Tests/
+    test_cut_list.py        # ✓ Cut list tests
+    test_dimensions.py      # ✓ Dimension data tests
 ```
 
 ---
 
 ## Implementation Order
 
-Recommended sequence based on dependencies and value:
+Recommended sequence based on dependencies, value, and current progress:
 
-1. **1.1 Cut List / BOM** — Highest standalone value, no UI dependency
-2. **3.1 Seal 3D Visualization** — Completes Phase 1 gap, improves visual fidelity
-3. **2.3 Property Validation** — Foundation for wizard error handling
-4. **2.1 Enclosure Creation Wizard** — Major usability improvement
-5. **1.2 STEP/STL Export** — Straightforward FreeCAD integration
-6. **2.2 Hardware Selection Panel** — Enhances wizard and standalone use
-7. **1.3 Measurement & Dimensioning** — Complex but high value for installers
-8. **2.4 Custom Icons** — Polish, can be done anytime
-9. **3.2 Cost Estimation** — Builds on cut list, lowest priority
+1. ~~**1.1 Cut List / BOM**~~ — 85% complete, finish end-to-end testing
+2. ~~**1.2 STEP/STL Export**~~ — 75% complete, finish manifest + validation
+3. **1.3 Glass Order Drawings** — High priority, critical for glass supplier ordering
+4. ~~**1.4 Measurement & Dimensioning**~~ — 50% complete (1.4a done), TechDraw next
+5. **3.1 Seal 3D Visualization** — Completes Phase 1 gap, improves visual fidelity
+6. **2.3 Property Validation** — Foundation for wizard error handling
+7. **2.1 Enclosure Creation Wizard** — Major usability improvement
+8. **2.2 Hardware Selection Panel** — Enhances wizard and standalone use
+9. **2.4 Custom Icons** — 55% complete, remaining 8 icons needed
+10. **3.2 Cost Estimation** — Builds on cut list, lowest priority
 
 ---
 
@@ -622,6 +754,6 @@ Recommended sequence based on dependencies and value:
 - All new Data layer files must remain pure Python (no FreeCAD imports)
 - GUI files use the existing Qt compatibility layer (`from freecad.ShowerDesigner.Qt...`)
 - Commands follow existing pattern: `GetResources()`, `Activated()`, `IsActive()`
-- New commands replace the three placeholder registrations in `Commands/__init__.py`
+- CutList, Export, and Measure commands are implemented directly in `Commands/__init__.py` (not separate files)
 - All files must include LGPL-3.0 license headers
 - Maintain camelCase methods for FreeCAD convention
